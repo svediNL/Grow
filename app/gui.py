@@ -46,26 +46,18 @@ class App( Frame ):
         self.arduino.writeCommand("ENABLE_LAMP", ["1"])
 
     def update_lampR(self, value):
-        
-        print(value)
         self.arduino.writeCommand("SET_LAMP", ["R", str(int(float(value)))])
         #Set value on arduino
         
     def update_lampG(self, value):
-        
-        print(value)
         self.arduino.writeCommand("SET_LAMP", ["G", str(int(float(value)))])
         #Set value on arduino
         
     def update_lampB(self, value):
-        
-        print(value)
         self.arduino.writeCommand("SET_LAMP", ["B", str(int(float(value)))])
         #Set value on arduino
 
     def update_lampW(self, value):
-        
-        print(value)
         self.arduino.writeCommand("SET_LAMP", ["W", str(int(float(value)))])
 
     def update_pump(self, value):
@@ -73,7 +65,6 @@ class App( Frame ):
 
     def set_pumpEnable(self):
         self.pump_enable = not self.pump_enable
-        print(self.pump_enable)
         self.arduino.writeCommand("ENABLE_PUMP", [str(int(self.pump_enable))])
 
         if self.pump_enable:
@@ -139,15 +130,15 @@ class App( Frame ):
         self.serial_button_open= Button(self.serial_frame, text = "open", command= self.open_serial_connection)
         self.serial_button_close = Button(self.serial_frame,text = "close", command= self.close_serial_connection)
 
-        #  W I D G E T   L A Y O U T
+        #  W I D G E T   L A Y O U T  
         # header texta
-        self.label_header.grid(row = 0, column = 0, columnspan = 2 )
+        self.label_header.grid(row = 0, column = 0, columnspan = 2 , sticky = NW)
         self.label_dico.grid(row= 0 , column = 0, sticky= N)
 
         # serial conneciton
-        self.serial_entry_port.grid(row= 0, column=0, columnspan=2)
-        self.serial_button_close.grid(row=1, column=0)
-        self.serial_button_open.grid(row=1,column=1)
+        self.serial_entry_port.grid(row= 0, column=0, columnspan=2, sticky = NW)
+        self.serial_button_close.grid(row=1, column=0, sticky = NW)
+        self.serial_button_open.grid(row=1,column=1, sticky = NW)
 
         # RGBW lamp
         self.dico_button_lampOff.grid   (row=0, column= 0)
@@ -202,13 +193,13 @@ def animate(i):
         valH[1,n]= valH[1,n-1]
 
     # add new value
-    valM[1,0] = app.arduino.readCommand("GET_MOISTURE")
+    #valM[1,0] = app.arduino.readCommand("GET_MOISTURE")
+    valM[1,0] = valM[1,0] + 1
     print(valM[1,0])
-    #valM[1,0] = valM[1,0] + 1
 
-    valH[1,0] = app.arduino.readCommand("GET_TEMP")
+    #valH[1,0] = app.arduino.readCommand("GET_TEMP")
+    valH[1,0] = (valH[1,0]+1) % 2
     print(valH[1,0])
-    #valH[1,0] = (valH[1,0]+1) % 2
 
     # reverse value array for neatness
     valMneat = np.flip(valM, 1)

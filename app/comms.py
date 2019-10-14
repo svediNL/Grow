@@ -16,6 +16,7 @@ class SlaveComm:
         
         try:
             self.ser.open()
+            self.ser_isopen = True
             runbool = True
             while runbool:
                 msg = self.ser.read_until(b'\n')
@@ -26,19 +27,20 @@ class SlaveComm:
                     
         except serial.serialutil.SerialException:
             print("failed opening "+ self.ser.port)
+            self.ser_isopen = False
         else:
             print("Slave connected")
 
     def closeConnection(self):
         self.ser.close()
+        print("Slave disconnected")
+        self.ser_isopen = False
 
     def writeString(self, inputString):
-        
-        if not self.ser.isOpen:
-            self.openConnection()
-        
-        if self.ser.isOpen:
-            tmp = inputString + "\n"
+        tmp = inputString + "\n"
+        print(tmp)
+
+        if self.ser_isopen:
             try:
                 self.sio.write(unicode(tmp))
                 self.sio.flush()
@@ -55,15 +57,14 @@ class SlaveComm:
                 tmp= tmp +","
             else:
                 tmp=tmp+")"
-        #print(tmp)
-        
+
         self.writeString(tmp)
 
     def readCommand(self, command):
 
         self.writeCommand(command, [])
 
-        if self.ser.isOpen:
+        if self.ser_isopen:
             tmp = b''
             try:
                 tmp = self.ser.read_until(b'\n')
@@ -83,11 +84,17 @@ class SlaveComm:
         self.ser.baudrate = baud
         self.ser.port = serial_port
 
+        self.ser_isopen = False
+        print("seropen" + str(self.ser_isopen))
+
+
         self.sio = io.TextIOWrapper( buffer = io.BufferedRWPair(self.ser, self.ser),
                                      newline = '\n')
         
         self.closeConnection()
         self.openConnection()
+
+        print("seropen" + str(self.ser_isopen))
 
 
         
