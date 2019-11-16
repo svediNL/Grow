@@ -81,7 +81,7 @@ void doCommand(){
       moisture.refresh(); // get value
       moisturePower.set( false);  // disable power
 
-      Serial.print(moisture.getRawValue()); //print raw value
+      Serial.print(moisture.getMetricValue()); //print raw value
       Serial.print("\n"); // close line
       
       serialMsg.message.inputCommand= -1; // reset command variable
