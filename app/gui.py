@@ -7,13 +7,21 @@ from matplotlib.ticker import AutoMinorLocator, MultipleLocator
 
 import numpy as np
 
+from ttk import *
 try:
     from Tkinter import *
 except:
+    print("using tkinter")
     from tkinter import *
+else:
+    print("using Tkinter")
 
-from ttk import *
 from comms import SlaveComm
+
+BG_MAIN = '#7A7A7A'
+BG_SUB = '#B0B0B0'
+BG_SUBSUB = '#DDDDDD'
+
 
 # create app of type Frame
 class App( Frame ):
@@ -24,6 +32,7 @@ class App( Frame ):
         self.serial_var_port = StringVar()
         self.serial_var_port.set("/dev/ttyACM0")
         self.arduino = SlaveComm("/dev/ttyACM0", 115200)
+        self.serial_var_string = StringVar()
 
         self.pump_enable = False
         self.pump_state = StringVar()
@@ -88,19 +97,33 @@ class App( Frame ):
     def close_serial_connection(self):
         self.arduino.closeConnection()
 
+    def send_serial_string(self):
+        self.arduino.writeString(self.serial_var_string.get())
+        self.serial_var_string.set("")
+
     def create_widgets(self):
 
         #  C R E A T E   F R A M E S
         # main frames
-        self.topFrame=Frame(self)
-        self.leftFrame = Frame(self)
-        self.rightFrame = Frame(self)
+        self.mainframe = Frame(self, width=1024, height=512 )
+        self.mainframe.pack()
+
+        self.topFrame=Frame(self.mainframe , width=1024, height=64  , bd=2, relief = SUNKEN)
+        self.leftFrame = Frame(self.mainframe, bd=2, relief = SUNKEN)
+        self.rightFrame = Frame(self.mainframe, bd=2, relief = SUNKEN)
 
         #frame for arduino connection
-        self.serial_frame = Frame(self.topFrame)
+        self.serial_frame = Frame(self.rightFrame, bd=1, relief = SUNKEN)
+        self.serial_notebook = Notebook(self.serial_frame)
+        self.serial_connectionFrame = Frame(self.serial_notebook)
+        self.serial_interfaceFrame = Frame(self.serial_notebook)
+
+        self.serial_notebook.add(self.serial_connectionFrame, text = 'connect')
+        self.serial_notebook.add(self.serial_interfaceFrame, text = 'comm')
 
         # frame for direct control
-        self.dico_notebook = Notebook(self.rightFrame)
+        self.dico_frame = Frame(self.rightFrame , bd=1, relief = SUNKEN)
+        self.dico_notebook = Notebook(self.dico_frame)
         self.dico_lamp_frame = Frame(self.dico_notebook)
         self.dico_hydro_frame = Frame(self.dico_notebook)
 
@@ -111,7 +134,8 @@ class App( Frame ):
         #  C R E A T E   W I D G E T S
         # header texts
         self.label_header = Label(self.topFrame, text= " +-~-~-~-~-~-+ Grow Controller +-~-~-~-~-~-+ ")
-        self.label_dico = Label(self.rightFrame, text= " DIRECT CONTROL ")
+        self.label_header.pack(fill = X)
+        self.label_dico = Label(self.dico_frame, text= " DIRECT CONTROL ")
 
         # create widgets for RGBW light
         # RGBW sliders
@@ -135,19 +159,26 @@ class App( Frame ):
         self.dico_label_pumpRunning = Label(self.dico_hydro_frame, textvariable = self.pump_state)
 
         # create widgets for serial connection
-        self.serial_entry_port = Entry(self.serial_frame, textvariable= self.serial_var_port)
-        self.serial_button_open= Button(self.serial_frame, text = "open", command= self.open_serial_connection)
-        self.serial_button_close = Button(self.serial_frame,text = "close", command= self.close_serial_connection)
+        self.serial_entry_port = Entry(self.serial_connectionFrame, textvariable= self.serial_var_port)
+        self.serial_button_open= Button(self.serial_connectionFrame, text = "open", command= self.open_serial_connection)
+        self.serial_button_close = Button(self.serial_connectionFrame,text = "close", command= self.close_serial_connection)
+
+        self.serial_entry_command = Entry(self.serial_interfaceFrame, textvariable= self.serial_var_string)
+        self.serial_button_send= Button(self.serial_interfaceFrame, text = "send", command= self.send_serial_string)
 
         #  W I D G E T   L A Y O U T
         # header texta
-        self.label_header.grid(row = 0, column = 0, columnspan = 2 )
-        self.label_dico.grid(row= 0 , column = 0, sticky= N)
+        #self.label_header.grid(row = 0, column = 0, columnspan = 2 )
 
         # serial conneciton
         self.serial_entry_port.grid(row= 0, column=0, columnspan=2)
         self.serial_button_close.grid(row=1, column=0)
         self.serial_button_open.grid(row=1,column=1)
+
+        self.serial_entry_command.grid(row = 0 , column = 0, columnspan = 2)
+        self.serial_button_send.grid(row = 1 , column = 0)
+
+        self.serial_notebook.grid(row=0, column =0)
 
         # RGBW lamp
         self.dico_button_lampOff.grid   (row=0, column= 0)
@@ -169,12 +200,16 @@ class App( Frame ):
         self.dico_button_pumpEnable.grid(row = 2, column = 0)
         self.dico_label_pumpRunning.grid(row=1, column =0, sticky= S)
 
+        self.label_dico.grid(row= 0 , column = 0, sticky= N)
+        self.dico_notebook.grid(row = 1, column = 0, sticky= N)
+
         #  F R A M E   L A Y O U T
-        self.topFrame.grid(row = 0, column = 0, columnspan = 2)
+        self.topFrame.grid(row = 0, column = 0)
+        #self.topFrame.pack(fill = X, side = TOP)
         self.leftFrame.grid(row=1, column=0)
         self.rightFrame.grid(row=1, column=1)
-        self.serial_frame.grid(row=1, column=0, sticky= W)
-        self.dico_notebook.grid(row = 1, column = 0, sticky= N)
+        self.serial_frame.grid(row=0, column=0, sticky= N)
+        self.dico_frame.grid(row = 2, column = 0, sticky= N)
 
         self.pack()
 
@@ -222,7 +257,7 @@ def animate(i):
     moistPlot.clear()
     
     moistPlot.set_ylim([0,100])
-    moistPlot.set_ylabel("analog input byte [0-1023]")
+    moistPlot.set_ylabel("% of FSV [%]")
     moistPlot.set_xlabel("time [min]")
     moistPlot.grid(True)    
     moistPlot.plot( valMneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valMneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
@@ -231,7 +266,8 @@ def animate(i):
 #   UPDATE TEMOERATURE PLOT
     heatPlot.clear()
     
-    heatPlot.set_ylim([10,40])
+    heatPlot.set_ylim([ min(10, min(valHneat[0 , BUFF_LEN-BUFF_FILL:BUFF_LEN])), 
+                        max(40, max(valHneat[0, BUFF_LEN-BUFF_FILL : BUFF_LEN])) ])
     heatPlot.set_ylabel("temp [*C]")
     heatPlot.set_xlabel("time [min]")
     heatPlot.grid(True)
@@ -241,11 +277,11 @@ def animate(i):
     # print(BUFF_FILL)
 
 #  A D D   P L O T
-f = pp.Figure(figsize=(10,5),dpi = 100)
+f = pp.Figure(figsize=(10,4),dpi = 100)
 
 moistPlot = f.add_subplot(121)
 moistPlot.set_ylim([0,100])
-moistPlot.set_ylabel("analog input byte [0-1023]")
+moistPlot.set_ylabel("% of FSV [%]")
 moistPlot.set_xlabel("time [min]")
 moistPlot.grid(True)
     
@@ -256,8 +292,11 @@ heatPlot.set_xlabel("time [min]")
 
 heatPlot.grid(True)
 
-moistPlot.plot(valM[0,:], valM[1,:])
-heatPlot.plot(valH[0,:], valH[1,:])
+#moistPlot.plot(valM[0,:], valM[1,:])
+#heatPlot.plot(valH[0,:], valH[1,:])
+moistPlot.plot(0, 0)
+heatPlot.plot(0, 0)
+
 
 #run app
 root = Tk() #init Tk

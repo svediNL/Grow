@@ -12,6 +12,7 @@ class SlaveComm:
         self.ser.baudrate = baud
 
     def openConnection(self):
+        print("o - o - o")
         print("opening connection to "+ self.ser.port)
         
         try:
@@ -25,26 +26,49 @@ class SlaveComm:
                     print(msg)
                     
         except serial.serialutil.SerialException:
-            print("failed opening "+ self.ser.port)
+            self.assumed_connection_status = False
+            print("device connection failed")
+            print("x - x - x")
         else:
-            print("Slave connected")
+            self.assumed_connection_status = True
+            print("device connected")
+            print("o - o - o")
 
     def closeConnection(self):
-        self.ser.close()
+        print("x - x - x")
+        print("closing connection to "+ self.ser.port)
+
+        try:
+            self.ser.close()
+        except serial.serialutil.SerialException:
+            if self.assumed_connection_status:
+                print("failed closing "+ self.ser.port)
+                print("o - o - o")
+            else:
+                print("device disconnected with errors")
+                print("x - x - x")
+                
+        else:
+            self.assumed_connection_status = False
+            print("device succesfully disconnected")
+            print("x - x - x")
+
+
 
     def writeString(self, inputString):
-        
-        if not self.ser.isOpen:
+        if not self.assumed_connection_status:
             self.openConnection()
         
-        if self.ser.isOpen:
+        print(inputString)
+        if self.assumed_connection_status:
             tmp = inputString + "\n"
             try:
                 self.sio.write(unicode(tmp))
                 self.sio.flush()
                 
             except serial.serialutil.SerialException:
-                print("communication error")
+                self.closeConnection()
+                
                 
     def writeCommand(self, command, parameters):
         tmp = command + "("
@@ -55,7 +79,6 @@ class SlaveComm:
                 tmp= tmp +","
             else:
                 tmp=tmp+")"
-        print(tmp)
         
         self.writeString(tmp)
 
@@ -63,10 +86,11 @@ class SlaveComm:
 
         self.writeCommand(command, [])
 
-        if self.ser.isOpen:
+        if self.assumed_connection_status:
             tmp = b''
             try:
                 tmp = self.ser.read_until(b'\n')
+                print(tmp)
                 #for n in range()
                 try:
                     float(tmp)
@@ -77,18 +101,12 @@ class SlaveComm:
                 
             except serial.serialutil.SerialException:
                 print("communication error")
+                
 
     def __init__(self, serial_port, baud):
         self.ser = serial.Serial()
         self.ser.baudrate = baud
         self.ser.port = serial_port
-
-        self.sio = io.TextIOWrapper( buffer = io.BufferedRWPair(self.ser, self.ser),
-                                     newline = '\n')
-        
-        self.closeConnection()
+        self.sio = io.TextIOWrapper(    buffer = io.BufferedRWPair(self.ser, self.ser),newline = '\n')
+        self.assumed_connection_status = False
         self.openConnection()
-
-
-        
-
