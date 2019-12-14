@@ -17,13 +17,6 @@ class SlaveComm:
         
         try:
             self.ser.open()
-            # runbool = True
-            # while runbool:
-            #     msg = self.ser.read_until(b'\n')
-            #     if msg == b'Running\r\n':
-            #         runbool = False
-            #     else:
-            #         print(msg)
                     
         except serial.serialutil.SerialException:
             self.assumed_connection_status = False
