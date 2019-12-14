@@ -12,8 +12,8 @@ class SlaveComm:
         self.ser.baudrate = baud
 
     def openConnection(self):
-        print("o - o - o")
-        print("opening connection to "+ self.ser.port)
+        # print("o - o - o")
+        # print("opening connection to "+ self.ser.port)
         
         try:
             self.ser.open()
@@ -27,19 +27,20 @@ class SlaveComm:
                     
         except serial.serialutil.SerialException:
             self.assumed_connection_status = False
-            print("device connection failed")
-            print("x - x - x")
+            # print("device connection failed")
+            # print("x - x - x")
         else:
             self.assumed_connection_status = True
-            print("device connected")
-            print("o - o - o")
+            # print("device connected")
+            # print("o - o - o")
 
     def closeConnection(self):
-        print("x - x - x")
-        print("closing connection to "+ self.ser.port)
+        # print("x - x - x")
+        # print("closing connection to "+ self.ser.port)
 
         try:
             self.ser.close()
+            
         except serial.serialutil.SerialException:
             if self.assumed_connection_status:
                 print("failed closing "+ self.ser.port)
@@ -50,8 +51,8 @@ class SlaveComm:
                 
         else:
             self.assumed_connection_status = False
-            print("device succesfully disconnected")
-            print("x - x - x")
+            # print("device succesfully disconnected")
+            # print("x - x - x")
 
 
 
@@ -101,7 +102,9 @@ class SlaveComm:
                 
             except serial.serialutil.SerialException:
                 print("communication error")
-                
+
+    def getStatus(self):
+        return self.assumed_connection_status   
 
     def __init__(self, serial_port, baud):
         self.ser = serial.Serial()
