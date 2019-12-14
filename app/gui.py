@@ -50,27 +50,29 @@ class App( Frame ):
         self.lamp_state = StringVar()
         self.lamp_state.set("Lamp is off...")
 
-        self.enable_daylight = False
+        self.enable_daylight = IntVar()
         self.daylight_status = StringVar()
-        self.daylight_status.set("Daylight disabled")
-        self.daylight_start = [7,0]
-        self.daylight_end = [19,0]
-        self.daylight_sunrise = [0, 15]
-        self.daylight_stepsize = 1.0
         self.daylight_brightness = StringVar()
+        self.daylight_tv_start_hour = StringVar()
+        self.daylight_tv_start_min = StringVar()
+        self.daylight_tv_end_hour = StringVar()
+        self.daylight_tv_end_min = StringVar()
+        self.daylight_tv_ramp_hour = StringVar()
+        self.daylight_tv_ramp_min = StringVar()
+
+        self.daylight_status.set("Daylight disabled")
         self.daylight_brightness.set("255")
+        self.daylight_tv_start_hour.set("7")
+        self.daylight_tv_start_min.set("00")
+        self.daylight_tv_end_hour.set("19")
+        self.daylight_tv_end_min.set("00")
+        self.daylight_tv_ramp_hour.set("00")
+        self.daylight_tv_ramp_min.set("05")
+
+        self.daylight_stepsize = 1.0
         self.daylight_output = 0.0
         self.daybool = False
         self.nightbool = False
-        self.daylight_tv_start_hour = StringVar()
-        self.daylight_tv_start_hour.set("7")
-        self.daylight_tv_start_min = StringVar()
-        self.daylight_tv_start_min.set("00")
-        self.daylight_tv_end_hour = StringVar()
-        self.daylight_tv_end_hour.set("19")
-        self.daylight_tv_end_min = StringVar()
-        self.daylight_tv_end_min.set("00")
-
 
         self.str_time = StringVar()
         self.str_time.set(".....")
@@ -78,13 +80,11 @@ class App( Frame ):
         self.create_widgets()
 
     def disable_lamp(self):
-        self.lamp_enable = False
-        self.lamp_state.set("Lamp is off...")
+        self.lamp_state.set("LAMP DISABLED")
         self.arduino.writeCommand("ENABLE_LAMP", ["0"])
 
     def enable_lamp(self):
-        self.lamp_enable = True
-        self.lamp_state.set("Lamp is on...")
+        self.lamp_state.set("LAMP ENABLED")
         self.arduino.writeCommand("ENABLE_LAMP", ["1"])
 
     def update_lampW(self, value):
@@ -92,9 +92,16 @@ class App( Frame ):
         #print(value)
         self.arduino.writeCommand("SET_LAMP", ["W", str(int(float(value)))])
 
-    def toggle_daylight(self):
-        self.enable_daylight = not self.enable_daylight
-        self.daylight_stepsize = float(self.daylight_brightness.get()) / ( float(self.daylight_sunrise[0]*3600 + self.daylight_sunrise[1]*60) / float(PROGRAM_CYLCETIME/1000) )
+    def update_daylight_params(self):
+        try:
+            if float(self.daylight_tv_ramp_min.get())>0 or float(self.daylight_tv_ramp_hour.get())>0:
+                self.daylight_stepsize = float(self.daylight_brightness.get()) / ( ( float(self.daylight_tv_ramp_hour.get())*3600 + float(self.daylight_tv_ramp_min.get())*60 ) / float(PROGRAM_CYLCETIME/1000) )
+                print self.daylight_stepsize
+        except ValueError:
+            print "Value Error"
+
+        return True 
+        
 
     def update_pump(self, value):
         self.arduino.writeCommand("SET_PUMP", [str(int(float(value))), str(int(self.pump_enable))])
@@ -142,7 +149,7 @@ class App( Frame ):
         self.headerFrame.pack(fill = BOTH, side = TOP)
 
     # HEADER TEXT
-        self.label_header = Label(self.headerFrame, text= " +-~-~-~-~-~-+ Grow Controller +-~-~-~-~-~-+ ")
+        self.label_header = Label(self.headerFrame, text= " +- ~ - ~ - ~ - ~ - ~ -+  G R O W   M A S T E R     v1.0  +- ~ - ~ - ~ - ~ - ~ -+ ")
         self.label_header.pack(side = LEFT)
 
     # CURRENT TIME LABEL
@@ -217,7 +224,7 @@ class App( Frame ):
         self.devco_lamp_frame = Frame(self.devco_notebook)
         self.devco_notebook.add(self.devco_lamp_frame, text = 'LIGHT', sticky=N+S+E+W)
 
-        self.devco_lamp_direct_frame = Frame(self.devco_lamp_frame, bd=1, relief = SUNKEN)
+        self.devco_lamp_direct_frame = Frame(self.devco_lamp_frame, bd=2, relief = SUNKEN)
         self.devco_lamp_direct_frame.pack(side = TOP, fill = BOTH)
         self.devco_lamp_direct_frame.grid_columnconfigure(0, weight =1)
         self.devco_lamp_direct_frame.grid_columnconfigure(1, weight =1)
@@ -229,12 +236,12 @@ class App( Frame ):
         self.devco_label_lampState.grid(column = 0, columnspan = 4, row = 0)
 
         # SLIDER LABELS
-        self.devco_label_white = Label(self.devco_lamp_direct_frame, text= "White:")
+        self.devco_label_white = Label(self.devco_lamp_direct_frame, text= "Raw output:")
         self.devco_label_white.grid(column = 0, row = 1, sticky=S+W)
 
         # SLIDERS
-        self.devco_slider_white = Scale(self.devco_lamp_direct_frame, orient= HORIZONTAL, command= self.update_lampW, to = 255)
-        self.devco_slider_white.grid(column = 1, row = 1, columnspan = 3, sticky=S+W+N+E)
+        self.devco_slider_lamp = Scale(self.devco_lamp_direct_frame, orient= HORIZONTAL, command= self.update_lampW, to = 255)
+        self.devco_slider_lamp.grid(column = 1, row = 1, columnspan = 3, sticky=S+W+N+E)
 
         # ON BUTTON
         self.devco_button_lampOff = Button(self.devco_lamp_direct_frame, text= "OFF", command = self.disable_lamp)
@@ -245,18 +252,18 @@ class App( Frame ):
         self.devco_button_lampOn.grid(column = 2, columnspan = 2, row = 2, sticky=N+S+E+W)
 
         # AUTOMATIC LIGHT MODE
-        self.devco_lamp_daylight_frame = Frame(self.devco_lamp_frame, bd=1, relief = SUNKEN)
+        self.devco_lamp_daylight_frame = Frame(self.devco_lamp_frame, bd=2, relief = SUNKEN)
         self.devco_lamp_daylight_frame.pack(side=TOP , fill = BOTH)
         self.devco_lamp_daylight_frame.grid_columnconfigure(0, weight =1)
         self.devco_lamp_daylight_frame.grid_columnconfigure(1, weight =1)
         self.devco_lamp_daylight_frame.grid_columnconfigure(2, weight =1)
         self.devco_lamp_daylight_frame.grid_columnconfigure(3, weight =1)
 
-        self.devco_daylight_status = Label(self.devco_lamp_daylight_frame, textvariable= self.daylight_status)
-        self.devco_daylight_status.grid(column = 0, row = 1, columnspan = 4, sticky=S+W+N+E)
+        self.devco_daylight_toggle = Checkbutton(self.devco_lamp_daylight_frame, text= "Toggle automatic daylight mode", variable = self.enable_daylight, onvalue= 1, offvalue=0, command = self.update_daylight_params)
+        self.devco_daylight_toggle.grid(column = 0, row = 1, columnspan = 4, sticky=S+W+N+E)
 
-        self.devco_daylight_toggle = Button(self.devco_lamp_daylight_frame, text= "TOGGLE DAYLIGHT", command = self.toggle_daylight)
-        self.devco_daylight_toggle.grid(column = 0, row = 2, columnspan = 4, sticky=S+W+N+E)
+        self.devco_daylight_status = Label(self.devco_lamp_daylight_frame, textvariable= self.daylight_status)
+        self.devco_daylight_status.grid(column = 0, row = 2, columnspan = 4, sticky=S+W+N+E)
 
         self.devco_daylight_start_label = Label(self.devco_lamp_daylight_frame, text = "Day start")
         self.devco_daylight_start_label.grid(column = 0, row = 3, columnspan = 1, sticky=S+W+N)
@@ -276,10 +283,19 @@ class App( Frame ):
         self.devco_daylight_end_minute = Entry(self.devco_lamp_daylight_frame, textvariable = self.daylight_tv_end_min, width =3)
         self.devco_daylight_end_minute.grid(column = 3, row = 4)
 
+        self.devco_daylight_ramp_label = Label(self.devco_lamp_daylight_frame, text = "Sunrise/set period")
+        self.devco_daylight_ramp_label.grid(column = 0, row = 5, columnspan = 1, sticky=S+W+N)
+
+        self.devco_daylight_ramp_hour = Entry(self.devco_lamp_daylight_frame, textvariable = self.daylight_tv_ramp_hour,validate = "all", validatecommand = self.update_daylight_params, width =3)
+        self.devco_daylight_ramp_hour.grid(column = 2, row = 5)
+
+        self.devco_daylight_ramp_minute = Entry(self.devco_lamp_daylight_frame, textvariable = self.daylight_tv_ramp_min,validate = "all", validatecommand = self.update_daylight_params, width =3)
+        self.devco_daylight_ramp_minute.grid(column = 3, row = 5)
+
         self.devco_daylight_brightness_label = Label(self.devco_lamp_daylight_frame, text = "Full brightness")
-        self.devco_daylight_brightness_label.grid(column = 0, row = 5, columnspan = 1, sticky=S+W+N)
+        self.devco_daylight_brightness_label.grid(column = 0, row = 6, columnspan = 1, sticky=S+W+N)
         self.devco_daylight_brightness_value = Entry(self.devco_lamp_daylight_frame, textvariable = self.daylight_brightness, width =3)
-        self.devco_daylight_brightness_value.grid(column = 3, row = 5)
+        self.devco_daylight_brightness_value.grid(column = 3, row = 6)
 
 
     # DEVCO NOTBOOK _ PUMP CONTROL
@@ -388,6 +404,7 @@ heatPlot.plot(0, 0)
 
 #run app
 root = Tk() #init Tk
+root.title ("G R O W  .  M A S T E R")
 app = App(master=root)  # assign tk to master frame
 
 def program():
@@ -396,7 +413,7 @@ def program():
     struct_time_str = str(struct_time.tm_hour) + " : " + str(struct_time.tm_min) + " : " + str(struct_time.tm_sec)
     app.str_time.set(struct_time_str)
 
-    if app.enable_daylight:
+    if app.enable_daylight.get() == 1:
 
         if struct_time.tm_hour == int(float(app.daylight_tv_start_hour.get())):
             if struct_time.tm_min >= int(float(app.daylight_tv_start_min.get())):
@@ -425,12 +442,18 @@ def program():
                 app.daylight_output = float(app.daylight_output) + float(app.daylight_stepsize)
                 app.arduino.writeCommand("SET_LAMP", ["W", str(int(app.daylight_output))])
                 app.arduino.writeCommand("ENABLE_LAMP", ["1"])
+
                 app.daylight_status.set("DAYTIME - SUNRISE")
+                app.lamp_state.set("AUTOMATIC CTRL - RAMPING UP")
+                app.devco_slider_lamp.set(int(app.daylight_output))
             else:
                 # OUTPUT IS DONE RISING
                 app.arduino.writeCommand("SET_LAMP", ["W", str(int(float(app.daylight_brightness)))])
                 app.arduino.writeCommand("ENABLE_LAMP", ["1"])
+
                 app.daylight_status.set("DAYTIME")
+                app.lamp_state.set("AUTOMATIC CTRL - FULL OUTPUT")
+                app.devco_slider_lamp.set(int(float(app.daylight_brightness)))
 
         elif app.nightbool:
             if (app.daylight_output > 0):
@@ -438,14 +461,22 @@ def program():
                 app.daylight_output = app.daylight_output - app.daylight_stepsize
                 app.arduino.writeCommand("SET_LAMP", ["W", str(int(float(app.daylight_output)))])
                 app.arduino.writeCommand("ENABLE_LAMP", ["1"])
+
                 app.daylight_status.set("DAYTIME - SUNSET")
+                app.lamp_state.set("AUTOMATIC CTRL - RAMPING DOWN")
+                app.devco_slider_lamp.set(int(app.daylight_output))
             else:
            # OUTPUT IS NOT YET DONE FALLING
                 app.arduino.writeCommand("SET_LAMP", ["W", str(0)])
                 app.arduino.writeCommand("ENABLE_LAMP", ["0"])
+
                 app.daylight_status.set("NIGHTTIME")
+                app.lamp_state.set("AUTOMATIC CTRL - DISABLED OUTPUT")
+                app.devco_slider_lamp.set(0)
+
     else:
         app.daylight_status.set("DAYLIGHT DISABLED")
+        app.lamp_state.set("LAMP DISABLED")
 
 
     if app.arduino.getStatus():

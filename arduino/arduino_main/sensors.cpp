@@ -7,7 +7,7 @@ void AnalogSensor::init(int inputpin, String devName, int fsv=1023, float mfsv=3
   metricFullScaleValue=mfsv;
   metric= unit;
   deviceName = devName;
-
+  /*
   Serial.print("Intializing: ");
   Serial.print(deviceName);
   Serial.print("\n\r");
@@ -29,7 +29,7 @@ void AnalogSensor::init(int inputpin, String devName, int fsv=1023, float mfsv=3
   Serial.print(metric);
   Serial.print("\n\r");
 
-  Serial.println("");
+  Serial.println("");*/
 }
     
 void AnalogSensor::refresh(){
@@ -48,7 +48,7 @@ void DigitalInput::init(int input, String devName){
 
   pinMode(pin, INPUT_PULLUP);
   pinstate = digitalRead(pin);
-
+/*
   Serial.print("Initalizing: ");
   Serial.print(deviceName);
   Serial.print("\n\r");
@@ -58,7 +58,7 @@ void DigitalInput::init(int input, String devName){
   Serial.print(pin);
   Serial.print("\n\r");
   
-  Serial.println("");
+  Serial.println("");*/
 };
 
 bool DigitalInput::state(){

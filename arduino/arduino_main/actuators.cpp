@@ -11,7 +11,7 @@ void DigitalOutput::init(int input, String devName){
   deviceName = devName;
   pinMode(pin, OUTPUT);
   digitalWrite(pin, false);
-
+  /*
   Serial.print("Initalizing: ");
   Serial.print(deviceName);
   Serial.print("\n\r");
@@ -22,6 +22,7 @@ void DigitalOutput::init(int input, String devName){
   Serial.print("\n\r");
   
   Serial.println("");
+  */
 }
 
 void RGBWLed::init(String devName, int pinR = -1, int pinG= -1, int pinB= -1, int pinW= -1){
@@ -30,23 +31,26 @@ void RGBWLed::init(String devName, int pinR = -1, int pinG= -1, int pinB= -1, in
   pinRGBW[2] = pinB;
   pinRGBW[3] = pinW;
   deviceName = devName;
-      
+  /*
   Serial.print("Initalizing: ");
   Serial.print(deviceName);
   Serial.print("\n\r");
   delay(500);
+  */
   
   for(int n=0;n<4; n++){
     if(pinRGBW[n] != -1){ pinMode(pinRGBW[n], OUTPUT); };
 
+    /*
     Serial.print("   ");
     Serial.print(cRGBW[n]);
     Serial.print(" output on pin: ");
     Serial.print(pinRGBW[n]);
     Serial.print("\n\r");
     delay(200);
+    */
   }
-  Serial.println("");
+  //Serial.println("");
 }
 
 void RGBWLed::set(RGBWenum colour, int value){
@@ -74,7 +78,7 @@ void MotorDriver::init(byte dir, byte power, String devName= ""){
   deviceName = devName;
   hBridge.pinDir = dir;
   hBridge.pinPWM = power;
-  
+  /*
   Serial.print("Initalizing: ");
   Serial.print(deviceName);
   Serial.print("\n\r");
@@ -83,16 +87,19 @@ void MotorDriver::init(byte dir, byte power, String devName= ""){
   Serial.print("   Motor direction on pin: ");
   Serial.print(hBridge.pinDir);
   Serial.print("\n\r");
+  */
   pinMode(hBridge.pinDir, OUTPUT);
+  /*
   delay(200);
   
   Serial.print("   Motor PWM on pin: ");
   Serial.print(hBridge.pinPWM);
   Serial.print("\n\r");
+  */
   pinMode(hBridge.pinPWM, OUTPUT);
   
   
-  Serial.println("");
+  //Serial.println("");
 }
 
 void MotorDriver::enableOutput(bool output){

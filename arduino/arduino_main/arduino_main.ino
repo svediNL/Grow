@@ -22,7 +22,8 @@ void setup(){
   Rn = 10000;
   coeffB=3435;
   Serial.begin(115200);
-  Serial.println(" + = + = + = +   + = + = + = +   + = + = + = +");
+  
+  /*Serial.println(" + = + = + = +   + = + = + = +   + = + = + = +");
   delay(750);  
   Serial.print("Booting grow controller");
   for( int n=0; n<3; n++){
@@ -31,6 +32,7 @@ void setup(){
   }
   Serial.print("\n\r");
   Serial.println("");
+  */
   
   lamp.init("RGBW LED PWM output",11,10,9,8);
   pump.init(7,6,"pump on H-Bridge board");

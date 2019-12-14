@@ -12,27 +12,27 @@ class SlaveComm:
         self.ser.baudrate = baud
 
     def openConnection(self):
-        # print("o - o - o")
-        # print("opening connection to "+ self.ser.port)
+        print("o - o - o")
+        print("opening connection to "+ self.ser.port)
         
         try:
             self.ser.open()
-            runbool = True
-            while runbool:
-                msg = self.ser.read_until(b'\n')
-                if msg == b'Running\r\n':
-                    runbool = False
-                else:
-                    print(msg)
+            # runbool = True
+            # while runbool:
+            #     msg = self.ser.read_until(b'\n')
+            #     if msg == b'Running\r\n':
+            #         runbool = False
+            #     else:
+            #         print(msg)
                     
         except serial.serialutil.SerialException:
             self.assumed_connection_status = False
-            # print("device connection failed")
-            # print("x - x - x")
+            print("device connection failed")
+            print("x - x - x")
         else:
             self.assumed_connection_status = True
-            # print("device connected")
-            # print("o - o - o")
+            print("device connected")
+            print("o - o - o")
 
     def closeConnection(self):
         # print("x - x - x")
