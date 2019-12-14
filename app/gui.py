@@ -18,6 +18,8 @@ else:
 
 from comms import SlaveComm
 
+import time
+
 BG_MAIN = '#7A7A7A'
 BG_SUB = '#B0B0B0'
 BG_SUBSUB = '#DDDDDD'
@@ -41,6 +43,9 @@ class App( Frame ):
         self.lamp_enable = False
         self.lamp_state = StringVar()
         self.lamp_state.set("Lamp is off...")
+
+        self.str_time = StringVar()
+        self.str_time.set(".....")
 
         self.create_widgets()
 
@@ -102,18 +107,28 @@ class App( Frame ):
         self.serial_var_string.set("")
 
     def create_widgets(self):
-
         #  C R E A T E   F R A M E S
         # main frames
-        self.mainframe = Frame(self, width=1024, height=512 )
+        self.mainframe = Frame(self, width=2524, height=512 )
         self.mainframe.pack()
 
-        self.topFrame=Frame(self.mainframe , width=1024, height=64  , bd=2, relief = SUNKEN)
-        self.leftFrame = Frame(self.mainframe, bd=2, relief = SUNKEN)
-        self.rightFrame = Frame(self.mainframe, bd=2, relief = SUNKEN)
+        self.headerFrame=Frame(self.mainframe, height = 128, bd=2, relief = SUNKEN)
+        self.headerFrame.pack(fill = X, side = TOP)
+
+        self.contentFrame=Frame(self.mainframe, bd=2, relief = SUNKEN)
+        self.contentFrame.pack(fill = BOTH, side = BOTTOM)
+
+        self.plotFrame = Frame(self.contentFrame, width = 1280, bd=1, relief = SUNKEN)
+        self.plotFrame.pack(fill = Y, side = LEFT)
+
+        self.dicoFrame = Frame(self.contentFrame, bd=1, relief = SUNKEN)
+        self.dicoFrame.pack(fill = Y, side = RIGHT)
+
 
         #frame for arduino connection
-        self.serial_frame = Frame(self.rightFrame, bd=1, relief = SUNKEN)
+        self.serial_frame = Frame(self.dicoFrame, bd=1, relief = SUNKEN)
+        self.serial_frame.pack(fill = X, side = TOP)
+
         self.serial_notebook = Notebook(self.serial_frame)
         self.serial_connectionFrame = Frame(self.serial_notebook)
         self.serial_interfaceFrame = Frame(self.serial_notebook)
@@ -122,42 +137,43 @@ class App( Frame ):
         self.serial_notebook.add(self.serial_interfaceFrame, text = 'comm')
 
         # frame for direct control
-        self.dico_frame = Frame(self.rightFrame , bd=1, relief = SUNKEN)
-        self.dico_notebook = Notebook(self.dico_frame)
-        self.dico_lamp_frame = Frame(self.dico_notebook)
-        self.dico_hydro_frame = Frame(self.dico_notebook)
+        self.devco_frame = Frame(self.dicoFrame , bd=1, relief = SUNKEN)
+        self.devco_frame.pack(fill = X, side = TOP)
 
-        self.dico_notebook.add(self.dico_lamp_frame, text = 'LIGHT')
-        self.dico_notebook.add(self.dico_hydro_frame, text = 'HYDROLICS')
+        self.devco_notebook = Notebook(self.devco_frame)
+        self.devco_lamp_frame = Frame(self.devco_notebook)
+        self.devco_hydro_frame = Frame(self.devco_notebook)
 
+        self.devco_notebook.add(self.devco_lamp_frame, text = 'LIGHT')
+        self.devco_notebook.add(self.devco_hydro_frame, text = 'HYDROLICS')
 
         #  C R E A T E   W I D G E T S
-        # header texts
-        self.label_header = Label(self.topFrame, text= " +-~-~-~-~-~-+ Grow Controller +-~-~-~-~-~-+ ")
-        self.label_header.pack(fill = X)
-        self.label_dico = Label(self.dico_frame, text= " DIRECT CONTROL ")
-
+        # DEVCO
+        self.devco_label = Label(self.devco_frame, text= " ~ DEVICE CONTROL  ")
         # create widgets for RGBW light
         # RGBW sliders
-        self.dico_slider_white = Scale(self.dico_lamp_frame, orient= HORIZONTAL, command= self.update_lampW, to = 255)
-        self.dico_slider_red = Scale(self.dico_lamp_frame, orient= HORIZONTAL, command= self.update_lampR, to = 255)
-        self.dico_slider_green = Scale(self.dico_lamp_frame, orient= HORIZONTAL, command= self.update_lampG, to = 255)
-        self.dico_slider_blue = Scale(self.dico_lamp_frame, orient= HORIZONTAL, command= self.update_lampB, to = 255)
-        # label for RGBW slider
-        self.dico_label_white = Label(self.dico_lamp_frame, text= "White:")
-        self.dico_label_red = Label(self.dico_lamp_frame, text= "Red:")
-        self.dico_label_green = Label(self.dico_lamp_frame, text= "Green:")
-        self.dico_label_blue = Label(self.dico_lamp_frame, text= "Blue:")
+        self.devco_slider_white = Scale(self.devco_lamp_frame, orient= HORIZONTAL, command= self.update_lampW, to = 255)
+        self.devco_slider_red = Scale(self.devco_lamp_frame, orient= HORIZONTAL, command= self.update_lampR, to = 255)
+        self.devco_slider_green = Scale(self.devco_lamp_frame, orient= HORIZONTAL, command= self.update_lampG, to = 255)
+        self.devco_slider_blue = Scale(self.devco_lamp_frame, orient= HORIZONTAL, command= self.update_lampB, to = 255)
 
-        self.dico_button_lampOn = Button(self.dico_lamp_frame, text= "ON", command = self.enable_lamp)
-        self.dico_button_lampOff = Button(self.dico_lamp_frame, text= "OFF", command = self.disable_lamp)
-        self.dico_label_lampState = Label(self.dico_lamp_frame, textvariable = self.lamp_state)
+        # label for RGBW slider
+        self.devco_label_white = Label(self.devco_lamp_frame, text= "White:")
+        self.devco_label_red = Label(self.devco_lamp_frame, text= "Red:")
+        self.devco_label_green = Label(self.devco_lamp_frame, text= "Green:")
+        self.devco_label_blue = Label(self.devco_lamp_frame, text= "Blue:")
+
+        self.devco_button_lampOn = Button(self.devco_lamp_frame, text= "ON", command = self.enable_lamp)
+        self.devco_button_lampOff = Button(self.devco_lamp_frame, text= "OFF", command = self.disable_lamp)
+        self.devco_label_lampState = Label(self.devco_lamp_frame, textvariable = self.lamp_state)
+
 
         # create widgets for pump control
-        self.dico_slider_pumpValue = Scale(self.dico_hydro_frame, orient= HORIZONTAL, command= self.update_pump, to = 255)
-        self.dico_button_pumpEnable = Button(self.dico_hydro_frame, command = self.set_pumpEnable, text = "toggle pump")
-        self.dico_label_pumpRunning = Label(self.dico_hydro_frame, textvariable = self.pump_state)
+        self.devco_slider_pumpValue = Scale(self.devco_hydro_frame, orient= HORIZONTAL, command= self.update_pump, to = 255)
+        self.devco_button_pumpEnable = Button(self.devco_hydro_frame, command = self.set_pumpEnable, text = "toggle pump")
+        self.devco_label_pumpRunning = Label(self.devco_hydro_frame, textvariable = self.pump_state)
 
+        # SERIAL
         # create widgets for serial connection
         self.serial_entry_port = Entry(self.serial_connectionFrame, textvariable= self.serial_var_port)
         self.serial_button_open= Button(self.serial_connectionFrame, text = "open", command= self.open_serial_connection)
@@ -166,10 +182,14 @@ class App( Frame ):
         self.serial_entry_command = Entry(self.serial_interfaceFrame, textvariable= self.serial_var_string)
         self.serial_button_send= Button(self.serial_interfaceFrame, text = "send", command= self.send_serial_string)
 
+
+        # header texts
+        self.label_header = Label(self.headerFrame, text= "                    +-~-~-~-~-~-+ Grow Controller +-~-~-~-~-~-+ ")
+        self.label_time = Label(self.headerFrame, textvariable = self.str_time)
+        
+
         #  W I D G E T   L A Y O U T
         # header texta
-        #self.label_header.grid(row = 0, column = 0, columnspan = 2 )
-
         # serial conneciton
         self.serial_entry_port.grid(row= 0, column=0, columnspan=2)
         self.serial_button_close.grid(row=1, column=0)
@@ -178,42 +198,38 @@ class App( Frame ):
         self.serial_entry_command.grid(row = 0 , column = 0, columnspan = 2)
         self.serial_button_send.grid(row = 1 , column = 0)
 
-        self.serial_notebook.grid(row=0, column =0)
+        self.serial_notebook.grid(row=0, column =0, sticky= N)
 
         # RGBW lamp
-        self.dico_button_lampOff.grid   (row=0, column= 0)
-        self.dico_button_lampOn.grid    (row=0, column= 2)
-        self.dico_label_lampState.grid  (row=1, column=0, columnspan=3)
+        self.devco_label.grid(row= 0 , column = 0, sticky= W)
+        self.devco_button_lampOff.grid   (row=0, column= 0)
+        self.devco_button_lampOn.grid    (row=0, column= 2)
+        self.devco_label_lampState.grid  (row=1, column=0, columnspan=3)
 
-        self.dico_label_white.grid  (row = 2, column = 0, sticky= SW )
-        self.dico_label_red.grid    (row = 3, column = 0, sticky= SW )
-        self.dico_label_green.grid  (row = 4, column = 0, sticky= SW )
-        self.dico_label_blue.grid   (row = 5, column = 0, sticky= SW )
-        self.dico_slider_white.grid (row = 2, column = 1, columnspan = 2, sticky = NW )
-        self.dico_slider_red.grid   (row = 3, column = 1, columnspan = 2, sticky = NW )
-        self.dico_slider_green.grid (row = 4, column = 1, columnspan = 2, sticky = NW )
-        self.dico_slider_blue.grid  (row = 5, column = 1, columnspan = 2, sticky = NW )
+        self.devco_label_white.grid  (row = 2, column = 0, sticky= SW )
+        self.devco_label_red.grid    (row = 3, column = 0, sticky= SW )
+        self.devco_label_green.grid  (row = 4, column = 0, sticky= SW )
+        self.devco_label_blue.grid   (row = 5, column = 0, sticky= SW )
+        self.devco_slider_white.grid (row = 2, column = 1, columnspan = 2, sticky = NW )
+        self.devco_slider_red.grid   (row = 3, column = 1, columnspan = 2, sticky = NW )
+        self.devco_slider_green.grid (row = 4, column = 1, columnspan = 2, sticky = NW )
+        self.devco_slider_blue.grid  (row = 5, column = 1, columnspan = 2, sticky = NW )
 
 
         # pump interface
-        self.dico_slider_pumpValue.grid(row = 0, column = 0)
-        self.dico_button_pumpEnable.grid(row = 2, column = 0)
-        self.dico_label_pumpRunning.grid(row=1, column =0, sticky= S)
+        self.devco_slider_pumpValue.grid(row = 0, column = 0)
+        self.devco_button_pumpEnable.grid(row = 2, column = 0)
+        self.devco_label_pumpRunning.grid(row=1, column =0, sticky= S)
 
-        self.label_dico.grid(row= 0 , column = 0, sticky= N)
-        self.dico_notebook.grid(row = 1, column = 0, sticky= N)
+        
+        self.devco_notebook.grid(row = 1, column = 0, sticky= N)
 
-        #  F R A M E   L A Y O U T
-        self.topFrame.grid(row = 0, column = 0)
-        #self.topFrame.pack(fill = X, side = TOP)
-        self.leftFrame.grid(row=1, column=0)
-        self.rightFrame.grid(row=1, column=1)
-        self.serial_frame.grid(row=0, column=0, sticky= N)
-        self.dico_frame.grid(row = 2, column = 0, sticky= N)
+        self.label_header.grid(row = 0, column = 0, sticky = W)
+        self.label_time.grid(row = 0, column = 1, sticky = E)     
 
         self.pack()
 
-        self.plot_canvas = FigureCanvasTkAgg(f, self.leftFrame)
+        self.plot_canvas = FigureCanvasTkAgg(f, self.plotFrame)
         self.plot_canvas.show()
         self.plot_canvas.get_tk_widget().grid(row = 0, column = 0)
 
@@ -273,19 +289,18 @@ def animate(i):
     heatPlot.grid(True)
     
     heatPlot.plot( valHneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valHneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
-
     # print(BUFF_FILL)
 
 #  A D D   P L O T
-f = pp.Figure(figsize=(10,4),dpi = 100)
+f = pp.Figure(figsize=(6,8),dpi = 100)
 
-moistPlot = f.add_subplot(121)
+moistPlot = f.add_subplot(211)
 moistPlot.set_ylim([0,100])
 moistPlot.set_ylabel("% of FSV [%]")
 moistPlot.set_xlabel("time [min]")
 moistPlot.grid(True)
     
-heatPlot = f.add_subplot(122)
+heatPlot = f.add_subplot(212)
 heatPlot.set_ylim([10,40])
 heatPlot.set_ylabel("temp [*C]")
 heatPlot.set_xlabel("time [min]")
@@ -301,6 +316,19 @@ heatPlot.plot(0, 0)
 #run app
 root = Tk() #init Tk
 app = App(master=root)  # assign tk to master frame
+
+def program():
+    eptime = time.time()
+    struct_time = time.localtime(eptime)
+    struct_time_str = str(struct_time.tm_hour) + " : " + str(struct_time.tm_min) + " : " + str(struct_time.tm_sec)
+
+    print eptime
+    print struct_time_str 
+    app.str_time.set(struct_time_str)
+
+    root.after(10000, program)
+root.after(10000, program)
+
 ani = animation.FuncAnimation(f, animate, interval = 30000)
 app.mainloop()
 app.arduino.closeConnection()
