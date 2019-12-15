@@ -25,7 +25,10 @@ BG_SUB = '#B0B0B0'
 BG_SUBSUB = '#DDDDDD'
 
 PROGRAM_CYLCETIME= 1000.0
-ANI_CYCLETIME = 5000.0
+ANI_CYCLETIME = 5000
+
+NAME_RELAY_1 = "RELAY 1"
+NAME_RELAY_2 = "RELAY 2"
 
 # create app of type Frame
 class App( Frame ):
@@ -47,6 +50,9 @@ class App( Frame ):
         self.pump_enable = False
         self.pump_state = StringVar()
         self.pump_state.set("pump stopped...")
+
+        self.enable_relay1 = IntVar()
+        self.enable_relay2 = IntVar()
 
         self.lamp_enable = False
         self.lamp_state = StringVar()
@@ -110,16 +116,20 @@ class App( Frame ):
 
     def update_pump(self, value):
         self.arduino.writeCommand("SET_PUMP", [str(int(float(value))), str(int(self.pump_enable))])
-
-    def set_pumpEnable(self):
-        self.pump_enable = not self.pump_enable
-        #print(self.pump_enable)
-        self.arduino.writeCommand("ENABLE_PUMP", [str(int(self.pump_enable))])
-
         if self.pump_enable:
             self.pump_state.set("pump running...")
         else:
             self.pump_state.set("pump stopped...")
+
+    def set_pumpEnable(self):
+        self.pump_enable = True
+        self.arduino.writeCommand("ENABLE_PUMP", [str(int(self.pump_enable))])
+        self.pump_state.set("pump running...")
+
+    def set_pumpDisable(self):
+        self.pump_enable = False
+        self.arduino.writeCommand("ENABLE_PUMP", [str(0)])
+        self.pump_state.set("pump stopped...")
 
     def open_serial_connection(self):
         self.arduino.setPort(self.serial_var_port.get())
@@ -145,12 +155,22 @@ class App( Frame ):
         self.arduino.readCommand(self.serial_var_string.get())
         self.serial_var_string.set("")
 
+    def toggle_relay1(self):
+        if self.enable_relay1.get() == 0:
+            self.arduino.writeCommand("SET_RELAY", [str(0), str(0)])
+        elif self.enable_relay1.get() == 1:
+            self.arduino.writeCommand("SET_RELAY", [str(0), str(1)])
+
+    def toggle_relay2(self):
+        if self.enable_relay2.get() == 0:
+            self.arduino.writeCommand("SET_RELAY", [str(1), str(0)])
+        elif self.enable_relay2.get() == 1:
+            self.arduino.writeCommand("SET_RELAY", [str(1), str(1)])
+
     def create_widgets(self):
         # CREATE MAIN FRAME
         self.mainframe = Frame(self)
         self.mainframe.pack()
-
-
 
 # H E A D E R   F R A M E
     # CREATE HEADER FRAME
@@ -330,19 +350,32 @@ class App( Frame ):
 
     # DEVCO NOTBOOK _ PUMP CONTROL
         self.devco_hydro_frame = Frame(self.devco_notebook)
+        self.devco_hydro_frame.grid_columnconfigure(0, weight =1)
+        self.devco_hydro_frame.grid_columnconfigure(1, weight =1)
+        self.devco_hydro_frame.grid_columnconfigure(2, weight =1)
+        self.devco_hydro_frame.grid_columnconfigure(3, weight =1)
         self.devco_notebook.add(self.devco_hydro_frame, text = 'HYDROLICS', sticky=N+S+E+W)
-
-        # PUMP SLIDER
-        self.devco_slider_pumpValue = Scale(self.devco_hydro_frame, orient= HORIZONTAL, command= self.update_pump, to = 255)
-        self.devco_slider_pumpValue.pack(side = TOP, fill = X)
 
         # PUMP RUNNING FB
         self.devco_label_pumpRunning = Label(self.devco_hydro_frame, textvariable = self.pump_state)
-        self.devco_label_pumpRunning.pack(side = TOP, fill = X)
+        self.devco_label_pumpRunning.grid(column = 0, row = 0, columnspan = 4, sticky=S+W+N+E)
+
+        # PUMP SLIDER
+        self.devco_slider_pumpValue = Scale(self.devco_hydro_frame, orient= HORIZONTAL, command= self.update_pump, to = 255)
+        self.devco_slider_pumpValue.grid(column = 0, row = 1, columnspan = 4, sticky=S+W+N+E)
 
         # TOGGLE PUMP STATE
-        self.devco_button_pumpEnable = Button(self.devco_hydro_frame, command = self.set_pumpEnable, text = "toggle pump")
-        self.devco_button_pumpEnable.pack(side = TOP, fill = X)
+        self.devco_button_pumpEnable = Button(self.devco_hydro_frame, command = self.set_pumpEnable, text = "Enable pump")
+        self.devco_button_pumpEnable.grid(column = 0, row = 2, columnspan = 2, sticky=S+W+N+E)
+
+        self.devco_button_pumpDisable = Button(self.devco_hydro_frame, command = self.set_pumpDisable, text = "Disable pump")
+        self.devco_button_pumpDisable.grid(column = 2, row = 2, columnspan = 2, sticky=S+W+N+E)
+
+        self.devco_relay1 = Checkbutton(self.devco_hydro_frame, text= NAME_RELAY_1, variable = self.enable_relay1, onvalue= 1, offvalue=0, command = self.toggle_relay1)
+        self.devco_relay1.grid(column = 0, row = 3, columnspan = 4, sticky=S+W+N)
+
+        self.devco_relay2 = Checkbutton(self.devco_hydro_frame, text= NAME_RELAY_2, variable = self.enable_relay2, onvalue= 1, offvalue=0, command = self.toggle_relay2)
+        self.devco_relay2.grid(column = 0, row = 4, columnspan = 4, sticky=S+W+N)
 
 # P L O T   F R A M E  
         self.plotFrame = Frame(self.contentFrame, bd=1, relief = SUNKEN)
@@ -461,7 +494,22 @@ app = App(master=root)  # assign tk to master frame
 def program():
     eptime = time.time()
     struct_time = time.localtime(eptime)
-    struct_time_str = str(struct_time.tm_hour) + " : " + str(struct_time.tm_min) + " : " + str(struct_time.tm_sec)
+
+    if struct_time.tm_hour < 10:
+        struct_time_str = "0" + str(struct_time.tm_hour) + " : "
+    else:
+        struct_time_str = str(struct_time.tm_hour) + " : "
+
+    if struct_time.tm_min < 10:
+        struct_time_str = struct_time_str + "0" + str(struct_time.tm_min) + " : "
+    else:
+        struct_time_str = struct_time_str+ str(struct_time.tm_min) + " : "
+
+    if struct_time.tm_sec < 10:
+        struct_time_str = struct_time_str + "0" + str(struct_time.tm_sec)
+    else:
+        struct_time_str = struct_time_str+ str(struct_time.tm_sec)
+
     app.str_time.set(struct_time_str)
 
     if app.enable_daylight.get() == 1:

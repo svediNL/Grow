@@ -15,24 +15,25 @@ float Tn, Rn, coeffB, temp;
 
 unsigned long runtime;
 void setup(){
-  rc = 14700;
-  vin = 5.0;
-  Tn = 25;
-  Rn = 10000;
-  coeffB=3435;
+  // SET THERMOCOUPLE CALCULATION PARAMETERS
+  vin = 5.0;    // INPUT VOLTAGE
+  rc = 14700;   // BIAS RESISTOR
+  Rn = 10000;   // THERMOCOUPLE RESITANCE AT Tn
+  Tn = 25;      // THERMOCOUPLE TEMPERATURE AT Rn
+  coeffB=3435;  // THERMOCOUPLE COEFFICIENT
+
+  // INIT SERIAL
   Serial.begin(115200);
-  
-  lamp.init("RGBW LED PWM output",11,10,9,8);
-  pump.init(7,6,"pump on H-Bridge board");
 
-  moisture.init(A0, "water sensor - analog input", 1023, 100, "%");
-  thermocouple.init(A1, "thermocouple", 1023, 5, "V");
-  
-  moisturePower.init(22, "water sensor - power enable");
-  relayboard[0].init(24, "relay0");
-  relayboard[1].init(26, "relay1");
-
-  vlotter.init(23, "vlotter");
+  // INIT GROW.H DEVICES
+  lamp.init("RGBW LED PWM output",11,10,9,8);                       // SETUP LAMP - RGBWLed ON PINS 11,10,9,8
+  pump.init(7,6,"pump on H-Bridge board");                          // SETUP PUMP - MotoDriver DIR=7, PWM=6
+  moisture.init(A0, "water sensor - analog input", 1023, 100, "%"); // SETUP MOISTURE - AnalogSensor on pin=A0, maxRawInput=1023, maxUserVal= 100%
+  thermocouple.init(A1, "thermocouple", 1023, 5, "V");              // SETUP THERMOCOUPLE VOLTAGEAnalogSensor on pin=A1, maxRawInput=1023, maxUserVal= 5V
+  moisturePower.init(22, "water sensor - power enable");            // SETUP DigitalOutput on pin=22
+  relayboard[0].init(24, "relay0");                                 // SETUP DigitalOutput on pin=24
+  relayboard[1].init(26, "relay1");                                 // SETUP DigitalOutput on pin=26
+  vlotter.init(23, "vlotter");                                      // SETUP DigitalInput on pin=23
 }
 
 void loop(){
