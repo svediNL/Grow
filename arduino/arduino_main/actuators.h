@@ -12,6 +12,7 @@ class DigitalOutput{
     bool state;
     
     void init(int input, String devName);
+    void help();
     void set(bool output);
     
 };
@@ -23,6 +24,7 @@ class RGBWLed {
     String deviceName;
     
     void init(String devName, int pinR = -1, int pinG= -1, int pinB= -1, int pinW= -1);
+    void help();
     void set(RGBWenum colour, int value);
     void enableOutput(bool output);
 
@@ -56,6 +58,7 @@ class MotorDriver{
     float rps;
     
     void init(byte dir, byte power, String devName= "");
+    void help();
     void refresh();
     void enableOutput(bool output);
     void setPWM(int setpoint);

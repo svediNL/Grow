@@ -7,7 +7,8 @@ class AnalogSensor{
   public:
     String deviceName;
     
-    void init(int inputpin, String devName, int fsv=1023, float mfsv=3.14, String unit= '[-]');
+    void init(int inputpin, String devName, int fsv=1023, float mfsv=3.14, String unit= "[-]");
+    void help();
     void refresh();
     int getRawValue();
     float getMetricValue();
@@ -29,6 +30,7 @@ class AnalogSensor{
 class DigitalInput {
   public:
     void init(int input, String devName);
+    void help();
     bool state();
     
   private:

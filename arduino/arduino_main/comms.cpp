@@ -106,24 +106,4 @@ void Comms::seperateString(String inputString){
     }
   
 }
-
-void Comms::printHelp(){
-  Serial.println("====================================================");
-  Serial.println("    + + + + + +     ARDUINO GROW     + + + + + +    ");
-  Serial.println("====================================================");
-  Serial.println("");
-  Serial.println("- Commands use the following syntax: ");
-  Serial.println("  COMMAND(PAR1, PAR2, PAR3, ETC)\n");
-  Serial.println("");
-  Serial.println("List of commands:");
-  Serial.println("   GET_MOISTURE( )");
-  Serial.println("   GET_TEMP( )");
-  Serial.println("   SET_RELAY( index[0-1], value[0/1] )");
-  Serial.println("   SET_LAMP( R/B/G/W, value[0-255], enable[0/1] )");
-  Serial.println("   SET_PUMP( value[0-255] , enable[0/1] )");
-  Serial.println("   ENABLE_LAMP( enable[0/1] )");
-  Serial.println("   ENABLE_PUMP( enable[0/1] )");  
-  Serial.println("====================================================");
-}
-
 #endif

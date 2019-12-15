@@ -84,7 +84,8 @@ class SlaveComm:
             self.writeCommand(command, [])  # write read-command and wait for answer
 
             try:
-                tmp = self.ser.read_until(b'\n')
+                tmp = self.ser.read_until(b'@')
+                tmp = tmp[:-1]
             except serial.serialutil.SerialException:
                 print("communication error")
                 return "-1"

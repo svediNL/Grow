@@ -14,7 +14,6 @@ float rntc, vin, vm, rc;
 float Tn, Rn, coeffB, temp;
 
 unsigned long runtime;
-
 void setup(){
   rc = 14700;
   vin = 5.0;
@@ -22,17 +21,6 @@ void setup(){
   Rn = 10000;
   coeffB=3435;
   Serial.begin(115200);
-  
-  /*Serial.println(" + = + = + = +   + = + = + = +   + = + = + = +");
-  delay(750);  
-  Serial.print("Booting grow controller");
-  for( int n=0; n<3; n++){
-    Serial.print(".");
-    delay(333);  
-  }
-  Serial.print("\n\r");
-  Serial.println("");
-  */
   
   lamp.init("RGBW LED PWM output",11,10,9,8);
   pump.init(7,6,"pump on H-Bridge board");
@@ -45,9 +33,6 @@ void setup(){
   relayboard[1].init(26, "relay1");
 
   vlotter.init(23, "vlotter");
-
-  Serial.println(" + = + = + = +   + = + = + = +   + = + = + = +");
-  Serial.println("Running");
 }
 
 void loop(){
@@ -84,7 +69,7 @@ void doCommand(){
       moisturePower.set( false);  // disable power
 
       Serial.print(moisture.getMetricValue()); //print raw value
-      Serial.print("\n"); // close line
+      Serial.print('@'); // close line
       
       serialMsg.message.inputCommand= -1; // reset command variable
       break;
@@ -104,13 +89,12 @@ void doCommand(){
         temp -= 273.15;
         
         Serial.print(temp);
-        Serial.print("\n");
       }
       else { 
         Serial.print(420);
-        Serial.print("\n");
         };
       serialMsg.message.inputCommand= -1; // reset command variable
+      Serial.print('@');
       break;
       
     case SET_RELAY:
@@ -120,6 +104,7 @@ void doCommand(){
       if(serialMsg.message.sParameter[1] == "0"){ relayboard[tmpInt].set(false);}
       else if (serialMsg.message.sParameter[1] == "1"){ relayboard[tmpInt].set(true);};
       serialMsg.message.inputCommand= -1;
+      Serial.print('@');
       break;
       
     case ENABLE_LAMP:
@@ -127,6 +112,7 @@ void doCommand(){
       tmpBool = bool(serialMsg.message.sParameter[0].toInt()); 
       lamp.enableOutput(tmpBool);
       serialMsg.message.inputCommand= -1; // reset command variable
+      Serial.print('@');
       break;
       
     case SET_LAMP:
@@ -145,6 +131,7 @@ void doCommand(){
 
       }
       serialMsg.message.inputCommand= -1;
+      Serial.print('@');
       break;
         
     case ENABLE_PUMP:
@@ -152,6 +139,7 @@ void doCommand(){
       tmpBool = bool(serialMsg.message.sParameter[0].toInt()); 
       pump.enableOutput(tmpBool);
       serialMsg.message.inputCommand= -1;
+      Serial.print('@');
       break;
       
     case SET_PUMP:
@@ -161,16 +149,58 @@ void doCommand(){
       
       pump.setPWM(byte(tmpInt));
       pump.enableOutput(tmpBool);
+      Serial.print('@');
       break;
     
     case HELP:
-      serialMsg.printHelp();
+      printHelp();
       serialMsg.message.inputCommand= -1;
+      Serial.print('@');
       break;
        
     default:
-      Serial.println("COMM_ERR");
+      Serial.println("DEV_COMM_ERR");
+      Serial.print('@');
       break;
   }
   
+}
+
+void printHelp(){
+  Serial.println("====================================================");
+  Serial.println("    + + + + + +     ARDUINO GROW     + + + + + +    ");
+  Serial.println("====================================================");
+  Serial.println(" - - - - - - - - - - - - - - - - - - ");
+  Serial.println("- Commands use the following syntax: ");
+  Serial.println("  COMMAND(PAR1, PAR2, PAR3, ETC)\n");
+  Serial.println("");
+  Serial.println("List of commands:");
+  Serial.println("   GET_MOISTURE( )");
+  Serial.println("   GET_TEMP( )");
+  Serial.println("   SET_RELAY( index[0-1], value[0/1] )");
+  Serial.println("   SET_LAMP( R/B/G/W, value[0-255], enable[0/1] )");
+  Serial.println("   SET_PUMP( value[0-255] , enable[0/1] )");
+  Serial.println("   ENABLE_LAMP( enable[0/1] )");
+  Serial.println("   ENABLE_PUMP( enable[0/1] )");  
+  Serial.println(" - - - - - - - - - - - - - - - - - - ");
+  Serial.println("DEVICE CONNECTIONS");
+  Serial.println("");
+  moisture.help();
+  Serial.println("");
+  moisturePower.help();
+  Serial.println("");
+  vlotter.help();
+  Serial.println("");
+  thermocouple.help();
+  Serial.println("");
+  relayboard[0].help(); 
+  Serial.println("");
+  relayboard[1].help(); 
+  Serial.println("");
+  lamp.help();
+  Serial.println("");
+  pump.help();
+  Serial.println(" - - - - - - - - - - - - - - - - - - ");
+  Serial.println("====================================================");
+  Serial.print('@');
 }

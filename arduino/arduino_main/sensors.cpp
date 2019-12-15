@@ -1,22 +1,23 @@
 #ifndef SENSORS_H
 #include "sensors.h"
 
-void AnalogSensor::init(int inputpin, String devName, int fsv=1023, float mfsv=3.14, String unit= '[-]'){
+void AnalogSensor::init(int inputpin, String devName, int fsv=1023, float mfsv=3.14, String unit= "[-]"){
   pin = inputpin;
   rawFullScaleValue=fsv;
   metricFullScaleValue=mfsv;
   metric= unit;
   deviceName = devName;
-  /*
-  Serial.print("Intializing: ");
+}
+void AnalogSensor::help(){
+   
+  Serial.print("Device: ");
   Serial.print(deviceName);
   Serial.print("\n\r");
 
   Serial.print("   Input pin: ");
   if (pin >= 54){   Serial.print(sAnalogPin[pin-54]); }
   else if (pin >= 14){  Serial.print(sAnalogPin[pin-14]);}
-  else { Serial.print(pin); }; 
-
+  else { Serial.print(pin); };
   Serial.print("\n\r");
     
   Serial.print("   Raw Full Scale Value: ");
@@ -28,10 +29,8 @@ void AnalogSensor::init(int inputpin, String devName, int fsv=1023, float mfsv=3
   Serial.print(" ");
   Serial.print(metric);
   Serial.print("\n\r");
-
-  Serial.println("");*/
 }
-    
+
 void AnalogSensor::refresh(){
   rawValue = analogRead(pin);
   metricValue = (float(rawValue) / float(rawFullScaleValue) ) * metricFullScaleValue;
@@ -48,8 +47,9 @@ void DigitalInput::init(int input, String devName){
 
   pinMode(pin, INPUT_PULLUP);
   pinstate = digitalRead(pin);
-/*
-  Serial.print("Initalizing: ");
+};
+void DigitalInput::help(){
+  Serial.print("Device: ");
   Serial.print(deviceName);
   Serial.print("\n\r");
   delay(500);
@@ -57,10 +57,7 @@ void DigitalInput::init(int input, String devName){
   Serial.print("   Input on pin: ");
   Serial.print(pin);
   Serial.print("\n\r");
-  
-  Serial.println("");*/
-};
-
+}
 bool DigitalInput::state(){
   pinstate = digitalRead(pin);
   

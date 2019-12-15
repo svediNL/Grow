@@ -40,7 +40,6 @@ class Comms {
     void printMessage(int type = 0);
     void receive_message();
     void message_handler(String inputString);
-    void printHelp();
 
    private:
     int receiveStage=0;

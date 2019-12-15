@@ -409,8 +409,8 @@ def animate(i):
 #    UPDATE MOUSTURE PLOT
     moistPlot.clear()
 
-    moistPlot.set_ylim([ min( 0, min(valMneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN])*1.1), 
-                    max(1, max(valMneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN])*1.1) ])
+    moistPlot.set_ylim([ min(valMneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1, 
+                        max(valMneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1 ])
     # moistPlot.set_ylim([0,100])
 
     moistPlot.set_ylabel("% of FSV [%]")
@@ -423,8 +423,8 @@ def animate(i):
 #   UPDATE TEMOERATURE PLOT
     heatPlot.clear()
 
-    heatPlot.set_ylim([ min( 0, min(valHneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN])*1.1), 
-                        max(1, max(valHneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN])*1.1) ])
+    heatPlot.set_ylim([ min(valHneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1, 
+                        max(valHneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1 ])
     # heatPlot.set_ylim([15,60])
 
     heatPlot.set_ylabel("temp [*C]")
