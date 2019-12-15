@@ -1,3 +1,0 @@
-void messageHandler(Message *myMessage){
-  
-}
