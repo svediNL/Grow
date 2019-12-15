@@ -23,7 +23,9 @@ import time
 BG_MAIN = '#7A7A7A'
 BG_SUB = '#B0B0B0'
 BG_SUBSUB = '#DDDDDD'
-PROGRAM_CYLCETIME= 1000
+
+PROGRAM_CYLCETIME= 1000.0
+ANI_CYCLETIME = 5000.0
 
 # create app of type Frame
 class App( Frame ):
@@ -76,6 +78,9 @@ class App( Frame ):
 
         self.str_time = StringVar()
         self.str_time.set(".....")
+
+        self.moisture_var = StringVar()
+        self.temperature_var = StringVar()
 
         self.create_widgets()
 
@@ -132,8 +137,12 @@ class App( Frame ):
         else:
             self.serial_connection_string.set("Disconnected")
 
-    def send_serial_string(self):
+    def write_serial_string(self):
         self.arduino.writeString(self.serial_var_string.get())
+        self.serial_var_string.set("")
+
+    def read_serial_string(self):
+        self.arduino.readCommand(self.serial_var_string.get())
         self.serial_var_string.set("")
 
     def create_widgets(self):
@@ -149,7 +158,7 @@ class App( Frame ):
         self.headerFrame.pack(fill = BOTH, side = TOP)
 
     # HEADER TEXT
-        self.label_header = Label(self.headerFrame, text= " +- ~ - ~ - ~ - ~ - ~ -+  G R O W   M A S T E R     v1.0  +- ~ - ~ - ~ - ~ - ~ -+ ")
+        self.label_header = Label(self.headerFrame, text= " +- ~ - ~ - ~ - ~ - ~ -+  G R O W   M A S T E R     v1.1  +- ~ - ~ - ~ - ~ - ~ -+ ")
         self.label_header.pack(side = LEFT)
 
     # CURRENT TIME LABEL
@@ -175,11 +184,11 @@ class App( Frame ):
 
     # SERIAL HEADER TEXT
         self.serial_header_label = Label(self.serial_frame, text = "~  S E R I A L ")
-        self.serial_header_label.pack(side = TOP, fill= X)
+        self.serial_header_label.grid(column = 0, row=0, sticky=N+S+W)
 
     # SERIAL NOTEBOOK
         self.serial_notebook = Notebook(self.serial_frame, width = 300)
-        self.serial_notebook.pack(side = BOTTOM, fill = X)
+        self.serial_notebook.grid(column = 0, row=1, sticky=N+S+E+W)
 
     # SERIAL NOTEBOOK _ CONNECTIO
         self.serial_connectionFrame = Frame(self.serial_notebook)
@@ -204,9 +213,30 @@ class App( Frame ):
         self.serial_entry_command = Entry(self.serial_interfaceFrame, textvariable= self.serial_var_string)
         self.serial_entry_command.pack(side= TOP, fill = X)
 
-        self.serial_button_send= Button(self.serial_interfaceFrame, text = "send", command= self.send_serial_string)
-        self.serial_button_send.pack(side = BOTTOM, fill = X)
+        self.serial_button_read= Button(self.serial_interfaceFrame, text = "read", command= self.read_serial_string)
+        self.serial_button_read.pack(side = LEFT, fill = BOTH, expand =True)
 
+        self.serial_button_write= Button(self.serial_interfaceFrame, text = "write", command= self.write_serial_string)
+        self.serial_button_write.pack(side = LEFT, fill = BOTH, expand =True)
+
+# L I V E   S T A T U S   F R A M E
+        self.live_frame = Frame(self.dicoFrame, bd=1, relief= SUNKEN)
+        self.live_frame.grid_columnconfigure(0, weight =1)
+        self.live_frame.grid_columnconfigure(1, weight =1)
+        self.live_frame.pack(fill = BOTH, side = TOP)
+
+        self.live_label = Label(self.live_frame, text = "~ L I V E   M O N I T O R")
+        self.live_label.grid(column = 0, row = 0, columnspan = 2, sticky = N+S+W)
+
+        self.live_moist_label   = Label(self.live_frame, text = "Current moisture: ")
+        self.live_moist_label.grid(column = 0, row= 1, sticky=N+S+W)
+        self.live_moist_value   = Label(self.live_frame, textvariab = self.moisture_var)
+        self.live_moist_value.grid(column = 1, row= 1, sticky=E)
+
+        self.live_heat_label    = Label(self.live_frame, text = "Current temperature: ")
+        self.live_heat_label.grid(column = 0, row= 2, sticky=N+S+W)
+        self.live_heat_value    = Label(self.live_frame, textvariab = self.temperature_var)
+        self.live_heat_value.grid(column = 1, row= 2, sticky=E)
 
 # D E V I C E  C O N T R O L  F R A M E
         self.devco_frame = Frame(self.dicoFrame , bd=1, relief = SUNKEN)
@@ -214,11 +244,11 @@ class App( Frame ):
 
     # DEVICE CONTROL HEADER TEXT
         self.devco_label = Label(self.devco_frame, text= "~  D E V I C E  C O N T R O L ")
-        self.devco_label.pack(side = TOP)
+        self.devco_label.grid(column = 0, row=0, sticky=N+S+W)
 
     # DEVICE CONTROL NOTEBOOL
         self.devco_notebook = Notebook(self.devco_frame, width = 300)
-        self.devco_notebook.pack(side= BOTTOM)
+        self.devco_notebook.grid(column = 0, row=1, sticky=N+S+E+W)
 
     # DEVCO NOTBOOK _ LAMP CONTROL
         self.devco_lamp_frame = Frame(self.devco_notebook)
@@ -331,27 +361,45 @@ BUFF_FILL = 0
 valM = np.zeros( shape=(2,BUFF_LEN) )
 valH = np.zeros( shape=(2,BUFF_LEN) )
 
-for n in range(BUFF_LEN):
-    valM[0,n]=n*-0.5;
-    valH[0,n]=n*-0.5;
-
-# define animation and call read command
+##   A N I M A T I O N
 def animate(i):
     global BUFF_FILL, valM, valH
 
-    # shift values
+    # ADD SAMPLE TIME
+    for n in range(BUFF_LEN):
+        valM[0,n]= -1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
+        valH[0,n]= -1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
+
+    # SHIFT BUFFERS
     for n in reversed(range( 1, BUFF_LEN )):
         valM[1,n]= valM[1,n-1]
         valH[1,n]= valH[1,n-1]
 
-    # add new value
-    valM[1,0] = app.arduino.readCommand("GET_MOISTURE")
-    print(valM[1,0])
-    #valM[1,0] = valM[1,0] + 1
+    # ADD VALUES TO BUFFERS
+    # tmpVal = app.arduino.readCommand("GET_MOISTURE")
+    tmpVal = str( valM[1,0] + 1 )
+    app.moisture_var.set(tmpVal)
 
-    valH[1,0] = app.arduino.readCommand("GET_TEMP")
-    print(valH[1,0])
-    #valH[1,0] = (valH[1,0]+1) % 2
+    try:
+        float(tmpVal)
+    except ValueError:
+        valM[1,0] = float(0)
+    else:
+        valM[1,0] = float(tmpVal)
+
+    #tmpVal = app.arduino.readCommand("GET_TEMP")
+    tmpVal = str( (valH[1,0]+1) % 2 )
+    app.temperature_var.set(tmpVal)
+
+    try:
+        float(tmpVal)
+    except ValueError:
+        valH[1,0] = float(0)
+    else:
+        valH[1,0] = float(tmpVal)
+
+    # print(valM[1,0])
+    # print(valH[1,0])
 
     # reverse value array for neatness
     valMneat = np.flip(valM, 1)
@@ -363,23 +411,29 @@ def animate(i):
 
 #    UPDATE MOUSTURE PLOT
     moistPlot.clear()
-    
-    moistPlot.set_ylim([0,100])
+
+    moistPlot.set_ylim([ min( 9, min(valMneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN])*1.1), 
+                    max(11, max(valMneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN])*1.1) ])
+    # moistPlot.set_ylim([0,100])
+
     moistPlot.set_ylabel("% of FSV [%]")
     moistPlot.set_xlabel("time [min]")
+
     moistPlot.grid(True)    
     moistPlot.plot( valMneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valMneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
     
     
 #   UPDATE TEMOERATURE PLOT
     heatPlot.clear()
-    
-    heatPlot.set_ylim([ min(10, min(valHneat[0 , BUFF_LEN-BUFF_FILL:BUFF_LEN])), 
-                        max(40, max(valHneat[0, BUFF_LEN-BUFF_FILL : BUFF_LEN])) ])
+
+    heatPlot.set_ylim([ min( 9, min(valHneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN])*1.1), 
+                        max(11, max(valHneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN])*1.1) ])
+    # heatPlot.set_ylim([15,60])
+
     heatPlot.set_ylabel("temp [*C]")
     heatPlot.set_xlabel("time [min]")
+
     heatPlot.grid(True)
-    
     heatPlot.plot( valHneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valHneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
     # print(BUFF_FILL)
 
@@ -448,12 +502,12 @@ def program():
                 app.devco_slider_lamp.set(int(app.daylight_output))
             else:
                 # OUTPUT IS DONE RISING
-                app.arduino.writeCommand("SET_LAMP", ["W", str(int(float(app.daylight_brightness)))])
+                app.arduino.writeCommand("SET_LAMP", ["W", str(int(float(app.daylight_brightness.get())))])
                 app.arduino.writeCommand("ENABLE_LAMP", ["1"])
 
                 app.daylight_status.set("DAYTIME")
                 app.lamp_state.set("AUTOMATIC CTRL - FULL OUTPUT")
-                app.devco_slider_lamp.set(int(float(app.daylight_brightness)))
+                app.devco_slider_lamp.set(int(float(app.daylight_brightness.get())))
 
         elif app.nightbool:
             if (app.daylight_output > 0):
@@ -487,10 +541,10 @@ def program():
 
     
 
-    root.after(PROGRAM_CYLCETIME, program)
-root.after(PROGRAM_CYLCETIME, program)
+    root.after(int(PROGRAM_CYLCETIME), program)
+root.after(int(PROGRAM_CYLCETIME), program)
 
-ani = animation.FuncAnimation(f, animate, interval = 30000)
+ani = animation.FuncAnimation(f, animate, interval = int(ANI_CYCLETIME))
 app.mainloop()
 app.arduino.closeConnection()
 sys.exit()

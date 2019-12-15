@@ -22,6 +22,7 @@ class SlaveComm:
             self.assumed_connection_status = False
             print("device connection failed")
             print("x - x - x")
+
         else:
             self.assumed_connection_status = True
             print("device connected")
@@ -77,30 +78,30 @@ class SlaveComm:
         self.writeString(tmp)
 
     def readCommand(self, command):
-
-        self.writeCommand(command, [])
-
         if self.assumed_connection_status:
-            tmp = b''
+            self.ser.reset_input_buffer() # clear input
+            tmp = b''   # set tmp type
+            self.writeCommand(command, [])  # write read-command and wait for answer
+
             try:
                 tmp = self.ser.read_until(b'\n')
-                print(tmp)
-                #for n in range()
-                try:
-                    float(tmp)
-                except ValueError:
-                    print "value error: "+tmp
-                else:
-                    return float(tmp)
-                
             except serial.serialutil.SerialException:
                 print("communication error")
+                return "-1"
+            except serial.serialutil.SerialTimeout:
+                print("timeout")
+                return "-1"
+            else:
+                print str(tmp) 
+                return str(tmp)
+        else:
+            return "-1"
 
     def getStatus(self):
         return self.assumed_connection_status   
 
     def __init__(self, serial_port, baud):
-        self.ser = serial.Serial()
+        self.ser = serial.Serial(timeout = 1)
         self.ser.baudrate = baud
         self.ser.port = serial_port
         self.sio = io.TextIOWrapper(    buffer = io.BufferedRWPair(self.ser, self.ser),newline = '\n')
