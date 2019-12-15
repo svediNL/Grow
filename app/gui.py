@@ -178,7 +178,7 @@ class App( Frame ):
         self.headerFrame.pack(fill = BOTH, side = TOP)
 
     # HEADER TEXT
-        self.label_header = Label(self.headerFrame, text= " +- ~ - ~ - ~ - ~ - ~ -+  G R O W   M A S T E R     v1.1  +- ~ - ~ - ~ - ~ - ~ -+ ")
+        self.label_header = Label(self.headerFrame, text= " +- ~ - ~ - ~ - ~ - ~ -+  G R O W   M A S T E R     v1.2  +- ~ - ~ - ~ - ~ - ~ -+ ")
         self.label_header.pack(side = LEFT)
 
     # CURRENT TIME LABEL
