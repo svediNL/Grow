@@ -50,13 +50,13 @@ class SlaveComm:
 
 
 
-    def writeString(self, inputString):
+    def writeString(self, output_string):
         if not self.assumed_connection_status:
             self.openConnection()
         
-        print(inputString)
+        print "> " + output_string
         if self.assumed_connection_status:
-            tmp = inputString + "\n"
+            tmp = output_string + "\n"
             try:
                 self.sio.write(unicode(tmp))
                 self.sio.flush()
@@ -93,7 +93,7 @@ class SlaveComm:
                 print("timeout")
                 return "-1"
             else:
-                print str(tmp) 
+                print "< " + str(tmp) 
                 return str(tmp)
         else:
             return "-1"

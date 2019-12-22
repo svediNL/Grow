@@ -18,15 +18,15 @@
 enum Command { 
   GET_MOISTURE, GET_TEMP, 
   SET_RELAY, SET_LAMP, SET_PUMP,
+  GET_RELAY, GET_LAMP, GET_PUMP,
   ENABLE_LAMP, ENABLE_PUMP, 
-  SET_MOTOR_PWM, SET_MOTOR_DIR, 
-  HELP
+  HELP, NO_COMMAND
 };
 
 struct Message {
     String sInput;
     String sCommand;
-    Command inputCommand = -1;
+    Command inputCommand = NO_COMMAND;
     String sParameter[6];
 };
 

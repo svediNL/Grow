@@ -14,12 +14,12 @@ void Comms::message_handler(String inputString){
     if      (message.sCommand == "GET_MOISTURE"){ message.inputCommand = GET_MOISTURE; }
     else if (message.sCommand == "GET_TEMP"){ message.inputCommand = GET_TEMP; }
     else if (message.sCommand == "SET_RELAY"){ message.inputCommand = SET_RELAY; }
-        else if (message.sCommand == "ENABLE_LAMP"){ message.inputCommand = ENABLE_LAMP; }
+    else if (message.sCommand == "ENABLE_LAMP"){ message.inputCommand = ENABLE_LAMP; }
     else if (message.sCommand == "SET_LAMP"){ message.inputCommand = SET_LAMP; }
+    else if (message.sCommand == "GET_LAMP"){ message.inputCommand = GET_LAMP; }
     else if (message.sCommand == "ENABLE_PUMP"){ message.inputCommand = ENABLE_PUMP; } 
     else if (message.sCommand == "SET_PUMP"){ message.inputCommand = SET_PUMP; }
-    else if (message.sCommand == "MOT_PWM"){ message.inputCommand = SET_MOTOR_PWM; }
-    else if (message.sCommand == "MOT_DIR"){ message.inputCommand = SET_MOTOR_DIR; }
+    else if (message.sCommand == "GET_PUMP"){ message.inputCommand = GET_PUMP; }
     else if (message.sCommand == "H" || message.sCommand == "HELP"){ message.inputCommand = HELP; }
     else {message.inputCommand = -1;};
     //else if (message.sCommand == ""){ message.inputCommand = ; }

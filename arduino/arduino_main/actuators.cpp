@@ -69,6 +69,11 @@ void RGBWLed::enableOutput(bool output){
   }
 }
 
+int RGBWLed::getStatus(){
+  if(outputEnabled){ return valRGBW[3]; }
+  else { return 0; }
+}
+
 void MotorDriver::init(byte dir, byte power, String devName= ""){
   
   deviceName = devName;
@@ -123,6 +128,15 @@ void MotorDriver::interlock(bool state){
 
 
   interlocked = state;
+}
+
+int MotorDriver::getStatus(){
+  int tmp; 
+  if(outputEnabled){
+    if(hBridge.outputDir){ tmp = -1* hBridge.outputPWM ;}
+    else {tmp = hBridge.outputPWM;}
+  }
+  else{ tmp = 0;}
 }
 
 #endif

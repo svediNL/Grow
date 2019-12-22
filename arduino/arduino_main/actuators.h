@@ -26,6 +26,7 @@ class RGBWLed {
     void init(String devName, int pinR = -1, int pinG= -1, int pinB= -1, int pinW= -1);
     void help();
     void set(RGBWenum colour, int value);
+    int getStatus();
     void enableOutput(bool output);
 
 
@@ -64,6 +65,7 @@ class MotorDriver{
     void setPWM(int setpoint);
     void setDir(bool dir);
     void interlock(bool state);
+    int getStatus();
   
   private:
     bool outputEnabled;

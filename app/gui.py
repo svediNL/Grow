@@ -1,6 +1,7 @@
 import matplotlib 
 from matplotlib import pyplot as pp
 import matplotlib.animation as animation
+from matplotlib import gridspec
 matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg #, NavigationToolbar2TkAgg
 from matplotlib.ticker import AutoMinorLocator, MultipleLocator
@@ -56,7 +57,7 @@ class App( Frame ):
 
         self.lamp_enable = False
         self.lamp_state = StringVar()
-        self.lamp_state.set("Lamp is off...")
+        self.lamp_state.set("LAMP DISABLED")
 
         self.enable_daylight = IntVar()
         self.daylight_status = StringVar()
@@ -178,7 +179,7 @@ class App( Frame ):
         self.headerFrame.pack(fill = BOTH, side = TOP)
 
     # HEADER TEXT
-        self.label_header = Label(self.headerFrame, text= " +- ~ - ~ - ~ - ~ - ~ -+  G R O W   M A S T E R     v1.2  +- ~ - ~ - ~ - ~ - ~ -+ ")
+        self.label_header = Label(self.headerFrame, text= " +- ~ - ~ - ~ - ~ - ~ -+  G R O W   M A S T E R     v1.3  +- ~ - ~ - ~ - ~ - ~ -+ ")
         self.label_header.pack(side = LEFT)
 
     # CURRENT TIME LABEL
@@ -393,98 +394,162 @@ BUFF_LEN = 4096
 BUFF_FILL = 0
 valM = np.zeros( shape=(2,BUFF_LEN) )
 valH = np.zeros( shape=(2,BUFF_LEN) )
+valP = np.zeros( shape=(2,BUFF_LEN) )
+valL = np.zeros( shape=(2,BUFF_LEN) )
 
 ##   A N I M A T I O N
 def animate(i):
     global BUFF_FILL, valM, valH
 
-    # ADD SAMPLE TIME
-    for n in range(BUFF_LEN):
-        valM[0,n]= -1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
-        valH[0,n]= -1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
+    if app.arduino.assumed_connection_status:
+        # ADD SAMPLE TIME
+        for n in range(BUFF_LEN):
+            valM[0,n]= -1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
+            valH[0,n]= -1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
+            valP[0,n]= -1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
+            valL[0,n]= -1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
 
-    # SHIFT BUFFERS
-    for n in reversed(range( 1, BUFF_LEN )):
-        valM[1,n]= valM[1,n-1]
-        valH[1,n]= valH[1,n-1]
+        # SHIFT BUFFERS
+        for n in reversed(range( 1, BUFF_LEN )):
+            valM[1,n]= valM[1,n-1]
+            valH[1,n]= valH[1,n-1]
+            valP[1,n]= valP[1,n-1]
+            valL[1,n]= valL[1,n-1]
 
     # ADD VALUES TO BUFFERS
-    tmpVal = app.arduino.readCommand("GET_MOISTURE")
-    # tmpVal = str( valM[1,0] + 1 )
-    app.moisture_var.set(tmpVal)
+        # HEAT
+        tmpVal = app.arduino.readCommand("GET_TEMP")
+        #tmpVal = str( (valH[1,0]+1) % 2 )
+        app.temperature_var.set(tmpVal)
+        try:
+            float(tmpVal)
+        except ValueError:
+            valH[1,0] = float(0)
+        else:
+            valH[1,0] = float(tmpVal)    
 
-    try:
-        float(tmpVal)
-    except ValueError:
-        valM[1,0] = float(0)
-    else:
-        valM[1,0] = float(tmpVal)
+        # MOISTURE
+        tmpVal = app.arduino.readCommand("GET_MOISTURE")
+        #tmpVal = str( valM[1,0] + 1 )
+        app.moisture_var.set(tmpVal)
 
-    tmpVal = app.arduino.readCommand("GET_TEMP")
-    #tmpVal = str( (valH[1,0]+1) % 2 )
-    app.temperature_var.set(tmpVal)
+        try:
+            float(tmpVal)
+        except ValueError:
+            valM[1,0] = float(0)
+        else:
+            valM[1,0] = float(tmpVal)
 
-    try:
-        float(tmpVal)
-    except ValueError:
-        valH[1,0] = float(0)
-    else:
-        valH[1,0] = float(tmpVal)
+        # PUMP
+        tmpVal = app.arduino.readCommand("GET_PUMP")
+        #tmpVal = str( (valP[1,0]+1) % 2 )
+        try:
+            float(tmpVal)
+        except ValueError:
+            valP[1,0] = float(0)
+        else:
+            valP[1,0] = float(tmpVal)
+        
 
-    # reverse value array for neatness
-    valMneat = np.flip(valM, 1)
-    valHneat = np.flip(valH, 1)
+        # LIGHT
+        tmpVal = app.arduino.readCommand("GET_LAMP")
+        #tmpVal = str( (valL[1,0]+1) % 2 )
+        try:
+            float(tmpVal)
+        except ValueError:
+            valL[1,0] = float(0)
+        else:
+            valL[1,0] = float(tmpVal)
 
-    # do plot stuff
-    if BUFF_FILL < BUFF_LEN:
-        BUFF_FILL = BUFF_FILL + 1
+        if BUFF_FILL < BUFF_LEN:
+            BUFF_FILL = BUFF_FILL + 1
 
-#    UPDATE MOUSTURE PLOT
-    moistPlot.clear()
+        # reverse value array for neatness
+        valMneat = np.flip(valM, 1)
+        valHneat = np.flip(valH, 1)
+        valPneat = np.flip(valP, 1)
+        valLneat = np.flip(valL, 1)
 
-    moistPlot.set_ylim([ min(valMneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1, 
-                        max(valMneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1 ])
-    # moistPlot.set_ylim([0,100])
+        # do plot stuff
 
-    moistPlot.set_ylabel("% of FSV [%]")
-    moistPlot.set_xlabel("time [min]")
 
-    moistPlot.grid(True)    
-    moistPlot.plot( valMneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valMneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
-    
-    
-#   UPDATE TEMOERATURE PLOT
-    heatPlot.clear()
 
-    heatPlot.set_ylim([ min(valHneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1, 
-                        max(valHneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1 ])
-    # heatPlot.set_ylim([15,60])
+    #   UPDATE TEMOERATURE PLOT
+        heatPlot.clear()
+        heatPlot.set_ylim([ min(valHneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1, 
+                            max(valHneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1 ])
+        heatPlot.set_ylabel("TC Temp [*C]")
+        #heatPlot.set_xlabel("time [min]")
+        heatPlot.grid(True)
+        heatPlot.plot( valHneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valHneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
 
-    heatPlot.set_ylabel("temp [*C]")
-    heatPlot.set_xlabel("time [min]")
 
-    heatPlot.grid(True)
-    heatPlot.plot( valHneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valHneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
-    # print(BUFF_FILL)
+    #   UPDATE LAMP
+        lampPlot.clear()
+        lampPlot.set_ylim([ min(valLneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1, 
+                            max(valLneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1 ])
+        lampPlot.set_ylabel("LIGHT")
+        #lampPlot.set_xlabel("time [min]")
+        lampPlot.grid(True)
+        lampPlot.plot( valLneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valLneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
+
+    #    UPDATE MOUSTURE PLOT
+        moistPlot.clear()
+        moistPlot.set_ylim([ min(valMneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1, 
+                            max(valMneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1 ])
+        moistPlot.set_ylabel("Moisture [%]")
+        #moistPlot.set_xlabel("time [min]")
+        moistPlot.grid(True)   
+        moistPlot.plot( valMneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valMneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
+
+
+        #   UPDATE PUMP
+        pumpPlot.clear()
+        pumpPlot.set_ylim([ min(valPneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1, 
+                            max(valPneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1 ])
+        pumpPlot.set_ylabel("PUMP")
+        pumpPlot.set_xlabel("time [min]")
+        pumpPlot.grid(True)
+        pumpPlot.plot( valPneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valPneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
+
+
+
+
 
 #  A D D   P L O T
-f = pp.Figure(figsize=(6,8),dpi = 100)
+f = pp.Figure(figsize=(6,10),dpi = 100)
+gs = gridspec.GridSpec(4,1, height_ratios=[3,1,3,1])
 f.set_tight_layout(True)
 
-moistPlot = f.add_subplot(211)
-moistPlot.set_ylim([0,100])
-moistPlot.set_ylabel("% of FSV [%]")
-moistPlot.set_xlabel("time [min]")
-moistPlot.grid(True)
-    
-heatPlot = f.add_subplot(212)
+heatPlot = f.add_subplot(gs[0])
 heatPlot.set_ylim([10,40])
-heatPlot.set_ylabel("temp [*C]")
-heatPlot.set_xlabel("time [min]")
-
+heatPlot.set_ylabel("TC temp [*C]")
+#heatPlot.set_xlabel("time [min]")
 heatPlot.grid(True)
-moistPlot.plot(0, 0)
+
+lampPlot = f.add_subplot(gs[1])
+lampPlot.set_ylim([0,255])
+lampPlot.set_ylabel("LIGHT")
+#lampPlot.set_xlabel("time [min]")
+lampPlot.grid(True)
+
+
+moistPlot = f.add_subplot(gs[2])
+moistPlot.set_ylim([0,100])
+moistPlot.set_ylabel("Moisture [%]")
+#moistPlot.set_xlabel("time [min]")
+moistPlot.grid(True)
+
+pumpPlot = f.add_subplot(gs[3])
+pumpPlot.set_ylim([0,100])
+pumpPlot.set_ylabel("PUMP")
+pumpPlot.set_xlabel("time [min]")
+pumpPlot.grid(True)
+    
 heatPlot.plot(0, 0)
+lampPlot.plot(0,0)
+moistPlot.plot(0, 0)
+pumpPlot.plot(0,0)
 
 #run app
 root = Tk() #init Tk
@@ -575,8 +640,6 @@ def program():
 
     else:
         app.daylight_status.set("DAYLIGHT DISABLED")
-        app.lamp_state.set("LAMP DISABLED")
-
 
     if app.arduino.getStatus():
         app.serial_connection_string.set("Connected")

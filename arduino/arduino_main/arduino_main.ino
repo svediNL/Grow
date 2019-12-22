@@ -55,8 +55,6 @@ void serialEvent(){
 }
 
 void doCommand(){
-  int iTmpPar[4];
-  bool bTmpPar[4];
   String tmpString;
   char tmpChar;
   int tmpInt;
@@ -72,7 +70,7 @@ void doCommand(){
       Serial.print(moisture.getMetricValue()); //print raw value
       Serial.print('@'); // close line
       
-      serialMsg.message.inputCommand= -1; // reset command variable
+      serialMsg.message.inputCommand= NO_COMMAND; // reset command variable
       break;
 
     case GET_TEMP:
@@ -94,7 +92,7 @@ void doCommand(){
       else { 
         Serial.print(420);
         };
-      serialMsg.message.inputCommand= -1; // reset command variable
+      serialMsg.message.inputCommand= NO_COMMAND; // reset command variable
       Serial.print('@');
       break;
       
@@ -104,7 +102,7 @@ void doCommand(){
       Serial.println(tmpInt);
       if(serialMsg.message.sParameter[1] == "0"){ relayboard[tmpInt].set(false);}
       else if (serialMsg.message.sParameter[1] == "1"){ relayboard[tmpInt].set(true);};
-      serialMsg.message.inputCommand= -1;
+      serialMsg.message.inputCommand= NO_COMMAND; // reset command variable
       Serial.print('@');
       break;
       
@@ -112,7 +110,7 @@ void doCommand(){
       //Serial.println("ACK");
       tmpBool = bool(serialMsg.message.sParameter[0].toInt()); 
       lamp.enableOutput(tmpBool);
-      serialMsg.message.inputCommand= -1; // reset command variable
+      serialMsg.message.inputCommand= NO_COMMAND; // reset command variable
       Serial.print('@');
       break;
       
@@ -131,7 +129,14 @@ void doCommand(){
         else if(tmpChar == 'W'){ lamp.set(W, tmpInt);}
 
       }
-      serialMsg.message.inputCommand= -1;
+      serialMsg.message.inputCommand= NO_COMMAND; // reset command variable
+      Serial.print('@');
+      break;
+
+    case GET_LAMP:
+      delay(10);
+      Serial.print(lamp.getStatus());
+      serialMsg.message.inputCommand= NO_COMMAND; // reset command variable
       Serial.print('@');
       break;
         
@@ -139,7 +144,7 @@ void doCommand(){
       //Serial.println("ACK");
       tmpBool = bool(serialMsg.message.sParameter[0].toInt()); 
       pump.enableOutput(tmpBool);
-      serialMsg.message.inputCommand= -1;
+      serialMsg.message.inputCommand= NO_COMMAND; // reset command variable
       Serial.print('@');
       break;
       
@@ -150,16 +155,26 @@ void doCommand(){
       
       pump.setPWM(byte(tmpInt));
       pump.enableOutput(tmpBool);
+      
+      serialMsg.message.inputCommand= NO_COMMAND; // reset command variable
+      Serial.print('@');
+      break;
+
+    case GET_PUMP:
+      delay(10);
+      tmpInt = pump.getStatus();
+      Serial.print(tmpInt);
+      serialMsg.message.inputCommand= NO_COMMAND; // reset command variable
       Serial.print('@');
       break;
     
     case HELP:
       printHelp();
-      serialMsg.message.inputCommand= -1;
+      serialMsg.message.inputCommand= NO_COMMAND; // reset command variable
       Serial.print('@');
       break;
        
-    default:
+    case NO_COMMAND:
       Serial.println("DEV_COMM_ERR");
       Serial.print('@');
       break;
