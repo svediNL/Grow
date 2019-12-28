@@ -126,17 +126,18 @@ void MotorDriver::interlock(bool state){
   if(!tmp){ analogWrite(hBridge.pinPWM, 0); }
   else { enableOutput(true);};
 
-
   interlocked = state;
 }
 
 int MotorDriver::getStatus(){
   int tmp; 
-  if(outputEnabled){
+  if(outputEnabled && !interlocked){
     if(hBridge.outputDir){ tmp = -1* hBridge.outputPWM ;}
     else {tmp = hBridge.outputPWM;}
   }
   else{ tmp = 0;}
+
+  return tmp;
 }
 
 #endif

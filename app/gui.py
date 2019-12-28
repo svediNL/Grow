@@ -28,7 +28,7 @@ BG_SUBSUB = '#DDDDDD'
 PROGRAM_CYLCETIME= 1000.0
 ANI_CYCLETIME = 5000
 
-NAME_RELAY_1 = "RELAY 1"
+NAME_RELAY_1 = "LIGHT COOLING"
 NAME_RELAY_2 = "RELAY 2"
 
 # create app of type Frame
@@ -393,124 +393,140 @@ class App( Frame ):
 BUFF_LEN = 4096
 BUFF_FILL = 0
 valM = np.zeros( shape=(2,BUFF_LEN) )
+valH1 = np.zeros( shape=(2,BUFF_LEN) )
 valH = np.zeros( shape=(2,BUFF_LEN) )
 valP = np.zeros( shape=(2,BUFF_LEN) )
 valL = np.zeros( shape=(2,BUFF_LEN) )
+
+# FILL SAMPLE TIME
+for n in range(BUFF_LEN):
+    valM[0,n]= -1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
+    valH[0,n]= -1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
+    valH1[0,n]= -1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
+    valP[0,n]= -1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
+    valL[0,n]= -1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
 
 ##   A N I M A T I O N
 def animate(i):
     global BUFF_FILL, valM, valH
 
-    if app.arduino.assumed_connection_status:
-        # ADD SAMPLE TIME
-        for n in range(BUFF_LEN):
-            valM[0,n]= -1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
-            valH[0,n]= -1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
-            valP[0,n]= -1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
-            valL[0,n]= -1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
+# GET SAMPLE IF ARDUINO IS CONNECTED
+#if app.arduino.assumed_connection_status:
+    # SHIFT BUFFERS
+    for n in reversed(range( 1, BUFF_LEN )):
+        valM[1,n]= valM[1,n-1]
+        valH[1,n]= valH[1,n-1]
+        valH1[1,n]= valH1[1,n-1]
+        valP[1,n]= valP[1,n-1]
+        valL[1,n]= valL[1,n-1]
 
-        # SHIFT BUFFERS
-        for n in reversed(range( 1, BUFF_LEN )):
-            valM[1,n]= valM[1,n-1]
-            valH[1,n]= valH[1,n-1]
-            valP[1,n]= valP[1,n-1]
-            valL[1,n]= valL[1,n-1]
+# ADD VALUES TO BUFFERS
+    # HEAT
+    #tmpVal = app.arduino.readCommand("GET_TEMP",["0"])
+    tmpVal = str( (valH[1,0]+1) % 2 )
+    app.temperature_var.set(tmpVal)
+    try:
+        float(tmpVal)
+    except ValueError:
+        valH[1,0] = float(0)
+    else:
+        valH[1,0] = float(tmpVal)  
 
-    # ADD VALUES TO BUFFERS
-        # HEAT
-        tmpVal = app.arduino.readCommand("GET_TEMP")
-        #tmpVal = str( (valH[1,0]+1) % 2 )
-        app.temperature_var.set(tmpVal)
-        try:
-            float(tmpVal)
-        except ValueError:
-            valH[1,0] = float(0)
-        else:
-            valH[1,0] = float(tmpVal)    
+    # HEAT1
+    #tmpVal = app.arduino.readCommand("GET_TEMP",["1"])
+    tmpVal = str( ((valH1[1,0]+1)*7) % 3 )
+    app.temperature_var.set(tmpVal)
+    try:
+        float(tmpVal)
+    except ValueError:
+        valH1[1,0] = float(0)
+    else:
+        valH1[1,0] = float(tmpVal)   
 
-        # MOISTURE
-        tmpVal = app.arduino.readCommand("GET_MOISTURE")
-        #tmpVal = str( valM[1,0] + 1 )
-        app.moisture_var.set(tmpVal)
+    # MOISTURE
+    tmpVal = app.arduino.readCommand("GET_MOISTURE")
+    #tmpVal = str( valM[1,0] + 1 )
+    app.moisture_var.set(tmpVal)
 
-        try:
-            float(tmpVal)
-        except ValueError:
-            valM[1,0] = float(0)
-        else:
-            valM[1,0] = float(tmpVal)
+    try:
+        float(tmpVal)
+    except ValueError:
+        valM[1,0] = float(0)
+    else:
+        valM[1,0] = float(tmpVal)
 
-        # PUMP
-        tmpVal = app.arduino.readCommand("GET_PUMP")
-        #tmpVal = str( (valP[1,0]+1) % 2 )
-        try:
-            float(tmpVal)
-        except ValueError:
-            valP[1,0] = float(0)
-        else:
-            valP[1,0] = float(tmpVal)
-        
+    # PUMP
+    tmpVal = app.arduino.readCommand("GET_PUMP")
+    #tmpVal = str( (valP[1,0]+1) % 2 )
+    try:
+        float(tmpVal)
+    except ValueError:
+        valP[1,0] = float(0)
+    else:
+        valP[1,0] = float(tmpVal)
+    
 
-        # LIGHT
-        tmpVal = app.arduino.readCommand("GET_LAMP")
-        #tmpVal = str( (valL[1,0]+1) % 2 )
-        try:
-            float(tmpVal)
-        except ValueError:
-            valL[1,0] = float(0)
-        else:
-            valL[1,0] = float(tmpVal)
+    # LIGHT
+    tmpVal = app.arduino.readCommand("GET_LAMP")
+    #tmpVal = str( (valL[1,0]+1) % 2 )
+    try:
+        float(tmpVal)
+    except ValueError:
+        valL[1,0] = float(0)
+    else:
+        valL[1,0] = float(tmpVal)
 
-        if BUFF_FILL < BUFF_LEN:
-            BUFF_FILL = BUFF_FILL + 1
+    if BUFF_FILL < BUFF_LEN:
+        BUFF_FILL = BUFF_FILL + 1
 
-        # reverse value array for neatness
-        valMneat = np.flip(valM, 1)
-        valHneat = np.flip(valH, 1)
-        valPneat = np.flip(valP, 1)
-        valLneat = np.flip(valL, 1)
+    # reverse value array for neatness
+    valMneat = np.flip(valM, 1)
+    valHneat = np.flip(valH, 1)
+    valH1neat = np.flip(valH1, 1)
+    valPneat = np.flip(valP, 1)
+    valLneat = np.flip(valL, 1)
 
-        # do plot stuff
-
-
-
-    #   UPDATE TEMOERATURE PLOT
-        heatPlot.clear()
-        heatPlot.set_ylim([ min(valHneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1, 
-                            max(valHneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1 ])
-        heatPlot.set_ylabel("TC Temp [*C]")
-        #heatPlot.set_xlabel("time [min]")
-        heatPlot.grid(True)
-        heatPlot.plot( valHneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valHneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
+    # do plot stuff
 
 
-    #   UPDATE LAMP
-        lampPlot.clear()
-        lampPlot.set_ylim([ min(valLneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1, 
-                            max(valLneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1 ])
-        lampPlot.set_ylabel("LIGHT")
-        #lampPlot.set_xlabel("time [min]")
-        lampPlot.grid(True)
-        lampPlot.plot( valLneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valLneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
 
-    #    UPDATE MOUSTURE PLOT
-        moistPlot.clear()
-        moistPlot.set_ylim([ min(valMneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1, 
-                            max(valMneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1 ])
-        moistPlot.set_ylabel("Moisture [%]")
-        #moistPlot.set_xlabel("time [min]")
-        moistPlot.grid(True)   
-        moistPlot.plot( valMneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valMneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
+#   UPDATE TEMOERATURE PLOT
+    heatPlot.clear()
+    heatPlot.set_ylim([ min(valHneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1, 
+                        max(valHneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1 ])
+    heatPlot.set_ylabel("TC Temp [*C]")
+    #heatPlot.set_xlabel("time [min]")
+    heatPlot.grid(True)
+    heatPlot.plot( valHneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valHneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color='g' )
+    heatPlot.plot( valH1neat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valH1neat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color='b' )
+
+#   UPDATE LAMP
+    lampPlot.clear()
+    lampPlot.set_ylim([ min(valLneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1, 
+                        max(valLneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1 ])
+    lampPlot.set_ylabel("LIGHT")
+    #lampPlot.set_xlabel("time [min]")
+    lampPlot.grid(True)
+    lampPlot.plot( valLneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valLneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
+
+#   UPDATE MOUSTURE PLOT
+    moistPlot.clear()
+    moistPlot.set_ylim([ min(valMneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1, 
+                        max(valMneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1 ])
+    moistPlot.set_ylabel("Moisture [%]")
+    #moistPlot.set_xlabel("time [min]")
+    moistPlot.grid(True)   
+    moistPlot.plot( valMneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valMneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
 
 
-        #   UPDATE PUMP
-        pumpPlot.clear()
-        pumpPlot.set_ylim([ min(valPneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1, 
-                            max(valPneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1 ])
-        pumpPlot.set_ylabel("PUMP")
-        pumpPlot.set_xlabel("time [min]")
-        pumpPlot.grid(True)
-        pumpPlot.plot( valPneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valPneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
+#   UPDATE PUMP
+    pumpPlot.clear()
+    pumpPlot.set_ylim([ min(valPneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1, 
+                        max(valPneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1 ])
+    pumpPlot.set_ylabel("PUMP")
+    pumpPlot.set_xlabel("time [min]")
+    pumpPlot.grid(True)
+    pumpPlot.plot( valPneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valPneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
 
 
 

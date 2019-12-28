@@ -65,7 +65,7 @@ class SlaveComm:
                 self.closeConnection()
                 
                 
-    def writeCommand(self, command, parameters):
+    def writeCommand(self, command="help", parameters=[]):
         tmp = command + "("
 
         for n in range(0,len(parameters)):
@@ -77,11 +77,11 @@ class SlaveComm:
         
         self.writeString(tmp)
 
-    def readCommand(self, command):
+    def readCommand(self, command= "help", parameters= []):
         if self.assumed_connection_status:
             self.ser.reset_input_buffer() # clear input
             tmp = b''   # set tmp type
-            self.writeCommand(command, [])  # write read-command and wait for answer
+            self.writeCommand(command, parameters)  # write read-command and wait for answer
 
             try:
                 tmp = self.ser.read_until(b'@')

@@ -29,9 +29,10 @@ void setup(){
   lamp.init("RGBW LED PWM output",11,10,9,8);                       // SETUP LAMP - RGBWLed ON PINS 11,10,9,8
   pump.init(7,6,"pump on H-Bridge board");                          // SETUP PUMP - MotoDriver DIR=7, PWM=6
   moisture.init(A0, "water sensor - analog input", 1023, 100, "%"); // SETUP MOISTURE - AnalogSensor on pin=A0, maxRawInput=1023, maxUserVal= 100%
-  thermocouple.init(A1, "thermocouple", 1023, 5, "V");              // SETUP THERMOCOUPLE VOLTAGEAnalogSensor on pin=A1, maxRawInput=1023, maxUserVal= 5V
+  thermocouple[0].init(A1, "thermocouple", 1023, 5, "V");              // SETUP THERMOCOUPLE VOLTAGEAnalogSensor on pin=A1, maxRawInput=1023, maxUserVal= 5V
+  thermocouple[1].init(A2, "thermocouple", 1023, 5, "V");              // SETUP THERMOCOUPLE VOLTAGEAnalogSensor on pin=A1, maxRawInput=1023, maxUserVal= 5V
   moisturePower.init(22, "water sensor - power enable");            // SETUP DigitalOutput on pin=22
-  relayboard[0].init(24, "relay0");                                 // SETUP DigitalOutput on pin=24
+  relayboard[0].init(24, "lighting fan");                           // SETUP DigitalOutput on pin=24
   relayboard[1].init(26, "relay1");                                 // SETUP DigitalOutput on pin=26
   vlotter.init(23, "vlotter");                                      // SETUP DigitalInput on pin=23
 }
@@ -50,8 +51,10 @@ void loop(){
 }
  
 void serialEvent(){
+  Serial.print(1);
   serialString = Serial.readStringUntil('\n');
   bNewMessage = true;
+  Serial.print(2);
 }
 
 void doCommand(){
@@ -62,6 +65,7 @@ void doCommand(){
   switch(serialMsg.message.inputCommand){
 
     case GET_MOISTURE:
+      delay(2);
       moisturePower.set(true); // enable power
       delay(10);  // let the power settle
       moisture.refresh(); // get value
@@ -74,9 +78,10 @@ void doCommand(){
       break;
 
     case GET_TEMP:
-    
-      thermocouple.refresh();
-      vm = thermocouple.getMetricValue();
+      delay(2);
+      tmpInt = serialMsg.message.sParameter[0].toInt();
+      thermocouple[tmpInt].refresh();
+      vm = thermocouple[tmpInt].getMetricValue();
       if (vin-vm != 0) {
         rntc = (vm*rc)/(vin-vm);
       
@@ -97,7 +102,7 @@ void doCommand(){
       break;
       
     case SET_RELAY:
-      //Serial.println("ACK");
+      delay(2);
       tmpInt = serialMsg.message.sParameter[0].toInt();
       Serial.println(tmpInt);
       if(serialMsg.message.sParameter[1] == "0"){ relayboard[tmpInt].set(false);}
@@ -107,15 +112,19 @@ void doCommand(){
       break;
       
     case ENABLE_LAMP:
-      //Serial.println("ACK");
+      delay(2);
       tmpBool = bool(serialMsg.message.sParameter[0].toInt()); 
+      
       lamp.enableOutput(tmpBool);
+      if(lamp.getStatus()>0)  { relayboard[0].set(true); }
+      else                    { relayboard[0].set(false); };
+      
       serialMsg.message.inputCommand= NO_COMMAND; // reset command variable
       Serial.print('@');
       break;
       
     case SET_LAMP:
-      //Serial.println("ACK");
+      delay(2);
       tmpString = serialMsg.message.sParameter[0];
       tmpInt = serialMsg.message.sParameter[1].toInt();
 
@@ -129,19 +138,23 @@ void doCommand(){
         else if(tmpChar == 'W'){ lamp.set(W, tmpInt);}
 
       }
+
+      if(lamp.getStatus()>0)  { relayboard[0].set(true); }
+      else                    { relayboard[0].set(false); };
+      
       serialMsg.message.inputCommand= NO_COMMAND; // reset command variable
       Serial.print('@');
       break;
 
     case GET_LAMP:
-      delay(10);
+      delay(2);
       Serial.print(lamp.getStatus());
       serialMsg.message.inputCommand= NO_COMMAND; // reset command variable
       Serial.print('@');
       break;
         
     case ENABLE_PUMP:
-      //Serial.println("ACK");
+      delay(2);
       tmpBool = bool(serialMsg.message.sParameter[0].toInt()); 
       pump.enableOutput(tmpBool);
       serialMsg.message.inputCommand= NO_COMMAND; // reset command variable
@@ -149,7 +162,6 @@ void doCommand(){
       break;
       
     case SET_PUMP:
-      //Serial.println("ACK");
       tmpInt = serialMsg.message.sParameter[0].toInt();
       tmpBool = bool(serialMsg.message.sParameter[1].toInt());
       
@@ -161,7 +173,7 @@ void doCommand(){
       break;
 
     case GET_PUMP:
-      delay(10);
+      delay(2);
       tmpInt = pump.getStatus();
       Serial.print(tmpInt);
       serialMsg.message.inputCommand= NO_COMMAND; // reset command variable
@@ -169,12 +181,14 @@ void doCommand(){
       break;
     
     case HELP:
+      delay(2);
       printHelp();
       serialMsg.message.inputCommand= NO_COMMAND; // reset command variable
       Serial.print('@');
       break;
        
     case NO_COMMAND:
+      delay(2);
       Serial.println("DEV_COMM_ERR");
       Serial.print('@');
       break;
@@ -191,13 +205,15 @@ void printHelp(){
   Serial.println("  COMMAND(PAR1, PAR2, PAR3, ETC)\n");
   Serial.println("");
   Serial.println("List of commands:");
-  Serial.println("   GET_MOISTURE( )");
-  Serial.println("   GET_TEMP( )");
-  Serial.println("   SET_RELAY( index[0-1], value[0/1] )");
-  Serial.println("   SET_LAMP( R/B/G/W, value[0-255], enable[0/1] )");
-  Serial.println("   SET_PUMP( value[0-255] , enable[0/1] )");
   Serial.println("   ENABLE_LAMP( enable[0/1] )");
-  Serial.println("   ENABLE_PUMP( enable[0/1] )");  
+  Serial.println("   ENABLE_PUMP( enable[0/1] )"); 
+  Serial.println("   SET_LAMP   ( colour[R,B,G,W],  value[0-255], enable[0/1] )");
+  Serial.println("   SET_PUMP   ( value[0-255],   enable[0/1] )"); 
+  Serial.println("   SET_RELAY  ( index[0-1],   value[0/1] )");
+  Serial.println("   GET_MOISTURE( )");
+  Serial.println("   GET_TEMP( index[0-1] )");
+  Serial.println("   GET_LAMP( )");
+  Serial.println("   GET_PUMP( )"); 
   Serial.println(" - - - - - - - - - - - - - - - - - - ");
   Serial.println("DEVICE CONNECTIONS");
   Serial.println("");
@@ -207,7 +223,9 @@ void printHelp(){
   Serial.println("");
   vlotter.help();
   Serial.println("");
-  thermocouple.help();
+  thermocouple[0].help();
+  Serial.println("");
+  thermocouple[1].help();
   Serial.println("");
   relayboard[0].help(); 
   Serial.println("");
