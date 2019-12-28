@@ -51,10 +51,8 @@ void loop(){
 }
  
 void serialEvent(){
-  Serial.print(1);
   serialString = Serial.readStringUntil('\n');
   bNewMessage = true;
-  Serial.print(2);
 }
 
 void doCommand(){

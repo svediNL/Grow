@@ -87,7 +87,8 @@ class App( Frame ):
         self.str_time.set(".....")
 
         self.moisture_var = StringVar()
-        self.temperature_var = StringVar()
+        self.temperature_var0 = StringVar()
+        self.temperature_var1 = StringVar()
 
         self.create_widgets()
 
@@ -179,7 +180,7 @@ class App( Frame ):
         self.headerFrame.pack(fill = BOTH, side = TOP)
 
     # HEADER TEXT
-        self.label_header = Label(self.headerFrame, text= " +- ~ - ~ - ~ - ~ - ~ -+  G R O W   M A S T E R     v1.3  +- ~ - ~ - ~ - ~ - ~ -+ ")
+        self.label_header = Label(self.headerFrame, text= " +- ~ - ~ - ~ - ~ - ~ -+  G R O W   M A S T E R     v1.4  +- ~ - ~ - ~ - ~ - ~ -+ ")
         self.label_header.pack(side = LEFT)
 
     # CURRENT TIME LABEL
@@ -254,11 +255,15 @@ class App( Frame ):
         self.live_moist_value   = Label(self.live_frame, textvariab = self.moisture_var)
         self.live_moist_value.grid(column = 1, row= 1, sticky=E)
 
-        self.live_heat_label    = Label(self.live_frame, text = "Current temperature: ")
+        self.live_heat_label    = Label(self.live_frame, text = "Current temperature 0: ")
         self.live_heat_label.grid(column = 0, row= 2, sticky=N+S+W)
-        self.live_heat_value    = Label(self.live_frame, textvariab = self.temperature_var)
+        self.live_heat_value    = Label(self.live_frame, textvariab = self.temperature_var0)
         self.live_heat_value.grid(column = 1, row= 2, sticky=E)
 
+        self.live_heat_label    = Label(self.live_frame, text = "Current temperature 1: ")
+        self.live_heat_label.grid(column = 0, row= 3, sticky=N+S+W)
+        self.live_heat_value    = Label(self.live_frame, textvariab = self.temperature_var1)
+        self.live_heat_value.grid(column = 1, row= 3, sticky=E)
 # D E V I C E  C O N T R O L  F R A M E
         self.devco_frame = Frame(self.dicoFrame , bd=1, relief = SUNKEN)
         self.devco_frame.pack(fill = Y, side = TOP)
@@ -411,129 +416,130 @@ def animate(i):
     global BUFF_FILL, valM, valH
 
 # GET SAMPLE IF ARDUINO IS CONNECTED
-#if app.arduino.assumed_connection_status:
-    # SHIFT BUFFERS
-    for n in reversed(range( 1, BUFF_LEN )):
-        valM[1,n]= valM[1,n-1]
-        valH[1,n]= valH[1,n-1]
-        valH1[1,n]= valH1[1,n-1]
-        valP[1,n]= valP[1,n-1]
-        valL[1,n]= valL[1,n-1]
+    if app.arduino.assumed_connection_status:
+        # SHIFT BUFFERS
+        for n in reversed(range( 1, BUFF_LEN )):
+            valM[1,n]= valM[1,n-1]
+            valH[1,n]= valH[1,n-1]
+            valH1[1,n]= valH1[1,n-1]
+            valP[1,n]= valP[1,n-1]
+            valL[1,n]= valL[1,n-1]
 
-# ADD VALUES TO BUFFERS
-    # HEAT
-    #tmpVal = app.arduino.readCommand("GET_TEMP",["0"])
-    tmpVal = str( (valH[1,0]+1) % 2 )
-    app.temperature_var.set(tmpVal)
-    try:
-        float(tmpVal)
-    except ValueError:
-        valH[1,0] = float(0)
-    else:
-        valH[1,0] = float(tmpVal)  
+    # ADD VALUES TO BUFFERS
+        # HEAT
+        tmpVal = app.arduino.readCommand("GET_TEMP",["0"])
+        #tmpVal = str( (valH[1,0]+1) % 2 )
+        app.temperature_var0.set(tmpVal)
+        try:
+            float(tmpVal)
+        except ValueError:
+            valH[1,0] = float(0)
+        else:
+            valH[1,0] = float(tmpVal)  
 
-    # HEAT1
-    #tmpVal = app.arduino.readCommand("GET_TEMP",["1"])
-    tmpVal = str( ((valH1[1,0]+1)*7) % 3 )
-    app.temperature_var.set(tmpVal)
-    try:
-        float(tmpVal)
-    except ValueError:
-        valH1[1,0] = float(0)
-    else:
-        valH1[1,0] = float(tmpVal)   
+        # HEAT1
+        tmpVal = app.arduino.readCommand("GET_TEMP",["1"])
+        #tmpVal = str( ((valH1[1,0]+1)*7) % 3 )
+        app.temperature_var1.set(tmpVal)
+        try:
+            float(tmpVal)
+        except ValueError:
+            valH1[1,0] = float(0)
+        else:
+            valH1[1,0] = float(tmpVal)   
 
-    # MOISTURE
-    tmpVal = app.arduino.readCommand("GET_MOISTURE")
-    #tmpVal = str( valM[1,0] + 1 )
-    app.moisture_var.set(tmpVal)
+        # MOISTURE
+        tmpVal = app.arduino.readCommand("GET_MOISTURE")
+        #tmpVal = str( valM[1,0] + 1 )
+        app.moisture_var.set(tmpVal)
 
-    try:
-        float(tmpVal)
-    except ValueError:
-        valM[1,0] = float(0)
-    else:
-        valM[1,0] = float(tmpVal)
+        try:
+            float(tmpVal)
+        except ValueError:
+            valM[1,0] = float(0)
+        else:
+            valM[1,0] = float(tmpVal)
 
-    # PUMP
-    tmpVal = app.arduino.readCommand("GET_PUMP")
-    #tmpVal = str( (valP[1,0]+1) % 2 )
-    try:
-        float(tmpVal)
-    except ValueError:
-        valP[1,0] = float(0)
-    else:
-        valP[1,0] = float(tmpVal)
-    
+        # PUMP
+        tmpVal = app.arduino.readCommand("GET_PUMP")
+        #tmpVal = str( (valP[1,0]+1) % 2 )
+        try:
+            float(tmpVal)
+        except ValueError:
+            valP[1,0] = float(0)
+        else:
+            valP[1,0] = float(tmpVal)
+        
 
-    # LIGHT
-    tmpVal = app.arduino.readCommand("GET_LAMP")
-    #tmpVal = str( (valL[1,0]+1) % 2 )
-    try:
-        float(tmpVal)
-    except ValueError:
-        valL[1,0] = float(0)
-    else:
-        valL[1,0] = float(tmpVal)
+        # LIGHT
+        tmpVal = app.arduino.readCommand("GET_LAMP")
+        #tmpVal = str( (valL[1,0]+1) % 2 )
+        try:
+            float(tmpVal)
+        except ValueError:
+            valL[1,0] = float(0)
+        else:
+            valL[1,0] = float(tmpVal)
 
-    if BUFF_FILL < BUFF_LEN:
-        BUFF_FILL = BUFF_FILL + 1
+        if BUFF_FILL < BUFF_LEN:
+            BUFF_FILL = BUFF_FILL + 1
 
-    # reverse value array for neatness
-    valMneat = np.flip(valM, 1)
-    valHneat = np.flip(valH, 1)
-    valH1neat = np.flip(valH1, 1)
-    valPneat = np.flip(valP, 1)
-    valLneat = np.flip(valL, 1)
+        # reverse value array for neatness
+        valMneat = np.flip(valM, 1)
+        valHneat = np.flip(valH, 1)
+        valH1neat = np.flip(valH1, 1)
+        valPneat = np.flip(valP, 1)
+        valLneat = np.flip(valL, 1)
 
-    # do plot stuff
-
-
-
-#   UPDATE TEMOERATURE PLOT
-    heatPlot.clear()
-    heatPlot.set_ylim([ min(valHneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1, 
-                        max(valHneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1 ])
-    heatPlot.set_ylabel("TC Temp [*C]")
-    #heatPlot.set_xlabel("time [min]")
-    heatPlot.grid(True)
-    heatPlot.plot( valHneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valHneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color='g' )
-    heatPlot.plot( valH1neat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valH1neat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color='b' )
-
-#   UPDATE LAMP
-    lampPlot.clear()
-    lampPlot.set_ylim([ min(valLneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1, 
-                        max(valLneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1 ])
-    lampPlot.set_ylabel("LIGHT")
-    #lampPlot.set_xlabel("time [min]")
-    lampPlot.grid(True)
-    lampPlot.plot( valLneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valLneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
-
-#   UPDATE MOUSTURE PLOT
-    moistPlot.clear()
-    moistPlot.set_ylim([ min(valMneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1, 
-                        max(valMneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1 ])
-    moistPlot.set_ylabel("Moisture [%]")
-    #moistPlot.set_xlabel("time [min]")
-    moistPlot.grid(True)   
-    moistPlot.plot( valMneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valMneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
+        # do plot stuff
 
 
-#   UPDATE PUMP
-    pumpPlot.clear()
-    pumpPlot.set_ylim([ min(valPneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1, 
-                        max(valPneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1 ])
-    pumpPlot.set_ylabel("PUMP")
-    pumpPlot.set_xlabel("time [min]")
-    pumpPlot.grid(True)
-    pumpPlot.plot( valPneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valPneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
+
+    #   UPDATE TEMOERATURE PLOT
+        heatPlot.clear()
+        hy_min = min(min(valHneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]), min(valH1neat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN])) - 1
+        hy_max = max(max(valHneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]), max(valH1neat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN])) + 1
+        heatPlot.set_ylim([ hy_min, hy_max ])
+        heatPlot.set_ylabel("TC Temp [*C]")
+        #heatPlot.set_xlabel("time [min]")
+        heatPlot.grid(True)
+        heatPlot.plot( valHneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valHneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color='g' )
+        heatPlot.plot( valH1neat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valH1neat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color='b' )
+
+    #   UPDATE LAMP
+        lampPlot.clear()
+        lampPlot.set_ylim([ min(valLneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1, 
+                            max(valLneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1 ])
+        lampPlot.set_ylabel("LIGHT")
+        #lampPlot.set_xlabel("time [min]")
+        lampPlot.grid(True)
+        lampPlot.plot( valLneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valLneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
+
+    #   UPDATE MOUSTURE PLOT
+        moistPlot.clear()
+        moistPlot.set_ylim([ min(valMneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1, 
+                            max(valMneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1 ])
+        moistPlot.set_ylabel("Moisture [%]")
+        #moistPlot.set_xlabel("time [min]")
+        moistPlot.grid(True)   
+        moistPlot.plot( valMneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valMneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
+
+
+    #   UPDATE PUMP
+        pumpPlot.clear()
+        pumpPlot.set_ylim([ min(valPneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1, 
+                            max(valPneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1 ])
+        pumpPlot.set_ylabel("PUMP")
+        pumpPlot.set_xlabel("time [min]")
+        pumpPlot.grid(True)
+        pumpPlot.plot( valPneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valPneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
 
 
 
 
 
 #  A D D   P L O T
-f = pp.Figure(figsize=(6,10),dpi = 100)
+f = pp.Figure(figsize=(6,10),dpi = 75)
 gs = gridspec.GridSpec(4,1, height_ratios=[3,1,3,1])
 f.set_tight_layout(True)
 
