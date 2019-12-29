@@ -18,18 +18,9 @@ else:
     print("using Tkinter")
 
 from comms import SlaveComm
+from configuration import *
 
 import time
-
-BG_MAIN = '#7A7A7A'
-BG_SUB = '#B0B0B0'
-BG_SUBSUB = '#DDDDDD'
-
-PROGRAM_CYLCETIME= 1000.0
-ANI_CYCLETIME = 5000
-
-NAME_RELAY_1 = "LIGHT COOLING"
-NAME_RELAY_2 = "RELAY 2"
 
 # create app of type Frame
 class App( Frame ):
@@ -37,28 +28,54 @@ class App( Frame ):
     def __init__(self, master=None):
         Frame.__init__(self, master)
 
+        # PUMP VARIABLES
+        self.pump_enable = []
+        self.pump_state = []
+        for n in range(NR_PUMP):
+            self.pump_enable.append(False)
+            self.pump_state.append(StringVar())
+            self.pump_state[n].set("pump stopped...")
+
+        # RELAY
+        self.enable_relay=[]
+        self.enable_relay_prev=[]
+        for n in range(NR_RELAY):
+            self.enable_relay.append(IntVar())
+            self.enable_relay_prev.append(self.enable_relay[n].get())
+        
+        self.flow_state = IntVar()
+        self.flow_state.set(NR_FLOW)
+
+        # LAMP
+        self.lamp_enable =[]
+        self.lamp_state = []
+        for n in range(NR_LAMP):
+            self.lamp_enable.append(False)
+            self.lamp_state.append(StringVar())
+            self.lamp_state[n].set("LAMP DISABLED")
+
+        self.moisture_var = []
+        for n in range(NR_MOISTURE):
+            self.moisture_var.append(StringVar())
+
+        self.temperature_var = []
+        for n in range(NR_THERMO):
+            self.temperature_var.append(StringVar())
+
+
+        # SERIAL VARIABLES
+        self.serial_var_string = StringVar()
+        self.serial_connection_string = StringVar()
         self.serial_var_port = StringVar()
         self.serial_var_port.set("/dev/ttyACM0")
         self.arduino = SlaveComm("/dev/ttyACM0", 115200)
-        self.serial_var_string = StringVar()
 
-        self.serial_connection_string = StringVar()
         if self.arduino.getStatus():
             self.serial_connection_string.set("Connected")
         else:
             self.serial_connection_string.set("Disconnected")
 
-        self.pump_enable = False
-        self.pump_state = StringVar()
-        self.pump_state.set("pump stopped...")
-
-        self.enable_relay1 = IntVar()
-        self.enable_relay2 = IntVar()
-
-        self.lamp_enable = False
-        self.lamp_state = StringVar()
-        self.lamp_state.set("LAMP DISABLED")
-
+        # DAYLIGHT SEQUENCE VARIABLES
         self.enable_daylight = IntVar()
         self.daylight_status = StringVar()
         self.daylight_brightness = StringVar()
@@ -69,6 +86,7 @@ class App( Frame ):
         self.daylight_tv_ramp_hour = StringVar()
         self.daylight_tv_ramp_min = StringVar()
 
+        # SET DAYLIGHT VARIABLES
         self.daylight_status.set("Daylight disabled")
         self.daylight_brightness.set("255")
         self.daylight_tv_start_hour.set("7")
@@ -86,23 +104,23 @@ class App( Frame ):
         self.str_time = StringVar()
         self.str_time.set(".....")
 
-        self.moisture_var = StringVar()
-        self.temperature_var0 = StringVar()
-        self.temperature_var1 = StringVar()
-
         self.create_widgets()
 
     def disable_lamp(self):
         self.lamp_state.set("LAMP DISABLED")
         self.arduino.writeCommand("ENABLE_LAMP", ["0"])
 
+        self.enable_relay[0].set(0)     # FANS ON LAMP
+        self.toggle_relay()
+
     def enable_lamp(self):
         self.lamp_state.set("LAMP ENABLED")
         self.arduino.writeCommand("ENABLE_LAMP", ["1"])
 
+        self.enable_relay[0].set(1)     # FANS ON LAMP
+        self.toggle_relay()
+
     def update_lampW(self, value):
-        
-        #print(value)
         self.arduino.writeCommand("SET_LAMP", ["W", str(int(float(value)))])
 
     def update_daylight_params(self):
@@ -157,78 +175,111 @@ class App( Frame ):
         self.arduino.readCommand(self.serial_var_string.get())
         self.serial_var_string.set("")
 
-    def toggle_relay1(self):
-        if self.enable_relay1.get() == 0:
-            self.arduino.writeCommand("SET_RELAY", [str(0), str(0)])
-        elif self.enable_relay1.get() == 1:
-            self.arduino.writeCommand("SET_RELAY", [str(0), str(1)])
+    def toggle_relay(self):
+        for n in range(NR_RELAY):
+            if self.enable_relay_prev[n] != self.enable_relay[n].get():
+                self.enable_relay_prev[n] = self.enable_relay[n].get()
+                self.arduino.writeCommand("SET_RELAY", [str(n), str(self.enable_relay[n].get())])
 
-    def toggle_relay2(self):
-        if self.enable_relay2.get() == 0:
-            self.arduino.writeCommand("SET_RELAY", [str(1), str(0)])
-        elif self.enable_relay2.get() == 1:
-            self.arduino.writeCommand("SET_RELAY", [str(1), str(1)])
+    def set_flow_circuit(self):
+        # DEFAULT ALL VALVES TO CLOSED
+        for n in range(NR_RELAY):
+            self.enable_relay[n].set(0)
+
+        # OPEN VALVES BASED ON SELECTED FLOW CIRCUIT
+        if self.flow_state.get() == NR_FLOW:
+        # DEFAULT = DO NOTHING
+            print "DISABLED"
+        else:
+        # OPEN VALVES
+            for n in range(len(VALVES_FLOW[self.flow_state.get()])):
+                print VALVES_FLOW[self.flow_state.get()][n]
+                tmp = VALVES_FLOW[self.flow_state.get()][n]
+                self.enable_relay[tmp].set(1)
+
+        # WRITE/SET ACTUAL OUTPUT
+        self.toggle_relay()
 
     def create_widgets(self):
+        # M A I N   F R A M E
         # CREATE MAIN FRAME
         self.mainframe = Frame(self)
-        self.mainframe.pack()
+        #self.mainframe.pack(fill = BOTH, expand = True)
+        self.mainframe.grid(column = 0, row=0, sticky=E+W)
 
-# H E A D E R   F R A M E
-    # CREATE HEADER FRAME
-        self.headerFrame=Frame(self.mainframe, height = 128, bd=2, relief = SUNKEN)
-        self.headerFrame.pack(fill = BOTH, side = TOP)
+        # H E A D E R   F R A M E
+        # CREATE HEADER FRAME
+        self.headerFrame=Frame(self.mainframe, bd=2, relief = SUNKEN)
+        #self.headerFrame.pack(fill = BOTH, side = TOP, expand = True)
+        self.headerFrame.grid(column = 0, columnspan = 2, row=0, sticky=N+S+E+W)
 
-    # HEADER TEXT
+        # HEADER TEXT
         self.label_header = Label(self.headerFrame, text= " +- ~ - ~ - ~ - ~ - ~ -+  G R O W   M A S T E R     v1.4  +- ~ - ~ - ~ - ~ - ~ -+ ")
-        self.label_header.pack(side = LEFT)
+        #self.label_header.pack(side = LEFT)
+        self.label_header.grid(column = 0, row=0, sticky=N+S+W)
 
-    # CURRENT TIME LABEL
+        # CURRENT TIME LABEL
         self.label_time = Label(self.headerFrame, textvariable = self.str_time)
-        self.label_time.pack(side = RIGHT)
+        #self.label_time.pack(side = RIGHT)
+        self.label_time.grid(column = 0, row=0, sticky=N+S+E)
 
 
-
-# C O N T E N T   F R A M E
+        # C O N T E N T   F R A M E
+        # CREATE CONTENT FRAME (PLOT AREA)
         self.contentFrame=Frame(self.mainframe, bd=2, relief = SUNKEN)
-        self.contentFrame.pack(side = BOTTOM, expand = True)
+        #self.contentFrame.pack(side = BOTTOM, expand = True)
+        self.contentFrame.grid(column = 0, row=0, sticky=N+S+E+W)
 
+        # P L O T   F R A M E  
+        self.plotFrame = Frame(self.contentFrame, bd=1, relief = SUNKEN)
+        #self.plotFrame.pack(fill = Y, side = LEFT, expand = True)
+        self.plotFrame.grid(column = 0, row=0, sticky=N+S+E+W)
+        
+        # ADD CANVAS TO FRAME
+        self.plot_canvas = FigureCanvasTkAgg(f, self.plotFrame)
+        self.plot_canvas.show()
+        self.plot_canvas.get_tk_widget().pack()
 
-
-# D I R E C T   C O N T R O L   F R A M E
+        # D I R E C T   C O N T R O L   F R A M E
+        # CREATE DIRECT CONTROL FRAME
         self.dicoFrame = Frame(self.contentFrame, width = 600, bd=1, relief = SUNKEN)
-        self.dicoFrame.pack(fill = BOTH, side = RIGHT)
+        #self.dicoFrame.pack(fill = BOTH, side = RIGHT, expand = True)
+        self.dicoFrame.grid(column = 1, row=0, sticky=N+S+E+W)
 
-
-# S E R I A L  F R A M E
+        # S E R I A L  F R A M E
+        # ADD SERIAL FRAME TO DICO FRAME
         self.serial_frame = Frame(self.dicoFrame, bd=1, relief = SUNKEN)
-        self.serial_frame.pack(side = TOP, fill = Y)
+        #self.serial_frame.pack(side = TOP, fill = Y, expand = True)
+        self.serial_frame.grid(column = 0, row=0, sticky=N+S+E+W)
 
-    # SERIAL HEADER TEXT
+        # SERIAL HEADER TEXT
         self.serial_header_label = Label(self.serial_frame, text = "~  S E R I A L ")
         self.serial_header_label.grid(column = 0, row=0, sticky=N+S+W)
 
-    # SERIAL NOTEBOOK
+        # ADD NOTEBOOK TO SERIAL FRAME
         self.serial_notebook = Notebook(self.serial_frame, width = 300)
         self.serial_notebook.grid(column = 0, row=1, sticky=N+S+E+W)
 
-    # SERIAL NOTEBOOK _ CONNECTIO
+        # ADD CONNECTION FRAME TO NOTEBOOK
         self.serial_connectionFrame = Frame(self.serial_notebook)
         self.serial_notebook.add(self.serial_connectionFrame, text = 'connect')
 
+        # ADD PROMPT FOR PORT TO CONNECTION FRAME
         self.serial_entry_port = Entry(self.serial_connectionFrame, textvariable= self.serial_var_port)
         self.serial_entry_port.pack(side= TOP, fill = X)
 
+        # ADD LABEL FOR STATUS TO CONNECTION FRAME
         self.serial_label_status = Label(self.serial_connectionFrame, textvariable = self.serial_connection_string)
         self.serial_label_status.pack(side= TOP, fill = X, expand = True)
 
+        # ADD OPEN CONNECTION BUTTON TO CONNECTION FRAME
         self.serial_button_open= Button(self.serial_connectionFrame, text = "open", command= self.open_serial_connection)
         self.serial_button_open.pack(side= RIGHT, fill = X, expand = True)
 
         self.serial_button_close = Button(self.serial_connectionFrame,text = "close", command= self.close_serial_connection)
         self.serial_button_close.pack(side = RIGHT, fill = X, expand = True)
 
-    # SERIAL NOTEBOOK _ DIRECT INTERFACE
+        # SERIAL NOTEBOOK _ DIRECT INTERFACE
         self.serial_interfaceFrame = Frame(self.serial_notebook)    
         self.serial_notebook.add(self.serial_interfaceFrame, text = 'comm')
 
@@ -241,42 +292,50 @@ class App( Frame ):
         self.serial_button_write= Button(self.serial_interfaceFrame, text = "write", command= self.write_serial_string)
         self.serial_button_write.pack(side = LEFT, fill = BOTH, expand =True)
 
-# L I V E   S T A T U S   F R A M E
+        # L I V E   S T A T U S   F R A M E
+        # ADD LIVE STATUS FRAME TO DICO FRAME
         self.live_frame = Frame(self.dicoFrame, bd=1, relief= SUNKEN)
         self.live_frame.grid_columnconfigure(0, weight =1)
         self.live_frame.grid_columnconfigure(1, weight =1)
-        self.live_frame.pack(fill = BOTH, side = TOP)
+        #self.live_frame.pack(fill = BOTH, side = TOP, expand = True)
+        self.live_frame.grid(column = 0, row=1, sticky=N+S+E+W)
 
         self.live_label = Label(self.live_frame, text = "~ L I V E   M O N I T O R")
         self.live_label.grid(column = 0, row = 0, columnspan = 2, sticky = N+S+W)
 
-        self.live_moist_label   = Label(self.live_frame, text = "Current moisture: ")
-        self.live_moist_label.grid(column = 0, row= 1, sticky=N+S+W)
-        self.live_moist_value   = Label(self.live_frame, textvariab = self.moisture_var)
-        self.live_moist_value.grid(column = 1, row= 1, sticky=E)
+        self.live_heat_label = []
+        self.live_heat_value = []
+        for n in range(NR_THERMO):
+            tmp = NAMES_THERMO[n] + " value :   "
+            self.live_heat_label.append(Label(self.live_frame, text = tmp))
+            self.live_heat_label[n].grid(column = 0, row= (n+1), sticky=N+S+W)
+            self.live_heat_value.append(Label(self.live_frame, textvariab = self.temperature_var[n]))
+            self.live_heat_value[n].grid(column = 1, row= (n+1), sticky=E)
 
-        self.live_heat_label    = Label(self.live_frame, text = "Current temperature 0: ")
-        self.live_heat_label.grid(column = 0, row= 2, sticky=N+S+W)
-        self.live_heat_value    = Label(self.live_frame, textvariab = self.temperature_var0)
-        self.live_heat_value.grid(column = 1, row= 2, sticky=E)
+        self.live_moist_label = []
+        self.live_moist_value = []
+        for n in range(NR_MOISTURE):
+            tmp = NAMES_MOISTURE[n] + " value :   "
+            self.live_moist_label.append(Label(self.live_frame, text = tmp))
+            self.live_moist_label[n].grid(column = 0, row= (NR_THERMO+n+1), sticky=N+S+W)
+            self.live_moist_value.append(Label(self.live_frame, textvariab = self.moisture_var[n]))
+            self.live_moist_value[n].grid(column = 1, row= (NR_THERMO+n+1), sticky=E)
 
-        self.live_heat_label    = Label(self.live_frame, text = "Current temperature 1: ")
-        self.live_heat_label.grid(column = 0, row= 3, sticky=N+S+W)
-        self.live_heat_value    = Label(self.live_frame, textvariab = self.temperature_var1)
-        self.live_heat_value.grid(column = 1, row= 3, sticky=E)
-# D E V I C E  C O N T R O L  F R A M E
+
+        # D E V I C E  C O N T R O L  F R A M E
+        # ADD DEVICE CONTROL TO DICOFRAME
         self.devco_frame = Frame(self.dicoFrame , bd=1, relief = SUNKEN)
-        self.devco_frame.pack(fill = Y, side = TOP)
-
-    # DEVICE CONTROL HEADER TEXT
+        #self.devco_frame.pack(fill = Y, side = TOP, expand = True)
+        self.devco_frame.grid(column = 0, row=2, sticky=N+S+E+W)
+        # DEVICE CONTROL HEADER TEXT
         self.devco_label = Label(self.devco_frame, text= "~  D E V I C E  C O N T R O L ")
         self.devco_label.grid(column = 0, row=0, sticky=N+S+W)
 
-    # DEVICE CONTROL NOTEBOOL
+        # DEVICE CONTROL NOTEBOOL
         self.devco_notebook = Notebook(self.devco_frame, width = 300)
         self.devco_notebook.grid(column = 0, row=1, sticky=N+S+E+W)
 
-    # DEVCO NOTBOOK _ LAMP CONTROL
+        # DEVCO NOTBOOK _ LAMP CONTROL
         self.devco_lamp_frame = Frame(self.devco_notebook)
         self.devco_notebook.add(self.devco_lamp_frame, text = 'LIGHT', sticky=N+S+E+W)
 
@@ -354,7 +413,7 @@ class App( Frame ):
         self.devco_daylight_brightness_value.grid(column = 3, row = 6)
 
 
-    # DEVCO NOTBOOK _ PUMP CONTROL
+        # DEVCO NOTBOOK _ PUMP CONTROL
         self.devco_hydro_frame = Frame(self.devco_notebook)
         self.devco_hydro_frame.grid_columnconfigure(0, weight =1)
         self.devco_hydro_frame.grid_columnconfigure(1, weight =1)
@@ -377,22 +436,114 @@ class App( Frame ):
         self.devco_button_pumpDisable = Button(self.devco_hydro_frame, command = self.set_pumpDisable, text = "Disable pump")
         self.devco_button_pumpDisable.grid(column = 2, row = 2, columnspan = 2, sticky=S+W+N+E)
 
-        self.devco_relay1 = Checkbutton(self.devco_hydro_frame, text= NAME_RELAY_1, variable = self.enable_relay1, onvalue= 1, offvalue=0, command = self.toggle_relay1)
-        self.devco_relay1.grid(column = 0, row = 3, columnspan = 4, sticky=S+W+N)
+        self.devco_flow=[]
+        for n in range(NR_FLOW):
+            self.devco_flow.append(Radiobutton(self.devco_hydro_frame, text= NAMES_FLOW[n], value = n, variable = self.flow_state, command = self.set_flow_circuit))
+            self.devco_flow[n].grid(column = 0, row = (3+n), columnspan = 4, sticky=S+W+N)
+        self.devco_flow.append(Radiobutton(self.devco_hydro_frame, text= "DISABLED", value = NR_FLOW, variable = self.flow_state, command = self.set_flow_circuit))
+        self.devco_flow[NR_FLOW].grid(column = 0, row = (3+NR_FLOW), columnspan = 4, sticky=S+W+N)
 
-        self.devco_relay2 = Checkbutton(self.devco_hydro_frame, text= NAME_RELAY_2, variable = self.enable_relay2, onvalue= 1, offvalue=0, command = self.toggle_relay2)
-        self.devco_relay2.grid(column = 0, row = 4, columnspan = 4, sticky=S+W+N)
+        # DEVCO NOTBOOK _ RELAY CONTROL
+        self.devco_relay_frame = Frame(self.devco_notebook)
+        self.devco_relay_frame.grid_columnconfigure(0, weight =1)
+        self.devco_relay_frame.grid_columnconfigure(1, weight =1)
+        self.devco_relay_frame.grid_columnconfigure(2, weight =1)
+        self.devco_relay_frame.grid_columnconfigure(3, weight =1)
+        self.devco_notebook.add(self.devco_relay_frame, text = 'RELAYS', sticky=N+S+E+W)
 
-# P L O T   F R A M E  
-        self.plotFrame = Frame(self.contentFrame, bd=1, relief = SUNKEN)
-        self.plotFrame.pack(fill = Y, side = LEFT)
-        
-    # ADD CANVAS TO FRAME
-        self.plot_canvas = FigureCanvasTkAgg(f, self.plotFrame)
-        self.plot_canvas.show()
-        self.plot_canvas.get_tk_widget().pack()
+        self.devco_relay = []
+        for n in range(NR_RELAY):
+            self.devco_relay.append(Checkbutton(self.devco_relay_frame, text= NAMES_RELAY[n], variable = self.enable_relay[n], onvalue= 1, offvalue=0, command = self.toggle_relay))
+            self.devco_relay[n].grid(column = 0, row = n, columnspan = 4, sticky=S+W+N)
 
+        self.grid_columnconfigure(0, weight =1)
+        self.grid_rowconfigure(0, weight =1)
         self.pack()
+
+    def daylight_sequence(self):
+        eptime = time.time()
+        struct_time = time.localtime(eptime)
+
+        if struct_time.tm_hour < 10:
+            struct_time_str = "0" + str(struct_time.tm_hour) + " : "
+        else:
+            struct_time_str = str(struct_time.tm_hour) + " : "
+
+        if struct_time.tm_min < 10:
+            struct_time_str = struct_time_str + "0" + str(struct_time.tm_min) + " : "
+        else:
+            struct_time_str = struct_time_str+ str(struct_time.tm_min) + " : "
+
+        if struct_time.tm_sec < 10:
+            struct_time_str = struct_time_str + "0" + str(struct_time.tm_sec)
+        else:
+            struct_time_str = struct_time_str+ str(struct_time.tm_sec)
+
+        self.str_time.set(struct_time_str)
+
+        if self.enable_daylight.get() == 1:
+
+            if struct_time.tm_hour == int(float(self.daylight_tv_start_hour.get())):
+                if struct_time.tm_min >= int(float(self.daylight_tv_start_min.get())):
+                    self.daybool = True
+                    self.nightbool = False
+                else:
+                    self.daybool = False
+            if struct_time.tm_hour == int(float(self.daylight_tv_end_hour.get())):
+                if struct_time.tm_min >= int(float(self.daylight_tv_end_min.get())):
+                    self.nightbool = True
+                    self.daybool = False
+                else:
+                    self.nightbool = False
+            else:
+                if struct_time.tm_hour > int(float(self.daylight_tv_start_hour.get())) and struct_time.tm_hour < int(float(self.daylight_tv_end_hour.get())):
+                    self.daybool = True
+                    self.nightbool = False
+                else:
+                    self.daybool = False
+                    self.nightbool = True
+
+            if self.daybool:
+            # TIME IS ABOVE DAY START TIME
+                if (self.daylight_output < int(self.daylight_brightness.get())):
+                # OUTPUT IS NOT YET DONE RISING
+                    self.daylight_output = float(self.daylight_output) + float(self.daylight_stepsize)
+                    self.arduino.writeCommand("SET_LAMP", ["W", str(int(self.daylight_output))])
+                    self.arduino.writeCommand("ENABLE_LAMP", ["1"])
+
+                    self.daylight_status.set("DAYTIME - SUNRISE")
+                    self.lamp_state.set("AUTOMATIC CTRL - RAMPING UP")
+                    self.devco_slider_lamp.set(int(self.daylight_output))
+                else:
+                    # OUTPUT IS DONE RISING
+                    self.arduino.writeCommand("SET_LAMP", ["W", str(int(float(self.daylight_brightness.get())))])
+                    self.arduino.writeCommand("ENABLE_LAMP", ["1"])
+
+                    self.daylight_status.set("DAYTIME")
+                    self.lamp_state.set("AUTOMATIC CTRL - FULL OUTPUT")
+                    self.devco_slider_lamp.set(int(float(self.daylight_brightness.get())))
+
+            elif self.nightbool:
+                if (self.daylight_output > 0):
+                # OUTPUT IS NOT YET DONE FALLING
+                    self.daylight_output = self.daylight_output - self.daylight_stepsize
+                    self.arduino.writeCommand("SET_LAMP", ["W", str(int(float(self.daylight_output)))])
+                    self.arduino.writeCommand("ENABLE_LAMP", ["1"])
+
+                    self.daylight_status.set("DAYTIME - SUNSET")
+                    self.lamp_state.set("AUTOMATIC CTRL - RAMPING DOWN")
+                    self.devco_slider_lamp.set(int(self.daylight_output))
+                else:
+               # OUTPUT IS NOT YET DONE FALLING
+                    self.arduino.writeCommand("SET_LAMP", ["W", str(0)])
+                    self.arduino.writeCommand("ENABLE_LAMP", ["0"])
+
+                    self.daylight_status.set("NIGHTTIME")
+                    self.lamp_state.set("AUTOMATIC CTRL - DISABLED OUTPUT")
+                    self.devco_slider_lamp.set(0)
+
+        else:
+            self.daylight_status.set("DAYLIGHT DISABLED")
 
 # prepare animation buffer
 BUFF_LEN = 4096
@@ -491,17 +642,12 @@ def animate(i):
         valPneat = np.flip(valP, 1)
         valLneat = np.flip(valL, 1)
 
-        # do plot stuff
-
-
-
     #   UPDATE TEMOERATURE PLOT
         heatPlot.clear()
         hy_min = min(min(valHneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]), min(valH1neat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN])) - 1
         hy_max = max(max(valHneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]), max(valH1neat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN])) + 1
         heatPlot.set_ylim([ hy_min, hy_max ])
         heatPlot.set_ylabel("TC Temp [*C]")
-        #heatPlot.set_xlabel("time [min]")
         heatPlot.grid(True)
         heatPlot.plot( valHneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valHneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color='g' )
         heatPlot.plot( valH1neat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valH1neat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color='b' )
@@ -511,7 +657,6 @@ def animate(i):
         lampPlot.set_ylim([ min(valLneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1, 
                             max(valLneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1 ])
         lampPlot.set_ylabel("LIGHT")
-        #lampPlot.set_xlabel("time [min]")
         lampPlot.grid(True)
         lampPlot.plot( valLneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valLneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
 
@@ -520,7 +665,6 @@ def animate(i):
         moistPlot.set_ylim([ min(valMneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1, 
                             max(valMneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1 ])
         moistPlot.set_ylabel("Moisture [%]")
-        #moistPlot.set_xlabel("time [min]")
         moistPlot.grid(True)   
         moistPlot.plot( valMneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valMneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
 
@@ -534,10 +678,6 @@ def animate(i):
         pumpPlot.grid(True)
         pumpPlot.plot( valPneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valPneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
 
-
-
-
-
 #  A D D   P L O T
 f = pp.Figure(figsize=(6,10),dpi = 75)
 gs = gridspec.GridSpec(4,1, height_ratios=[3,1,3,1])
@@ -546,20 +686,17 @@ f.set_tight_layout(True)
 heatPlot = f.add_subplot(gs[0])
 heatPlot.set_ylim([10,40])
 heatPlot.set_ylabel("TC temp [*C]")
-#heatPlot.set_xlabel("time [min]")
 heatPlot.grid(True)
 
 lampPlot = f.add_subplot(gs[1])
 lampPlot.set_ylim([0,255])
 lampPlot.set_ylabel("LIGHT")
-#lampPlot.set_xlabel("time [min]")
 lampPlot.grid(True)
 
 
 moistPlot = f.add_subplot(gs[2])
 moistPlot.set_ylim([0,100])
 moistPlot.set_ylabel("Moisture [%]")
-#moistPlot.set_xlabel("time [min]")
 moistPlot.grid(True)
 
 pumpPlot = f.add_subplot(gs[3])
@@ -579,97 +716,12 @@ root.title ("G R O W  .  M A S T E R")
 app = App(master=root)  # assign tk to master frame
 
 def program():
-    eptime = time.time()
-    struct_time = time.localtime(eptime)
-
-    if struct_time.tm_hour < 10:
-        struct_time_str = "0" + str(struct_time.tm_hour) + " : "
-    else:
-        struct_time_str = str(struct_time.tm_hour) + " : "
-
-    if struct_time.tm_min < 10:
-        struct_time_str = struct_time_str + "0" + str(struct_time.tm_min) + " : "
-    else:
-        struct_time_str = struct_time_str+ str(struct_time.tm_min) + " : "
-
-    if struct_time.tm_sec < 10:
-        struct_time_str = struct_time_str + "0" + str(struct_time.tm_sec)
-    else:
-        struct_time_str = struct_time_str+ str(struct_time.tm_sec)
-
-    app.str_time.set(struct_time_str)
-
-    if app.enable_daylight.get() == 1:
-
-        if struct_time.tm_hour == int(float(app.daylight_tv_start_hour.get())):
-            if struct_time.tm_min >= int(float(app.daylight_tv_start_min.get())):
-                app.daybool = True
-                app.nightbool = False
-            else:
-                app.daybool = False
-        if struct_time.tm_hour == int(float(app.daylight_tv_end_hour.get())):
-            if struct_time.tm_min >= int(float(app.daylight_tv_end_min.get())):
-                app.nightbool = True
-                app.daybool = False
-            else:
-                app.nightbool = False
-        else:
-            if struct_time.tm_hour > int(float(app.daylight_tv_start_hour.get())) and struct_time.tm_hour < int(float(app.daylight_tv_end_hour.get())):
-                app.daybool = True
-                app.nightbool = False
-            else:
-                app.daybool = False
-                app.nightbool = True
-
-        if app.daybool:
-        # TIME IS ABOVE DAY START TIME
-            if (app.daylight_output < int(app.daylight_brightness.get())):
-            # OUTPUT IS NOT YET DONE RISING
-                app.daylight_output = float(app.daylight_output) + float(app.daylight_stepsize)
-                app.arduino.writeCommand("SET_LAMP", ["W", str(int(app.daylight_output))])
-                app.arduino.writeCommand("ENABLE_LAMP", ["1"])
-
-                app.daylight_status.set("DAYTIME - SUNRISE")
-                app.lamp_state.set("AUTOMATIC CTRL - RAMPING UP")
-                app.devco_slider_lamp.set(int(app.daylight_output))
-            else:
-                # OUTPUT IS DONE RISING
-                app.arduino.writeCommand("SET_LAMP", ["W", str(int(float(app.daylight_brightness.get())))])
-                app.arduino.writeCommand("ENABLE_LAMP", ["1"])
-
-                app.daylight_status.set("DAYTIME")
-                app.lamp_state.set("AUTOMATIC CTRL - FULL OUTPUT")
-                app.devco_slider_lamp.set(int(float(app.daylight_brightness.get())))
-
-        elif app.nightbool:
-            if (app.daylight_output > 0):
-            # OUTPUT IS NOT YET DONE FALLING
-                app.daylight_output = app.daylight_output - app.daylight_stepsize
-                app.arduino.writeCommand("SET_LAMP", ["W", str(int(float(app.daylight_output)))])
-                app.arduino.writeCommand("ENABLE_LAMP", ["1"])
-
-                app.daylight_status.set("DAYTIME - SUNSET")
-                app.lamp_state.set("AUTOMATIC CTRL - RAMPING DOWN")
-                app.devco_slider_lamp.set(int(app.daylight_output))
-            else:
-           # OUTPUT IS NOT YET DONE FALLING
-                app.arduino.writeCommand("SET_LAMP", ["W", str(0)])
-                app.arduino.writeCommand("ENABLE_LAMP", ["0"])
-
-                app.daylight_status.set("NIGHTTIME")
-                app.lamp_state.set("AUTOMATIC CTRL - DISABLED OUTPUT")
-                app.devco_slider_lamp.set(0)
-
-    else:
-        app.daylight_status.set("DAYLIGHT DISABLED")
+    app.daylight_sequence()
 
     if app.arduino.getStatus():
         app.serial_connection_string.set("Connected")
     else:
         app.serial_connection_string.set("Disconnected")
-
-
-    
 
     root.after(int(PROGRAM_CYLCETIME), program)
 root.after(int(PROGRAM_CYLCETIME), program)
