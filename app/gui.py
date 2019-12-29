@@ -30,9 +30,11 @@ class App( Frame ):
 
         # PUMP VARIABLES
         self.pump_enable = []
+        self.pump_enable_prev = []
         self.pump_state = []
         for n in range(NR_PUMP):
             self.pump_enable.append(False)
+            self.pump_enable_prev.append(False)
             self.pump_state.append(StringVar())
             self.pump_state[n].set("pump stopped...")
 
@@ -48,11 +50,27 @@ class App( Frame ):
 
         # LAMP
         self.lamp_enable =[]
+        self.lamp_enable_prev = []
+        self.lamp_output=[]
+        self.lamp_output_prev =[]
         self.lamp_state = []
         for n in range(NR_LAMP):
+            print n
             self.lamp_enable.append(False)
+            self.lamp_enable_prev.append(False)
             self.lamp_state.append(StringVar())
             self.lamp_state[n].set("LAMP DISABLED")
+
+            tmp0 = []
+            tmp1 =[]
+            for m in range(len(CHANNELS_LAMP[n])):
+                tmp0.append(IntVar())
+                tmp1.append(0)
+            self.lamp_output.append(tmp0)
+            self.lamp_output_prev.append(tmp1)
+
+        
+        print self.lamp_output
 
         self.moisture_var = []
         for n in range(NR_MOISTURE):
@@ -107,21 +125,27 @@ class App( Frame ):
         self.create_widgets()
 
     def disable_lamp(self):
-        self.lamp_state.set("LAMP DISABLED")
-        self.arduino.writeCommand("ENABLE_LAMP", ["0"])
+        self.lamp_state[0].set("LAMP DISABLED")
+        self.arduino.writeCommand("ENABLE_LAMP", ["0","0"])
 
         self.enable_relay[0].set(0)     # FANS ON LAMP
         self.toggle_relay()
 
     def enable_lamp(self):
-        self.lamp_state.set("LAMP ENABLED")
-        self.arduino.writeCommand("ENABLE_LAMP", ["1"])
+        self.lamp_state[0].set("LAMP ENABLED")
+        self.arduino.writeCommand("ENABLE_LAMP", ["0","1"])
 
         self.enable_relay[0].set(1)     # FANS ON LAMP
         self.toggle_relay()
 
-    def update_lampW(self, value):
-        self.arduino.writeCommand("SET_LAMP", ["W", str(int(float(value)))])
+    def update_lamp(self, value):
+        # CYLCLE TRHOUGH OUTPUT CHANNELS
+        for n in range(len(self.lamp_output)):
+            for m in range(len(self.lamp_output[n])):
+                if self.lamp_output[n][m].get() != self.lamp_output_prev[n][m]:
+                    # OUTPUT CHANNEL HAS CHANGED
+                    self.lamp_output_prev[n][m] = self.lamp_output[n][m].get()
+                    self.arduino.writeCommand("SET_LAMP", [str(n),str(CHANNELS_LAMP[n][m]), str(int(float(value)))])
 
     def update_daylight_params(self):
         try:
@@ -135,21 +159,21 @@ class App( Frame ):
         
 
     def update_pump(self, value):
-        self.arduino.writeCommand("SET_PUMP", [str(int(float(value))), str(int(self.pump_enable))])
+        self.arduino.writeCommand("SET_PUMP", ["0",str(int(float(value))), str(int(self.pump_enable))])
         if self.pump_enable:
-            self.pump_state.set("pump running...")
+            self.pump_state[0].set("pump running...")
         else:
-            self.pump_state.set("pump stopped...")
+            self.pump_state[0].set("pump stopped...")
 
     def set_pumpEnable(self):
-        self.pump_enable = True
-        self.arduino.writeCommand("ENABLE_PUMP", [str(int(self.pump_enable))])
-        self.pump_state.set("pump running...")
+        self.pump_enable[0] = True
+        self.arduino.writeCommand("ENABLE_PUMP", ["0",str(int(self.pump_enable))])
+        self.pump_state[0].set("pump running...")
 
     def set_pumpDisable(self):
-        self.pump_enable = False
-        self.arduino.writeCommand("ENABLE_PUMP", [str(0)])
-        self.pump_state.set("pump stopped...")
+        self.pump_enable[0] = False
+        self.arduino.writeCommand("ENABLE_PUMP", ["0",str(0)])
+        self.pump_state[0].set("pump stopped...")
 
     def open_serial_connection(self):
         self.arduino.setPort(self.serial_var_port.get())
@@ -338,33 +362,52 @@ class App( Frame ):
         # DEVCO NOTBOOK _ LAMP CONTROL
         self.devco_lamp_frame = Frame(self.devco_notebook)
         self.devco_notebook.add(self.devco_lamp_frame, text = 'LIGHT', sticky=N+S+E+W)
+        self.devco_lamp_notebook = Notebook(self.devco_lamp_frame)
+        self.devco_lamp_notebook.pack(side=TOP , fill = BOTH)
 
-        self.devco_lamp_direct_frame = Frame(self.devco_lamp_frame, bd=2, relief = SUNKEN)
-        self.devco_lamp_direct_frame.pack(side = TOP, fill = BOTH)
-        self.devco_lamp_direct_frame.grid_columnconfigure(0, weight =1)
-        self.devco_lamp_direct_frame.grid_columnconfigure(1, weight =1)
-        self.devco_lamp_direct_frame.grid_columnconfigure(2, weight =1)
-        self.devco_lamp_direct_frame.grid_columnconfigure(3, weight =1)
+        self.devco_label_lampName = []
+        self.devco_label_lampState = []
+        self.devco_label_slider= []
+        self.devco_slider_lamp=[]
+        self.devco_button_lampOff=[]
+        self.devco_button_lampOn=[]
+        self.devco_lamp_direct_frame=[]
+        for n in range(NR_LAMP):
+            self.devco_lamp_direct_frame.append(Frame(self.devco_lamp_frame, bd=2, relief = SUNKEN))
+            self.devco_lamp_notebook.add(self.devco_lamp_direct_frame[n], text = NAMES_LAMP[n], sticky =N+S+E+W)
+            self.devco_lamp_direct_frame[n].grid_columnconfigure(0, weight =1)
+            self.devco_lamp_direct_frame[n].grid_columnconfigure(1, weight =1)
+            self.devco_lamp_direct_frame[n].grid_columnconfigure(2, weight =1)
+            self.devco_lamp_direct_frame[n].grid_columnconfigure(3, weight =1)
+            # LAMP STATE
+            self.devco_label_lampName.append(Label(self.devco_lamp_direct_frame[n], text = NAMES_LAMP[n]))
+            self.devco_label_lampName[n].grid(column = 0, row = (3*n)+0)
 
-        # LAMP STATE
-        self.devco_label_lampState = Label(self.devco_lamp_direct_frame, textvariable = self.lamp_state)
-        self.devco_label_lampState.grid(column = 0, columnspan = 4, row = 0)
+            self.devco_label_lampState.append(Label(self.devco_lamp_direct_frame[n], textvariable = self.lamp_state[n]))
+            self.devco_label_lampState[n].grid(column = 1, columnspan = 3, row = (3*n)+0)
+            
+            tmp0 = []
+            tmp1 = []
+            for m in range(len(CHANNELS_LAMP[n])):
+                # SLIDER LABELS
+                tmp0.append(Label(self.devco_lamp_direct_frame[n], text=(CHANNELS_LAMP[n][m] + "-channel")))
+                tmp1.append(Scale(self.devco_lamp_direct_frame[n], orient= HORIZONTAL, variable = self.lamp_output[n][m], command= self.update_lamp, to = 255))
 
-        # SLIDER LABELS
-        self.devco_label_white = Label(self.devco_lamp_direct_frame, text= "Raw output:")
-        self.devco_label_white.grid(column = 0, row = 1, sticky=S+W)
+            self.devco_label_slider.append(tmp0)
+            self.devco_slider_lamp.append(tmp1)   
 
-        # SLIDERS
-        self.devco_slider_lamp = Scale(self.devco_lamp_direct_frame, orient= HORIZONTAL, command= self.update_lampW, to = 255)
-        self.devco_slider_lamp.grid(column = 1, row = 1, columnspan = 3, sticky=S+W+N+E)
+            for m in range(len(CHANNELS_LAMP[n])):
+                # SLIDERS
+                self.devco_label_slider[n][m].grid(column = 0, row = (3*n)+m+1, sticky=S+W)
+                self.devco_slider_lamp[n][m].grid(column = 1, row = (3*n)+m+1, columnspan = 3, sticky=S+W+N+E)
 
-        # ON BUTTON
-        self.devco_button_lampOff = Button(self.devco_lamp_direct_frame, text= "OFF", command = self.disable_lamp)
-        self.devco_button_lampOff.grid(column = 0, columnspan = 2, row = 2, sticky=N+S+E+W)
+            # ON BUTTON
+            self.devco_button_lampOff.append(Button(self.devco_lamp_direct_frame[n], text= "OFF", command = self.disable_lamp))
+            self.devco_button_lampOff[n].grid(column = 0, columnspan = 2, row = (3*n)+len(CHANNELS_LAMP[n])+1, sticky=N+S+E+W)
 
-        # OFF BUTTON
-        self.devco_button_lampOn = Button(self.devco_lamp_direct_frame, text= "ON", command = self.enable_lamp)
-        self.devco_button_lampOn.grid(column = 2, columnspan = 2, row = 2, sticky=N+S+E+W)
+            # OFF BUTTON
+            self.devco_button_lampOn.append(Button(self.devco_lamp_direct_frame[n], text= "ON", command = self.enable_lamp))
+            self.devco_button_lampOn[n].grid(column = 2, columnspan = 2, row = (3*n)+len(CHANNELS_LAMP[n])+1, sticky=N+S+E+W)
 
         # AUTOMATIC LIGHT MODE
         self.devco_lamp_daylight_frame = Frame(self.devco_lamp_frame, bd=2, relief = SUNKEN)
@@ -422,7 +465,7 @@ class App( Frame ):
         self.devco_notebook.add(self.devco_hydro_frame, text = 'HYDROLICS', sticky=N+S+E+W)
 
         # PUMP RUNNING FB
-        self.devco_label_pumpRunning = Label(self.devco_hydro_frame, textvariable = self.pump_state)
+        self.devco_label_pumpRunning = Label(self.devco_hydro_frame, textvariable = self.pump_state[0])
         self.devco_label_pumpRunning.grid(column = 0, row = 0, columnspan = 4, sticky=S+W+N+E)
 
         # PUMP SLIDER
@@ -600,7 +643,7 @@ def animate(i):
             valH1[1,0] = float(tmpVal)   
 
         # MOISTURE
-        tmpVal = app.arduino.readCommand("GET_MOISTURE")
+        tmpVal = app.arduino.readCommand("GET_MOISTURE",["0"])
         #tmpVal = str( valM[1,0] + 1 )
         app.moisture_var.set(tmpVal)
 
@@ -612,7 +655,7 @@ def animate(i):
             valM[1,0] = float(tmpVal)
 
         # PUMP
-        tmpVal = app.arduino.readCommand("GET_PUMP")
+        tmpVal = app.arduino.readCommand("GET_PUMP",["0"])
         #tmpVal = str( (valP[1,0]+1) % 2 )
         try:
             float(tmpVal)
@@ -623,7 +666,7 @@ def animate(i):
         
 
         # LIGHT
-        tmpVal = app.arduino.readCommand("GET_LAMP")
+        tmpVal = app.arduino.readCommand("GET_LAMP",["0"])
         #tmpVal = str( (valL[1,0]+1) % 2 )
         try:
             float(tmpVal)
@@ -679,7 +722,7 @@ def animate(i):
         pumpPlot.plot( valPneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valPneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
 
 #  A D D   P L O T
-f = pp.Figure(figsize=(6,10),dpi = 75)
+f = pp.Figure(figsize=(10,10),dpi = 75)
 gs = gridspec.GridSpec(4,1, height_ratios=[3,1,3,1])
 f.set_tight_layout(True)
 

@@ -27,22 +27,22 @@ void setup(){
   Serial.begin(115200);
 
   // INIT GROW.H DEVICES
-  lamp.init("RGBW LED PWM output",11,10,9,8);                       // SETUP LAMP - RGBWLed ON PINS 11,10,9,8
-  pump.init(7,6,"pump on H-Bridge board");                          // SETUP PUMP - MotoDriver DIR=7, PWM=6
-  moisture.init(A0, "water sensor - analog input", 1023, 100, "%"); // SETUP MOISTURE - AnalogSensor on pin=A0, maxRawInput=1023, maxUserVal= 100%
+  lamp[0].init("RGBW LED PWM output",11,10,9,8);                       // SETUP LAMP - RGBWLed ON PINS 11,10,9,8
+  pump[0].init(7,6,"pump on H-Bridge board");                          // SETUP PUMP - MotoDriver DIR=7, PWM=6
+  moisture[0].init(A0, "water sensor - analog input", 1023, 100, "%"); // SETUP MOISTURE - AnalogSensor on pin=A0, maxRawInput=1023, maxUserVal= 100%
   thermocouple[0].init(A1, "thermocouple", 1023, 5, "V");              // SETUP THERMOCOUPLE VOLTAGEAnalogSensor on pin=A1, maxRawInput=1023, maxUserVal= 5V
   thermocouple[1].init(A2, "thermocouple", 1023, 5, "V");              // SETUP THERMOCOUPLE VOLTAGEAnalogSensor on pin=A1, maxRawInput=1023, maxUserVal= 5V
-  moisturePower.init(22, "water sensor - power enable");            // SETUP DigitalOutput on pin=22
-  relayboard[0].init(24, "lighting fan");                           // SETUP DigitalOutput on pin=24
-  relayboard[1].init(26, "relay1");                                 // SETUP DigitalOutput on pin=26
-  vlotter.init(23, "vlotter");                                      // SETUP DigitalInput on pin=23
+  moisturePower[0].init(22, "water sensor - power enable");            // SETUP DigitalOutput on pin=22
+  relayboard[0].init(24, "lighting fan");                              // SETUP DigitalOutput on pin=24
+  relayboard[1].init(26, "relay1");                                    // SETUP DigitalOutput on pin=26
+  vlotter[0].init(23, "vlotter");                                      // SETUP DigitalInput on pin=23
 }
 
 void loop(){
   runtime = millis();
 
-  if(vlotter.state()) { pump.interlock(true);}
-  else { pump.interlock(false); };
+  if(vlotter[0].state()) { pump[0].interlock(true);}
+  else { pump[0].interlock(false); };
 
   if(bNewMessage){
     serialMsg.message_handler(serialString); // decode serial string
@@ -65,14 +65,16 @@ void doCommand(){
 
 // PRINT MOISTURE VALUE
     case GET_MOISTURE:
+      tmpInt[0] = serialMsg.message.sParameter[0].toInt();  // GET CMD INDEX
+      
       // GET VALUE
-      moisturePower.set(true);    // enable power
+      moisturePower[tmpInt[0]].set(true);    // enable power
       delay(10);                  // let the power settle
-      moisture.refresh();         // get value
-      moisturePower.set( false);  // disable power
+      moisture[tmpInt[0]].refresh();         // get value
+      moisturePower[tmpInt[0]].set( false);  // disable power
 
       // PRINT VALUE
-      Serial.print(moisture.getMetricValue()); //print raw value
+      Serial.print(moisture[tmpInt[0]].getMetricValue()); //print raw value
       
       // COMMAND DONE
       serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
@@ -82,26 +84,25 @@ void doCommand(){
 // PRINT TEMPERATURE VALUE
     case GET_TEMP:
       // GET TC MEASUREMENT
-      tmpInt[0] = serialMsg.message.sParameter[0].toInt();  // GET TC INDEX
+      delay(2); // DELAY SERIAL COMM
+      tmpInt[0] = serialMsg.message.sParameter[0].toInt();  // GET CMD INDEX
+      
       thermocouple[tmpInt[0]].refresh();                    // UPDATE TC VALUE
       vm = thermocouple[tmpInt[0]].getMetricValue();        // TRANSLATE TO MEASURED VOLTAGE
-      delay(2);                                             // DELAY SERIAL COMM
-
-      // GET TEMPERATURE
-      if (vin-vm != 0) {
-      // PREVENT DIVIDE BY ZERO
-        rntc = (vm*rc[tmpInt[0]])/(vin-vm);  //GET RESISTANCE OF THERMOCOUPLE 
+      
+      if (vin-vm != 0) { // PREVENT DIVIDE BY ZERO
+        rntc = (vm*rc[tmpInt[0]])/(vin-vm);                 //GET RESISTANCE OF THERMOCOUPLE 
 
         // TRANSFORM RESISTANCE TO TEMPERATURE
-        temp = rntc / Rn;         // A   =   Rntc/Rn    [-]
-        temp = log(temp);         // tmp =   ln(Rntc/Rn)    [-]
-        temp /= coeffB;           // tmp =   ln(Rntc/Rn) / coeff   = Tntc^-1 - Tn^-1   [K]
-        temp += 1 / (Tn +273.15); // tmp = Tntc^-1  [K]
-        temp = 1/ temp;           // tmp = Tntc   [K]
-        temp -= 273.15;           // tmp = Tntc   [C] 
+        temp = rntc / Rn;                                   // A   =   Rntc/Rn    [-]
+        temp = log(temp);                                   // tmp =   ln(Rntc/Rn)    [-]
+        temp /= coeffB;                                     // tmp =   ln(Rntc/Rn) / coeff   = Tntc^-1 - Tn^-1   [K]
+        temp += 1 / (Tn +273.15);                           // tmp = Tntc^-1  [K]
+        temp = 1/ temp;                                     // tmp = Tntc   [K]
+        temp -= 273.15;                                     // tmp = Tntc   [C] 
         
-        Serial.print(temp); // PRINT TEMPERATURE VALUE
-      }
+        // PRINT TEMPERATURE VALUE
+        Serial.print(temp); }
       else { Serial.print(420); };
         
       // COMMAND DONE
@@ -112,8 +113,8 @@ void doCommand(){
 // SET RELAY OUTPUT
     case SET_RELAY:
       delay(2); // DELAY FOR SERIAL COMM
-      tmpInt[0] = serialMsg.message.sParameter[0].toInt(); // GET RELAY INDEX
-      tmpInt[1] = serialMsg.message.sParameter[1].toInt(); // GET RELAY OUTPUT
+      tmpInt[0] = serialMsg.message.sParameter[0].toInt(); // GET CMD RELAY INDEX
+      tmpInt[1] = serialMsg.message.sParameter[1].toInt(); // GET CMD RELAY OUTPUT
       
       // SET RELAY OUTPUT
       if(tmpInt[1] == 0){ relayboard[tmpInt[0]].set(false);}
@@ -127,12 +128,11 @@ void doCommand(){
 // ENABLE/DISABLE LAMP PWM
     case ENABLE_LAMP:
       delay(2);   // DELAY FOR SERIAL COMM
-      tmpBool[0] = bool(serialMsg.message.sParameter[0].toInt());  // GET ANABLE BIT
+      tmpInt[0] = bool(serialMsg.message.sParameter[0].toInt());    // GET CMD INDEX
+      tmpBool[0] = bool(serialMsg.message.sParameter[1].toInt());   // GET CMD ENABLE BIT
 
       // ENABLE LAMP
-      lamp.enableOutput(tmpBool[0]);                        // ENABLE OUTPUT TO LAMP
-      if(lamp.getStatus()>0)  { relayboard[0].set(true); }  // ENABLE FANS
-      else                    { relayboard[0].set(false); };
+      lamp[tmpInt[0]].enableOutput(tmpBool[0]);     // ENABLE OUTPUT TO LAMP
       
       // COMMAND DONE
       serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
@@ -141,23 +141,20 @@ void doCommand(){
 
 // SET LAMP PWM OUTPUT
     case SET_LAMP:
-      delay(2);
-      tmpString = serialMsg.message.sParameter[0];      // SET RGBW STRING
-      tmpInt[0] = serialMsg.message.sParameter[1].toInt(); // SET PWM OUTPUT VALUE
+      delay(2); // DELAY FOR SERIAL COMM
+      tmpInt[0] = serialMsg.message.sParameter[0].toInt();  // GET CMD INDEX
+      tmpString = serialMsg.message.sParameter[1];          // GET CMD RGBW STRING
+      tmpInt[1] = serialMsg.message.sParameter[2].toInt();  // GET CMD PWM OUTPUT VALUE
 
       // CYCLE THROUGH RGBW STRING PARAMETER & SET OUTPUT
       for(int i=0; i<=tmpString.length()-1; i++){
         tmpChar[0] = tmpString[i]; // NEW CHAR
         // SET PWM FOR CHANNEL
-        if(tmpChar[0] == 'R'){ lamp.set(R, tmpInt[0]);}
-        else if(tmpChar[0] == 'G'){ lamp.set(G, tmpInt[0]);}
-        else if(tmpChar[0] == 'B'){ lamp.set(B, tmpInt[0]);}
-        else if(tmpChar[0] == 'W'){ lamp.set(W, tmpInt[0]);}
+        if(tmpChar[0] == 'R'){ lamp[tmpInt[0]].set(R, tmpInt[1]);}
+        else if(tmpChar[0] == 'G'){ lamp[tmpInt[0]].set(G, tmpInt[1]);}
+        else if(tmpChar[0] == 'B'){ lamp[tmpInt[0]].set(B, tmpInt[1]);}
+        else if(tmpChar[0] == 'W'){ lamp[tmpInt[0]].set(W, tmpInt[1]);}
       }
-
-      // ENABLE/DISABLE FAN BASED ON LAMP STATUS
-      if(lamp.getStatus()>0)  { relayboard[0].set(true); }
-      else                    { relayboard[0].set(false); };
       
       // COMMAND DONE
       serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
@@ -166,8 +163,11 @@ void doCommand(){
 
 // PRINT ACTUAL OUTPUT VALUE OF LAMP
     case GET_LAMP:
-      delay(2);   // DELAY FOR SERIAL COMM
-      Serial.print(lamp.getStatus()); // PRINT CURRENT LAMP OUTPUT
+      delay(2); // DELAY FOR SERIAL COMM
+      tmpInt[0] = serialMsg.message.sParameter[0].toInt();  // GET CMD INDEX
+
+      // PRINT CURRENT LAMP OUTPUT
+      Serial.print(lamp[tmpInt[0]].getStatus()); 
       
       // COMMAND DONE
       serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
@@ -177,10 +177,11 @@ void doCommand(){
 // ENABLE/DISABLE PUMP PWM OUTPUT
     case ENABLE_PUMP:
       delay(2); // DELAY FOR SERIAL COMM
-      tmpBool[0] = bool(serialMsg.message.sParameter[0].toInt());  // GET ENABLE BIT
+      tmpInt[0] = serialMsg.message.sParameter[0].toInt();         // GET CMD INDEX
+      tmpBool[0] = bool(serialMsg.message.sParameter[1].toInt());  // GET CMD ENABLE BIT
 
       // SET PUMP OUTPUT
-      pump.enableOutput(tmpBool[0]);
+      pump[tmpInt[0]].enableOutput(tmpBool[0]);
       
       // COMMAND DONE
       serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
@@ -189,12 +190,14 @@ void doCommand(){
 
 // SET PUMP PWM OUTPUT
     case SET_PUMP:
-      tmpInt[0] = serialMsg.message.sParameter[0].toInt();         // GET PWM VALUE
-      tmpBool[0] = bool(serialMsg.message.sParameter[1].toInt());  // GET ENABLE BIT
+      delay(2);   // DELAY FOR SERIAL COMMS
+      tmpInt[0] = serialMsg.message.sParameter[0].toInt();         // GET CMD INDEX
+      tmpInt[1] = serialMsg.message.sParameter[1].toInt();         // GET CMD PWM VALUE
+      tmpBool[0] = bool(serialMsg.message.sParameter[2].toInt());  // GET CMD ENABLE BIT
 
       // SET OUTPUT
-      pump.setPWM(byte(tmpInt[0]));
-      pump.enableOutput(tmpBool[0]);
+      pump[tmpInt[0]].setPWM(byte(tmpInt[1]));
+      pump[tmpInt[0]].enableOutput(tmpBool[0]);
       
       // COMMAND DONE
       serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
@@ -204,8 +207,11 @@ void doCommand(){
 // GET ACTUAL PUMP PWM OUTPUT
     case GET_PUMP:
       delay(2);   // DELAY FOR SERIAL COMMS
-      tmpInt[0] = pump.getStatus();  // GET CURRENT PUMP OUTPUT
-      Serial.print(tmpInt[0]);       // PRINT CURRENT PUMP OUTPUT
+      tmpInt[0] = serialMsg.message.sParameter[0].toInt();  // GET CMD INDEX
+      tmpInt[1] = pump[tmpInt[0]].getStatus();              // GET CMD CURRENT PUMP OUTPUT
+
+      // PRINT CURRENT PUMP OUTPUT
+      Serial.print(tmpInt[1]);       
       
       // COMMAND DONE
       serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
@@ -215,8 +221,11 @@ void doCommand(){
 // SET BIAS RESISTANCE FOR TC
     case SET_TEMP_RC:
       delay(2);
-      tmpInt[0] = serialMsg.message.sParameter[0].toInt();
-      rc[tmpInt[0]] = serialMsg.message.sParameter[1].toInt();
+      tmpInt[0] = serialMsg.message.sParameter[0].toInt();  // GET CMD INDEX
+      tmpInt[1] = serialMsg.message.sParameter[1].toInt();  // GET CMD RC-VALUE
+      
+      // SET BIAS RESISTANCE VALUE
+      rc[tmpInt[0]] = tmpInt[1];
       
       // COMMAND DONE
       serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
@@ -255,36 +264,47 @@ void printHelp(){
   Serial.println("  COMMAND(PAR1, PAR2, PAR3, ETC)\n");
   Serial.println("");
   Serial.println("List of commands:");
-  Serial.println("   ENABLE_LAMP( enable[0/1] )");
-  Serial.println("   ENABLE_PUMP( enable[0/1] )"); 
-  Serial.println("   SET_LAMP   ( colour[R,B,G,W],  value[0-255], enable[0/1] )");
-  Serial.println("   SET_PUMP   ( value[0-255],   enable[0/1] )"); 
-  Serial.println("   SET_RELAY  ( index[0-1],   value[0/1] )");
-  Serial.println("   SET_TEMP_RC  ( TCindex[0-1],   biasResitiance[...] )");
-  Serial.println("   GET_MOISTURE( )");
-  Serial.println("   GET_TEMP( index[0-1] )");
-  Serial.println("   GET_LAMP( )");
-  Serial.println("   GET_PUMP( )"); 
+  Serial.println("   ENABLE_LAMP  ( index[0-1], enable[0/1] )");
+  Serial.println("   SET_LAMP     ( index[0-1], colour[R,B,G,W],  value[0-255], enable[0/1] )");
+  Serial.println("   GET_LAMP     ( index[0-1] )");
+  Serial.println("   ENABLE_PUMP  ( index[0-1], enable[0/1] )"); 
+  Serial.println("   SET_PUMP     ( index[0-1], value[0-255],   enable[0/1] )"); 
+  Serial.println("   GET_PUMP     ( index[0-1] )"); 
+  Serial.println("   SET_RELAY    ( index[0-7],   value[0/1] )");
+  Serial.println("   GET_TEMP     ( index[0-1] )");
+  Serial.println("   SET_TEMP_RC  ( index[0-1],   biasResitance[...] )");
+  Serial.println("   GET_MOISTURE ( index[0-1] )");
   Serial.println(" - - - - - - - - - - - - - - - - - - ");
   Serial.println("DEVICE CONNECTIONS");
   Serial.println("");
-  moisture.help();
-  Serial.println("");
-  moisturePower.help();
-  Serial.println("");
-  vlotter.help();
-  Serial.println("");
-  thermocouple[0].help();
-  Serial.println("");
-  thermocouple[1].help();
-  Serial.println("");
-  relayboard[0].help(); 
-  Serial.println("");
-  relayboard[1].help(); 
-  Serial.println("");
-  lamp.help();
-  Serial.println("");
-  pump.help();
+  
+  for(int n=0;n<NR_MOISTURE; n++){
+    moisture[n].help();
+    moisturePower[n].help();
+    Serial.println("");
+    }
+  
+  for(int n=0;n<NR_PUMP; n++){
+    pump[n].help();
+    vlotter[n].help();
+    Serial.println("");
+    }
+    
+  for(int n=0;n<NR_RELAY; n++){
+    relayboard[n].help(); 
+    Serial.println("");
+    }
+    
+  for(int n=0;n<NR_LAMP; n++){
+    lamp[n].help();
+    Serial.println("");
+    }
+    
+  for(int n=0;n<NR_TC; n++){ 
+    thermocouple[n].help();
+    Serial.println("");
+    }
+  
   Serial.println(" - - - - - - - - - - - - - - - - - - ");
   Serial.println("====================================================");
   Serial.print('@');
