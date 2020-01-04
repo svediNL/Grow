@@ -14,7 +14,7 @@ Through GUI:
     - Current values displayed seperatly
     
 The project is currently equiped with following devices:
-  - Water sensor  (0V-5V)
+  - Analog moisture sensor  (0V-5V)
   - Float switch  (Normally closed, connect to ground)
   - 1 thermistor
   - 2 relay outputs
@@ -29,6 +29,10 @@ Software suite for plant environment control.
 ## /Grow/app
 Application directory for main application. 
 
+### /Grow/app/config.py
+Configuration of the grow setup. 
+Device can be defined here and must be in accordance with the configuration installed on the arduino slave (grow.h)
+
 ### /Grow/app/gui.py
 Main program.
 
@@ -42,3 +46,6 @@ Custom library for communication with arduino.
 Dependencies: `pySerial`
 
 ## /Grow/arduino
+
+### /Grow/arduino/grow.h
+Devices are defined here.
