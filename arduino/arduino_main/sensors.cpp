@@ -10,21 +10,21 @@ void AnalogSensor::init(int inputpin, String devName, int fsv=1023, float mfsv=3
 }
 void AnalogSensor::help(){
    
-  Serial.print("Device: ");
+  Serial.print("  ");
   Serial.print(deviceName);
   Serial.print("\n\r");
 
-  Serial.print("   Input pin: ");
+  Serial.print("   - Input pin: ");
   if (pin >= 54){   Serial.print(sAnalogPin[pin-54]); }
   else if (pin >= 14){  Serial.print(sAnalogPin[pin-14]);}
   else { Serial.print(pin); };
   Serial.print("\n\r");
     
-  Serial.print("   Raw Full Scale Value: ");
+  Serial.print("   - Raw Full Scale Value: ");
   Serial.print(rawFullScaleValue);
   Serial.print("\n\r");
   
-  Serial.print("   Metric Full Scale Value: ");
+  Serial.print("   - Metric Full Scale Value: ");
   Serial.print(metricFullScaleValue);
   Serial.print(" ");
   Serial.print(metric);
@@ -49,12 +49,12 @@ void DigitalInput::init(int input, String devName){
   pinstate = digitalRead(pin);
 };
 void DigitalInput::help(){
-  Serial.print("Device: ");
+  Serial.print("  ");
   Serial.print(deviceName);
   Serial.print("\n\r");
   delay(500);
   
-  Serial.print("   Input on pin: ");
+  Serial.print("   - Input on pin: ");
   Serial.print(pin);
   Serial.print("\n\r");
 }

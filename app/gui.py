@@ -22,9 +22,10 @@ from configuration import *
 
 import time
 
-# create app of type Frame
+# DEFINE APP CLASS AS BASE FRAME
 class App( Frame ):
 
+# INIT
     def __init__(self, master=None):
         Frame.__init__(self, master)
 
@@ -32,11 +33,15 @@ class App( Frame ):
         self.pump_enable = []
         self.pump_enable_prev = []
         self.pump_state = []
+        self.pump_pwm = []
+        self.overrule_pump_interlock = []
         for n in range(NR_PUMP):
             self.pump_enable.append(False)
             self.pump_enable_prev.append(False)
+            self.pump_pwm.append(0)
             self.pump_state.append(StringVar())
             self.pump_state[n].set("pump stopped...")
+            self.overrule_pump_interlock.append(IntVar())
 
         # RELAY
         self.enable_relay=[]
@@ -48,11 +53,29 @@ class App( Frame ):
         self.flow_state = IntVar()
         self.flow_state.set(NR_FLOW)
 
+        self.flow_control_relays = []
+        for n in range( len(VALVES_FLOW) ):
+            for m in range( len(VALVES_FLOW[n]) ):
+                if len(self.flow_control_relays) > 0:
+                    append_valves_list = True
+                    for k in range(len(self.flow_control_relays)):
+                        if self.flow_control_relays[k] == VALVES_FLOW[n][m]:
+                            append_valves_list = False
+                    if append_valves_list:
+                        self.flow_control_relays.append(VALVES_FLOW[n][m])
+                else:
+                    print "except"
+                    self.flow_control_relays.append(VALVES_FLOW[n][m])
+                print self.flow_control_relays
+        self.flow_control_relays.sort()
+        print self.flow_control_relays
+
+
         # LAMP
         self.lamp_enable =[]
         self.lamp_enable_prev = []
-        self.lamp_output=[]
-        self.lamp_output_prev =[]
+        self.lamp_output=[]         #  [LAMP_INDEX] [LAMP_CHANNEL]
+        self.lamp_output_prev =[] 
         self.lamp_state = []
         for n in range(NR_LAMP):
             print n
@@ -79,19 +102,6 @@ class App( Frame ):
         self.temperature_var = []
         for n in range(NR_THERMO):
             self.temperature_var.append(StringVar())
-
-
-        # SERIAL VARIABLES
-        self.serial_var_string = StringVar()
-        self.serial_connection_string = StringVar()
-        self.serial_var_port = StringVar()
-        self.serial_var_port.set("/dev/ttyACM0")
-        self.arduino = SlaveComm("/dev/ttyACM0", 115200)
-
-        if self.arduino.getStatus():
-            self.serial_connection_string.set("Connected")
-        else:
-            self.serial_connection_string.set("Disconnected")
 
         # DAYLIGHT SEQUENCE VARIABLES
         self.enable_daylight = IntVar()
@@ -122,20 +132,88 @@ class App( Frame ):
         self.str_time = StringVar()
         self.str_time.set(".....")
 
+        # SERIAL VARIABLES
+        self.serial_var_string = StringVar()
+        self.serial_connection_string = StringVar()
+        self.serial_var_port = StringVar()
+        self.serial_var_port.set("/dev/ttyACM0")
+        self.arduino = SlaveComm("/dev/ttyACM0", 115200)
+
+        # CREATE WIDGETS
         self.create_widgets()
 
+        # GET/SET STATUS ON ARDUINO
+        if self.arduino.getStatus():
+            self.serial_connection_string.set("Connected")
+
+            # WRITE DEFAULT VALUES
+            for i in range(NR_RELAY):
+                self.enable_relay[i].set(0)
+                self.arduino.writeCommand( "SET_RELAY", [str(i), str(self.enable_relay[i].get())] )
+ 
+            for i in range(NR_PUMP):
+                self.devco_slider_pumpValue.set(0)
+                self.pump_enable[i] = False
+                self.arduino.writeCommand( "SET_PUMP", [str(i) ,str(self.devco_slider_pumpValue.get()), str(int(self.pump_enable[i]))] )
+
+            for i in range(len(self.lamp_output)):
+                for j in range(len(self.lamp_output[i])):
+                    self.lamp_output[i][j].set(0)
+                    self.arduino.writeCommand("SET_LAMP", [str(i),str(CHANNELS_LAMP[i][j]), str(int(float( self.lamp_output[i][j].get() )))])
+        else:
+            self.serial_connection_string.set("Disconnected")
+
+# SERIAL FUNCTIONS
+    def open_serial_connection(self):
+        self.arduino.setPort(self.serial_var_port.get())
+        self.arduino.openConnection()
+
+        if self.arduino.getStatus():
+            self.serial_connection_string.set("Connected")
+
+            # WRITE DEFAULT VALUES
+            for i in range(NR_RELAY):
+                self.arduino.writeCommand( "SET_RELAY", [str(i), str(self.enable_relay[i].get())] )
+ 
+            for i in range(NR_PUMP):
+                self.arduino.writeCommand( "SET_PUMP", [ str(i),str(self.pump_pwm[0]), str(int(self.pump_enable[0]))] )
+
+            for i in range(len(self.lamp_output)):
+                for j in range(len(self.lamp_output[i])):
+                    self.arduino.writeCommand("SET_LAMP", [str(i),str(CHANNELS_LAMP[i][j]), str(int(float( self.lamp_output[i][j].get() )))])
+
+        else:
+            self.serial_connection_string.set("Disconnected")
+
+    def close_serial_connection(self):
+        self.arduino.closeConnection()
+        if self.arduino.getStatus():
+            self.serial_connection_string.set("Connected")
+        else:
+            self.serial_connection_string.set("Disconnected")
+
+    def write_serial_string(self):
+        self.arduino.writeString(self.serial_var_string.get())
+        self.serial_var_string.set("")
+
+    def read_serial_string(self):
+        self.arduino.readCommand(self.serial_var_string.get())
+        self.serial_var_string.set("")
+
+# LIGHTING FUNCTIONS
     def disable_lamp(self):
         self.lamp_state[0].set("LAMP DISABLED")
         self.arduino.writeCommand("ENABLE_LAMP", ["0","0"])
 
-        self.enable_relay[0].set(0)     # FANS ON LAMP
+        self.enable_relay[6].set(0)     # FANS ON LAMP
         self.toggle_relay()
 
     def enable_lamp(self):
         self.lamp_state[0].set("LAMP ENABLED")
         self.arduino.writeCommand("ENABLE_LAMP", ["0","1"])
 
-        self.enable_relay[0].set(1)     # FANS ON LAMP
+        self.enable_relay[0].set(1)     # ENABLE 12V (FOR FAN & PWM LEVEL BOOSTER)
+        self.enable_relay[6].set(1)     # FANS ON LAMP
         self.toggle_relay()
 
     def update_lamp(self, value):
@@ -156,59 +234,43 @@ class App( Frame ):
             print "Value Error"
 
         return True 
-        
 
+# HYDROLIC FUNCTIONS
     def update_pump(self, value):
-        self.arduino.writeCommand("SET_PUMP", ["0",str(int(float(value))), str(int(self.pump_enable))])
-        if self.pump_enable:
-            self.pump_state[0].set("pump running...")
+        self.pump_pwm[0] = int(float(value))
+        self.arduino.writeCommand("SET_PUMP", ["0",str(self.pump_pwm[0]), str(int(self.pump_enable[0]))] )
+        if self.pump_enable[0]:
+            self.pump_state[0].set("PUMP & VALVES ENABLED")
+            self.toggle_pump_interlock()
         else:
-            self.pump_state[0].set("pump stopped...")
+            self.pump_state[0].set("PUMP STOPPED")
 
     def set_pumpEnable(self):
-        self.pump_enable[0] = True
-        self.arduino.writeCommand("ENABLE_PUMP", ["0",str(int(self.pump_enable))])
-        self.pump_state[0].set("pump running...")
+        for n in range(NR_PUMP):
+            self.pump_enable[n] = True
+            self.arduino.writeCommand("ENABLE_PUMP", ["0",str(int(self.pump_enable[0]))])
+            self.pump_state[0].set("PUMP & VALVES ENABLED")
+            self.set_flow_circuit()
 
     def set_pumpDisable(self):
         self.pump_enable[0] = False
         self.arduino.writeCommand("ENABLE_PUMP", ["0",str(0)])
-        self.pump_state[0].set("pump stopped...")
+        self.pump_state[0].set("PUMP STOPPED")
+        self.reset_flow_circuit()
 
-    def open_serial_connection(self):
-        self.arduino.setPort(self.serial_var_port.get())
-        self.arduino.openConnection()
 
-        if self.arduino.getStatus():
-            self.serial_connection_string.set("Connected")
+    def toggle_pump_interlock(self):
+        if FORCE_INTERLOCK[self.flow_state.get()] == True:
+            app.overrule_pump_interlock[0].set(0)
+
+        if self.overrule_pump_interlock[0].get() == 0:
+            self.arduino.writeCommand("IGNORE_PUMP_INTERLOCK", ["0",str(0)])
         else:
-            self.serial_connection_string.set("Disconnected")
-
-    def close_serial_connection(self):
-        self.arduino.closeConnection()
-        if self.arduino.getStatus():
-            self.serial_connection_string.set("Connected")
-        else:
-            self.serial_connection_string.set("Disconnected")
-
-    def write_serial_string(self):
-        self.arduino.writeString(self.serial_var_string.get())
-        self.serial_var_string.set("")
-
-    def read_serial_string(self):
-        self.arduino.readCommand(self.serial_var_string.get())
-        self.serial_var_string.set("")
-
-    def toggle_relay(self):
-        for n in range(NR_RELAY):
-            if self.enable_relay_prev[n] != self.enable_relay[n].get():
-                self.enable_relay_prev[n] = self.enable_relay[n].get()
-                self.arduino.writeCommand("SET_RELAY", [str(n), str(self.enable_relay[n].get())])
+            self.arduino.writeCommand("IGNORE_PUMP_INTERLOCK", ["0",str(1)])
 
     def set_flow_circuit(self):
-        # DEFAULT ALL VALVES TO CLOSED
-        for n in range(NR_RELAY):
-            self.enable_relay[n].set(0)
+    # SET VALVES BASED ON SELECTED FLOW CIRCUIT
+        self.reset_flow_circuit()
 
         # OPEN VALVES BASED ON SELECTED FLOW CIRCUIT
         if self.flow_state.get() == NR_FLOW:
@@ -216,45 +278,69 @@ class App( Frame ):
             print "DISABLED"
         else:
         # OPEN VALVES
-            for n in range(len(VALVES_FLOW[self.flow_state.get()])):
-                print VALVES_FLOW[self.flow_state.get()][n]
-                tmp = VALVES_FLOW[self.flow_state.get()][n]
+            for m in range(len( VALVES_FLOW[self.flow_state.get()] )):
+                print VALVES_FLOW[self.flow_state.get()][m]
+                tmp = VALVES_FLOW[self.flow_state.get()][m]
                 self.enable_relay[tmp].set(1)
 
         # WRITE/SET ACTUAL OUTPUT
         self.toggle_relay()
+        self.toggle_pump_interlock()
 
+    def reset_flow_circuit(self):
+    # DEFAULT ALL VALVES TO CLOSED
+        for n in range(NR_RELAY):
+        # ITERATE VALVE INDEX
+            for m in range(len(self.flow_control_relays)):
+            # ITERATE FLOW CONTROL VALVE INDEX
+                if n == self.flow_control_relays[m]:
+                # SET VALVE RELAY 0
+                    self.enable_relay[n].set(0)
+
+        # WRITE/SET ACTUAL OUTPUT
+        self.toggle_relay()
+
+    def toggle_relay(self):
+        for n in range(NR_RELAY):
+            if self.enable_relay_prev[n] != self.enable_relay[n].get():
+                self.enable_relay_prev[n] = self.enable_relay[n].get()
+                self.arduino.writeCommand("SET_RELAY", [str(n), str(self.enable_relay[n].get())])
+
+# BUILD GUI
     def create_widgets(self):
-        # M A I N   F R A M E
+    # M A I N   F R A M E
         # CREATE MAIN FRAME
         self.mainframe = Frame(self)
         #self.mainframe.pack(fill = BOTH, expand = True)
         self.mainframe.grid(column = 0, row=0, sticky=E+W)
 
-        # H E A D E R   F R A M E
+    # H E A D E R   F R A M E
         # CREATE HEADER FRAME
         self.headerFrame=Frame(self.mainframe, bd=2, relief = SUNKEN)
         #self.headerFrame.pack(fill = BOTH, side = TOP, expand = True)
         self.headerFrame.grid(column = 0, columnspan = 2, row=0, sticky=N+S+E+W)
+        self.headerFrame.grid_columnconfigure(0, weight =1)
+        self.headerFrame.grid_columnconfigure(1, weight =1)
+
 
         # HEADER TEXT
-        self.label_header = Label(self.headerFrame, text= " +- ~ - ~ - ~ - ~ - ~ -+  G R O W   M A S T E R     v1.4  +- ~ - ~ - ~ - ~ - ~ -+ ")
+        self.label_header = Label(self.headerFrame, text= " +- ~ - ~ - ~ - ~ - ~ -+  G R O W   M A S T E R     v1.5  +- ~ - ~ - ~ - ~ - ~ -+ ")
         #self.label_header.pack(side = LEFT)
         self.label_header.grid(column = 0, row=0, sticky=N+S+W)
 
         # CURRENT TIME LABEL
         self.label_time = Label(self.headerFrame, textvariable = self.str_time)
         #self.label_time.pack(side = RIGHT)
-        self.label_time.grid(column = 0, row=0, sticky=N+S+E)
+        self.label_time.grid(column = 1, row=0, sticky=N+S+E)
 
 
-        # C O N T E N T   F R A M E
+    # C O N T E N T   F R A M E
         # CREATE CONTENT FRAME (PLOT AREA)
         self.contentFrame=Frame(self.mainframe, bd=2, relief = SUNKEN)
         #self.contentFrame.pack(side = BOTTOM, expand = True)
-        self.contentFrame.grid(column = 0, row=0, sticky=N+S+E+W)
+        self.contentFrame.grid(column = 0, row=1, sticky=N+S+E+W)
 
-        # P L O T   F R A M E  
+    # P L O T   F R A M E  
         self.plotFrame = Frame(self.contentFrame, bd=1, relief = SUNKEN)
         #self.plotFrame.pack(fill = Y, side = LEFT, expand = True)
         self.plotFrame.grid(column = 0, row=0, sticky=N+S+E+W)
@@ -264,13 +350,15 @@ class App( Frame ):
         self.plot_canvas.show()
         self.plot_canvas.get_tk_widget().pack()
 
-        # D I R E C T   C O N T R O L   F R A M E
+
+    # D I R E C T   C O N T R O L   F R A M E
         # CREATE DIRECT CONTROL FRAME
         self.dicoFrame = Frame(self.contentFrame, width = 600, bd=1, relief = SUNKEN)
         #self.dicoFrame.pack(fill = BOTH, side = RIGHT, expand = True)
         self.dicoFrame.grid(column = 1, row=0, sticky=N+S+E+W)
 
-        # S E R I A L  F R A M E
+
+    #   S E R I A L  F R A M E
         # ADD SERIAL FRAME TO DICO FRAME
         self.serial_frame = Frame(self.dicoFrame, bd=1, relief = SUNKEN)
         #self.serial_frame.pack(side = TOP, fill = Y, expand = True)
@@ -316,7 +404,8 @@ class App( Frame ):
         self.serial_button_write= Button(self.serial_interfaceFrame, text = "write", command= self.write_serial_string)
         self.serial_button_write.pack(side = LEFT, fill = BOTH, expand =True)
 
-        # L I V E   S T A T U S   F R A M E
+
+    #   L I V E   S T A T U S   F R A M E
         # ADD LIVE STATUS FRAME TO DICO FRAME
         self.live_frame = Frame(self.dicoFrame, bd=1, relief= SUNKEN)
         self.live_frame.grid_columnconfigure(0, weight =1)
@@ -346,7 +435,7 @@ class App( Frame ):
             self.live_moist_value[n].grid(column = 1, row= (NR_THERMO+n+1), sticky=E)
 
 
-        # D E V I C E  C O N T R O L  F R A M E
+    #   D E V I C E  C O N T R O L  F R A M E
         # ADD DEVICE CONTROL TO DICOFRAME
         self.devco_frame = Frame(self.dicoFrame , bd=1, relief = SUNKEN)
         #self.devco_frame.pack(fill = Y, side = TOP, expand = True)
@@ -359,7 +448,7 @@ class App( Frame ):
         self.devco_notebook = Notebook(self.devco_frame, width = 300)
         self.devco_notebook.grid(column = 0, row=1, sticky=N+S+E+W)
 
-        # DEVCO NOTBOOK _ LAMP CONTROL
+    #   DEVCO NOTBOOK _ LAMP CONTROL
         self.devco_lamp_frame = Frame(self.devco_notebook)
         self.devco_notebook.add(self.devco_lamp_frame, text = 'LIGHT', sticky=N+S+E+W)
         self.devco_lamp_notebook = Notebook(self.devco_lamp_frame)
@@ -385,7 +474,7 @@ class App( Frame ):
 
             self.devco_label_lampState.append(Label(self.devco_lamp_direct_frame[n], textvariable = self.lamp_state[n]))
             self.devco_label_lampState[n].grid(column = 1, columnspan = 3, row = (3*n)+0)
-            
+
             tmp0 = []
             tmp1 = []
             for m in range(len(CHANNELS_LAMP[n])):
@@ -455,8 +544,7 @@ class App( Frame ):
         self.devco_daylight_brightness_value = Entry(self.devco_lamp_daylight_frame, textvariable = self.daylight_brightness, width =3)
         self.devco_daylight_brightness_value.grid(column = 3, row = 6)
 
-
-        # DEVCO NOTBOOK _ PUMP CONTROL
+    #   DEVCO NOTBOOK _ HYDROLICS
         self.devco_hydro_frame = Frame(self.devco_notebook)
         self.devco_hydro_frame.grid_columnconfigure(0, weight =1)
         self.devco_hydro_frame.grid_columnconfigure(1, weight =1)
@@ -479,14 +567,17 @@ class App( Frame ):
         self.devco_button_pumpDisable = Button(self.devco_hydro_frame, command = self.set_pumpDisable, text = "Disable pump")
         self.devco_button_pumpDisable.grid(column = 2, row = 2, columnspan = 2, sticky=S+W+N+E)
 
+        self.devco_check_overrule_pump = Checkbutton(self.devco_hydro_frame, variable = self.overrule_pump_interlock[0], onvalue= 1, offvalue=0, command = self.toggle_pump_interlock, text = "Overrule Pump Interlock")
+        self.devco_check_overrule_pump.grid(column = 0, row = 3, columnspan = 4, sticky=S+W+N+E)
+
         self.devco_flow=[]
         for n in range(NR_FLOW):
             self.devco_flow.append(Radiobutton(self.devco_hydro_frame, text= NAMES_FLOW[n], value = n, variable = self.flow_state, command = self.set_flow_circuit))
-            self.devco_flow[n].grid(column = 0, row = (3+n), columnspan = 4, sticky=S+W+N)
+            self.devco_flow[n].grid(column = 0, row = (4+n), columnspan = 4, sticky=S+W+N)
         self.devco_flow.append(Radiobutton(self.devco_hydro_frame, text= "DISABLED", value = NR_FLOW, variable = self.flow_state, command = self.set_flow_circuit))
-        self.devco_flow[NR_FLOW].grid(column = 0, row = (3+NR_FLOW), columnspan = 4, sticky=S+W+N)
+        self.devco_flow[NR_FLOW].grid(column = 0, row = (4+NR_FLOW), columnspan = 4, sticky=S+W+N)
 
-        # DEVCO NOTBOOK _ RELAY CONTROL
+    #   DEVCO NOTBOOK _ RELAY CONTROL
         self.devco_relay_frame = Frame(self.devco_notebook)
         self.devco_relay_frame.grid_columnconfigure(0, weight =1)
         self.devco_relay_frame.grid_columnconfigure(1, weight =1)
@@ -499,6 +590,7 @@ class App( Frame ):
             self.devco_relay.append(Checkbutton(self.devco_relay_frame, text= NAMES_RELAY[n], variable = self.enable_relay[n], onvalue= 1, offvalue=0, command = self.toggle_relay))
             self.devco_relay[n].grid(column = 0, row = n, columnspan = 4, sticky=S+W+N)
 
+    #   PACK SELF
         self.grid_columnconfigure(0, weight =1)
         self.grid_rowconfigure(0, weight =1)
         self.pack()
@@ -607,23 +699,23 @@ for n in range(BUFF_LEN):
 
 ##   A N I M A T I O N
 def animate(i):
+# GET SENSOR VALUES, ADD TO BUFFER & PLOT VALUES
     global BUFF_FILL, valM, valH
 
-# GET SAMPLE IF ARDUINO IS CONNECTED
+    # GET SAMPLE IF ARDUINO IS CONNECTED
     if app.arduino.assumed_connection_status:
-        # SHIFT BUFFERS
+# SHIFT BUFFERS
         for n in reversed(range( 1, BUFF_LEN )):
             valM[1,n]= valM[1,n-1]
             valH[1,n]= valH[1,n-1]
             valH1[1,n]= valH1[1,n-1]
             valP[1,n]= valP[1,n-1]
-            valL[1,n]= valL[1,n-1]
-
-    # ADD VALUES TO BUFFERS
-        # HEAT
+            valL[1,n]= valL[1,n-1]           
+# ADD VALUES TO BUFFERS
+    #   HEAT
         tmpVal = app.arduino.readCommand("GET_TEMP",["0"])
         #tmpVal = str( (valH[1,0]+1) % 2 )
-        app.temperature_var0.set(tmpVal)
+        app.temperature_var[0].set(tmpVal)
         try:
             float(tmpVal)
         except ValueError:
@@ -631,10 +723,10 @@ def animate(i):
         else:
             valH[1,0] = float(tmpVal)  
 
-        # HEAT1
+    #   HEAT 1
         tmpVal = app.arduino.readCommand("GET_TEMP",["1"])
         #tmpVal = str( ((valH1[1,0]+1)*7) % 3 )
-        app.temperature_var1.set(tmpVal)
+        app.temperature_var[1].set(tmpVal)
         try:
             float(tmpVal)
         except ValueError:
@@ -642,10 +734,10 @@ def animate(i):
         else:
             valH1[1,0] = float(tmpVal)   
 
-        # MOISTURE
+    #   MOISTURE
         tmpVal = app.arduino.readCommand("GET_MOISTURE",["0"])
         #tmpVal = str( valM[1,0] + 1 )
-        app.moisture_var.set(tmpVal)
+        app.moisture_var[0].set(tmpVal)
 
         try:
             float(tmpVal)
@@ -654,7 +746,7 @@ def animate(i):
         else:
             valM[1,0] = float(tmpVal)
 
-        # PUMP
+    #   PUMP
         tmpVal = app.arduino.readCommand("GET_PUMP",["0"])
         #tmpVal = str( (valP[1,0]+1) % 2 )
         try:
@@ -665,7 +757,7 @@ def animate(i):
             valP[1,0] = float(tmpVal)
         
 
-        # LIGHT
+    #   LIGHT
         tmpVal = app.arduino.readCommand("GET_LAMP",["0"])
         #tmpVal = str( (valL[1,0]+1) % 2 )
         try:
@@ -677,7 +769,7 @@ def animate(i):
 
         if BUFF_FILL < BUFF_LEN:
             BUFF_FILL = BUFF_FILL + 1
-
+# FLIP BUFFERS
         # reverse value array for neatness
         valMneat = np.flip(valM, 1)
         valHneat = np.flip(valH, 1)
@@ -685,6 +777,7 @@ def animate(i):
         valPneat = np.flip(valP, 1)
         valLneat = np.flip(valL, 1)
 
+# UPDATE PLOTS
     #   UPDATE TEMOERATURE PLOT
         heatPlot.clear()
         hy_min = min(min(valHneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]), min(valH1neat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN])) - 1
@@ -721,54 +814,59 @@ def animate(i):
         pumpPlot.grid(True)
         pumpPlot.plot( valPneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valPneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
 
-#  A D D   P L O T
+
+## START PROGRAM / GUI
+#  DEFINE MATPLOT FUIGURE
 f = pp.Figure(figsize=(10,10),dpi = 75)
 gs = gridspec.GridSpec(4,1, height_ratios=[3,1,3,1])
 f.set_tight_layout(True)
 
 heatPlot = f.add_subplot(gs[0])
-heatPlot.set_ylim([10,40])
-heatPlot.set_ylabel("TC temp [*C]")
-heatPlot.grid(True)
-
 lampPlot = f.add_subplot(gs[1])
-lampPlot.set_ylim([0,255])
-lampPlot.set_ylabel("LIGHT")
-lampPlot.grid(True)
-
-
 moistPlot = f.add_subplot(gs[2])
-moistPlot.set_ylim([0,100])
-moistPlot.set_ylabel("Moisture [%]")
-moistPlot.grid(True)
-
 pumpPlot = f.add_subplot(gs[3])
-pumpPlot.set_ylim([0,100])
-pumpPlot.set_ylabel("PUMP")
-pumpPlot.set_xlabel("time [min]")
-pumpPlot.grid(True)
-    
-heatPlot.plot(0, 0)
-lampPlot.plot(0,0)
-moistPlot.plot(0, 0)
-pumpPlot.plot(0,0)
 
-#run app
+heatPlot.set_ylim([10,40])
+lampPlot.set_ylim([0,255])
+moistPlot.set_ylim([0,100])
+pumpPlot.set_ylim([0,100])
+
+heatPlot.set_ylabel("TC temp [*C]")
+lampPlot.set_ylabel("LIGHT")
+moistPlot.set_ylabel("Moisture [%]")
+pumpPlot.set_ylabel("PUMP")
+
+heatPlot.grid(True)
+lampPlot.grid(True)
+moistPlot.grid(True)
+pumpPlot.grid(True)
+
+pumpPlot.set_xlabel("time [min]")
+
+heatPlot.plot(0, 0)
+lampPlot.plot(0, 0)
+moistPlot.plot(0, 0)
+pumpPlot.plot(0, 0)
+
+# DEFINE TK STUFF
 root = Tk() #init Tk
 root.title ("G R O W  .  M A S T E R")
 app = App(master=root)  # assign tk to master frame
 
+# DEFINE PROGRAM
 def program():
     app.daylight_sequence()
 
     if app.arduino.getStatus():
         app.serial_connection_string.set("Connected")
+
     else:
         app.serial_connection_string.set("Disconnected")
 
     root.after(int(PROGRAM_CYLCETIME), program)
 root.after(int(PROGRAM_CYLCETIME), program)
 
+# START GUI
 ani = animation.FuncAnimation(f, animate, interval = int(ANI_CYCLETIME))
 app.mainloop()
 app.arduino.closeConnection()

@@ -2,7 +2,9 @@
 #include "actuators.h"
 
 void DigitalOutput::set(bool output){
-  digitalWrite(pin, output);
+  if(invertOutput){ digitalWrite(pin, !output); }
+  else { digitalWrite(pin, output); }
+  
   state= output;
 }
 
@@ -10,15 +12,17 @@ void DigitalOutput::init(int input, String devName){
   pin = input;
   deviceName = devName;
   pinMode(pin, OUTPUT);
-  digitalWrite(pin, false);
+  state = false;
+  if(invertOutput){ digitalWrite(pin, state); }
+  else { digitalWrite(pin, state); }
 }
 
 void DigitalOutput::help(){
   
-  Serial.print("Device: ");
+  Serial.print("  ");
   Serial.print(deviceName);
   Serial.print("\n\r");
-  Serial.print("   Output on pin: ");
+  Serial.print("    - Output on pin: ");
   Serial.print(pin);
   Serial.print("\n\r");
 }
@@ -37,12 +41,12 @@ void RGBWLed::init(String devName, int pinR = -1, int pinG= -1, int pinB= -1, in
 }
 void RGBWLed::help(){
 
-  Serial.print("Device: ");
+  Serial.print("  ");
   Serial.print(deviceName);
   Serial.print("\n\r");
 
   for(int n=0;n<4; n++){
-    Serial.print("   ");
+    Serial.print("   - ");
     Serial.print(cRGBW[n]);
     Serial.print(" output on pin: ");
     Serial.print(pinRGBW[n]);
@@ -86,14 +90,14 @@ void MotorDriver::init(byte dir, byte power, String devName= ""){
 
 }
 void MotorDriver::help(){
-  Serial.print("Device: ");
+  Serial.print("  ");
   Serial.print(deviceName);
   Serial.print("\n\r");
   
-  Serial.print("   Motor direction on pin: ");
+  Serial.print("   - Motor direction on pin: ");
   Serial.print(hBridge.pinDir);
   Serial.print("\n\r");
-  Serial.print("   Motor PWM on pin: ");
+  Serial.print("   - Motor PWM on pin: ");
   Serial.print(hBridge.pinPWM);
   Serial.print("\n\r");
 

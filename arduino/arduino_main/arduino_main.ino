@@ -3,46 +3,81 @@
 #include "actuators.h"
 #include "grow.h" 
 
-int rawMoisture = 0;
+bool overrule_pump_interlock[NR_PUMP];
 
 Comms serialMsg;
 int counter = 0;
 bool bNewMessage = false;
 
 String serialString;
-float rntc, vin, vm, rc[2];
+
+float rntc, vin, vm;
+float rc[NR_TC];
 float Tn, Rn, coeffB, temp;
 
-unsigned long runtime;
-void setup(){
-  // SET THERMOCOUPLE CALCULATION PARAMETERS
-  vin = 5.0;    // INPUT VOLTAGE                  [V]
-  rc[0] = 14700;   // BIAS RESISTOR               [ohm]
-  rc[1] = 14700;   // BIAS RESISTOR
-  Rn = 10000;   // THERMOCOUPLE RESITANCE AT Tn   [ohm]
-  Tn = 25;      // THERMOCOUPLE TEMPERATURE AT Rn [C]
-  coeffB=3435;  // THERMOCOUPLE COEFFICIENT       [K] -> B= ln(Rt1/Rt2)/(T1^-1 - T2^-1)
+bool x;
 
+void setup(){
+  // SETUP   P U M P
+  for(int n=0; n<NR_PUMP; n++){ 
+    overrule_pump_interlock[n] = false; 
+    pump[n].init(PUMP_DIR_PIN[n], PUMP_PWM_PIN[n], PUMP_NAME[n]); // SETUP PUMP
+  }
+  vlotter[0].init(23, "vlotter");   // SETUP FLOAT SWITCH - DigitalInput on pin=23
+
+  // SETUP   T H E R M O C O U P L E
+  // SET THERMOCOUPLE CALCULATION PARAMETERS
+  vin = 5.0;        // INPUT VOLTAGE                  [V]
+  Rn = 10000;       // THERMOCOUPLE RESITANCE AT Tn   [ohm]
+  Tn = 25;          // THERMOCOUPLE TEMPERATURE AT Rn [C]
+  coeffB=3435;      // THERMOCOUPLE COEFFICIENT       [K] -> B= ln(Rt1/Rt2)/(T1^-1 - T2^-1)
+  
+  for(int n=0;n<NR_TC; n++){ 
+    rc[n] = 14700;    // BIAS RESISTOR                  [ohm]
+    thermocouple[n].init(TC_PIN[n], TC_NAME[n], 1023, 5, "V");               // SETUP THERMOCOUPLE VOLTAGE - AnalogSensor maxRawInput=1023, maxUserVal= 5V
+  };
+
+  // SETUP   L A M P
+  for(int n=0;n<NR_LAMP; n++){ 
+    lamp[n].init(LAMP_NAME[n],LAMP_RGBW_PIN[n][0],LAMP_RGBW_PIN[n][1],LAMP_RGBW_PIN[n][2],LAMP_RGBW_PIN[n][3]);  // SETUP LAMP - RGBWLed ON PINS 11,10,9,8
+  }
+
+  doorSensor.init(25, "Door switch");
+  // SETUP   M O I S T U R E 
+  for(int n=0;n<NR_MOISTURE; n++){ 
+    moisture[n].init(MOISTURE_INPUT_PIN[n], MOISTURE_NAME[n] , 1023, 100, "%");    // SETUP MOISTURE              - AnalogSensor on pin=A0, maxRawInput=1023, maxUserVal= 100%
+    moisturePower[n].init(MOISTURE_POWER_PIN[n], MOISTURE_POWER_NAME[n] );               // SETUP MOISTURE POWER ENABLE - DigitalOutput on pin=22
+  }
+
+  // SETUP   R E L A Y
+  for(int n=0;n<NR_RELAY; n++){ 
+    relayboard[n].init(RELAY_PIN[n], RELAY_NAME[n]);    // SETUP RELAYBOARD INPUT INx
+  }
+  
   // INIT SERIAL
   Serial.begin(115200);
-
-  // INIT GROW.H DEVICES
-  lamp[0].init("RGBW LED PWM output",11,10,9,8);                       // SETUP LAMP - RGBWLed ON PINS 11,10,9,8
-  pump[0].init(7,6,"pump on H-Bridge board");                          // SETUP PUMP - MotoDriver DIR=7, PWM=6
-  moisture[0].init(A0, "water sensor - analog input", 1023, 100, "%"); // SETUP MOISTURE - AnalogSensor on pin=A0, maxRawInput=1023, maxUserVal= 100%
-  thermocouple[0].init(A1, "thermocouple", 1023, 5, "V");              // SETUP THERMOCOUPLE VOLTAGEAnalogSensor on pin=A1, maxRawInput=1023, maxUserVal= 5V
-  thermocouple[1].init(A2, "thermocouple", 1023, 5, "V");              // SETUP THERMOCOUPLE VOLTAGEAnalogSensor on pin=A1, maxRawInput=1023, maxUserVal= 5V
-  moisturePower[0].init(22, "water sensor - power enable");            // SETUP DigitalOutput on pin=22
-  relayboard[0].init(24, "lighting fan");                              // SETUP DigitalOutput on pin=24
-  relayboard[1].init(26, "relay1");                                    // SETUP DigitalOutput on pin=26
-  vlotter[0].init(23, "vlotter");                                      // SETUP DigitalInput on pin=23
+  Serial.print('@')
 }
 
 void loop(){
-  runtime = millis();
-
-  if(vlotter[0].state()) { pump[0].interlock(true);}
+  if(vlotter[0].state() && !overrule_pump_interlock[0]) { pump[0].interlock(true);}
   else { pump[0].interlock(false); };
+  
+  if (lamp[0].getStatus()>0){
+    if(doorSensor.state() == true ){
+    // DOOR IS OPEN
+      for(int n=0; n<4; n++){
+         analogWrite(lamp[0].pinRGBW[n], 30); // SET INTESTITY TO 30
+      }
+      x = true;
+    }
+    else if(x){
+      for(int n=0; n<4; n++){
+         analogWrite(lamp[0].pinRGBW[n], lamp[0].valRGBW[n]); // RESET INTESTITY
+      }
+      x=false;
+    }
+  }
 
   if(bNewMessage){
     serialMsg.message_handler(serialString); // decode serial string
@@ -232,6 +267,20 @@ void doCommand(){
       Serial.print('@');                            // PRINT EOL
       break;
 
+    case IGNORE_PUMP_INTERLOCK:
+      delay(2);
+      tmpInt[0] = serialMsg.message.sParameter[0].toInt();  // GET CMD INDEX
+      tmpBool[0] = bool(serialMsg.message.sParameter[1].toInt());  // GET CMD BOOL
+
+      // SET OVERRULE FLAG
+      overrule_pump_interlock[tmpInt[0]] = tmpBool[0];
+      
+      // COMMAND DONE
+      serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
+      Serial.print('@');            
+      break;
+      
+
 // PRINT HELP SEQUENCE
     case HELP:
       delay(2);
@@ -259,53 +308,62 @@ void printHelp(){
   Serial.println("====================================================");
   Serial.println("    + + + + + +     ARDUINO GROW     + + + + + +    ");
   Serial.println("====================================================");
+  Serial.println("");
   Serial.println(" - - - - - - - - - - - - - - - - - - ");
   Serial.println("- Commands use the following syntax: ");
   Serial.println("  COMMAND(PAR1, PAR2, PAR3, ETC)\n");
   Serial.println("");
   Serial.println("List of commands:");
-  Serial.println("   ENABLE_LAMP  ( index[0-1], enable[0/1] )");
-  Serial.println("   SET_LAMP     ( index[0-1], colour[R,B,G,W],  value[0-255], enable[0/1] )");
-  Serial.println("   GET_LAMP     ( index[0-1] )");
-  Serial.println("   ENABLE_PUMP  ( index[0-1], enable[0/1] )"); 
-  Serial.println("   SET_PUMP     ( index[0-1], value[0-255],   enable[0/1] )"); 
-  Serial.println("   GET_PUMP     ( index[0-1] )"); 
-  Serial.println("   SET_RELAY    ( index[0-7],   value[0/1] )");
-  Serial.println("   GET_TEMP     ( index[0-1] )");
-  Serial.println("   SET_TEMP_RC  ( index[0-1],   biasResitance[...] )");
-  Serial.println("   GET_MOISTURE ( index[0-1] )");
-  Serial.println(" - - - - - - - - - - - - - - - - - - ");
-  Serial.println("DEVICE CONNECTIONS");
+  Serial.println("   ENABLE_LAMP  ( index[0-x], enable[0/1] )");
+  Serial.println("   SET_LAMP     ( index[0-x], colour[R,B,G,W],  value[0-255], enable[0/1] )");
+  Serial.println("   GET_LAMP     ( index[0-x] )");
+  Serial.println("   ENABLE_PUMP  ( index[0-x], enable[0/1] )"); 
+  Serial.println("   SET_PUMP     ( index[0-x], value[0-255],   enable[0/1] )"); 
+  Serial.println("   GET_PUMP     ( index[0-x] )"); 
+  Serial.println("   SET_RELAY    ( index[0-x],   value[0/1] )");
+  Serial.println("   GET_TEMP     ( index[0-x] )");
+  Serial.println("   SET_TEMP_RC  ( index[0-x],   biasResitance[...] )");
+  Serial.println("   GET_MOISTURE ( index[0-x] )");
+  Serial.println("   IGNORE_PUMP_INTERLOCK ( index[0-x], enable[0/1] )");
   Serial.println("");
-  
+  Serial.println(" - - - - - - - - - - - - - - - - - - ");
+  Serial.println("D E V I C E    C O N N E C T I O N S");
+  Serial.println("");
+
+  Serial.println("- MOISTURE SENSORS");
   for(int n=0;n<NR_MOISTURE; n++){
     moisture[n].help();
     moisturePower[n].help();
-    Serial.println("");
     }
-  
+  Serial.println("");
+
+  Serial.println("- PUMPS");
   for(int n=0;n<NR_PUMP; n++){
     pump[n].help();
     vlotter[n].help();
-    Serial.println("");
     }
-    
+  Serial.println("");
+
+  Serial.println("- RELAYS");
   for(int n=0;n<NR_RELAY; n++){
     relayboard[n].help(); 
-    Serial.println("");
     }
-    
+  Serial.println("");
+
+  Serial.println("- LAMPS");
   for(int n=0;n<NR_LAMP; n++){
     lamp[n].help();
-    Serial.println("");
     }
-    
+  Serial.println("");
+
+  Serial.println("- TEMPERATURE SENSORS");
   for(int n=0;n<NR_TC; n++){ 
     thermocouple[n].help();
-    Serial.println("");
     }
+  Serial.println("");
   
   Serial.println(" - - - - - - - - - - - - - - - - - - ");
+  Serial.println("");
   Serial.println("====================================================");
   Serial.print('@');
 }

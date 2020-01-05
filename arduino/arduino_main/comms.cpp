@@ -21,6 +21,7 @@ void Comms::message_handler(String inputString){
     else if (message.sCommand == "SET_PUMP"){ message.inputCommand = SET_PUMP; }
     else if (message.sCommand == "GET_PUMP"){ message.inputCommand = GET_PUMP; }
     else if (message.sCommand == "SET_TEMP_RC"){ message.inputCommand = SET_TEMP_RC; }
+    else if (message.sCommand == "IGNORE_PUMP_INTERLOCK"){ message.inputCommand = IGNORE_PUMP_INTERLOCK; }
     else if (message.sCommand == "H" || message.sCommand == "HELP"){ message.inputCommand = HELP; }
     else {message.inputCommand = -1;};
     //else if (message.sCommand == ""){ message.inputCommand = ; }

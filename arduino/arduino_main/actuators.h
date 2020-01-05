@@ -10,6 +10,7 @@ class DigitalOutput{
     int pin;
     String deviceName;
     bool state;
+    bool invertOutput = false;
     
     void init(int input, String devName);
     void help();
