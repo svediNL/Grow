@@ -6,7 +6,12 @@
 #include "actuators.h"
 #include "devices.h"
 
-
+// ENABLE/DISABLE DEVICES
+const bool  ENABLE_THERMOCOUPLES_ANALOG_VOLTAGE    = true;
+const bool  ENABLE_RELAY_DIGITIAL_OUPUTS          = true;
+const bool  ENABLE_MOSTURE_SENSOR_ANALOG_VOLTAGE  = true;
+const bool  ENABLE_PUMP_H_BRIGDE                  = true;
+const bool  ENABLE_LAMP_PWM                       = true;
 
 // THERMOCOUPLE CONFIGURATION
 const int     NR_TC           = 2;                  // NUMBER OF THERMOCOUPLE TO BE CONFIGURED

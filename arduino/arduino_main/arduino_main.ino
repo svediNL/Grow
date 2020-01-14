@@ -56,13 +56,13 @@ void setup(){
   
   // INIT SERIAL
   Serial.begin(115200);
-  Serial.print('@')
 }
 
 void loop(){
   if(vlotter[0].state() && !overrule_pump_interlock[0]) { pump[0].interlock(true);}
   else { pump[0].interlock(false); };
-  
+
+  // DIM LAMP WHEN DOOR OPENS
   if (lamp[0].getStatus()>0){
     if(doorSensor.state() == true ){
     // DOOR IS OPEN
@@ -202,7 +202,10 @@ void doCommand(){
       tmpInt[0] = serialMsg.message.sParameter[0].toInt();  // GET CMD INDEX
 
       // PRINT CURRENT LAMP OUTPUT
-      Serial.print(lamp[tmpInt[0]].getStatus()); 
+      if(doorSensor.state() == true ){
+        Serial.print("30");
+      }
+      else{ Serial.print(lamp[tmpInt[0]].getStatus()); }
       
       // COMMAND DONE
       serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
