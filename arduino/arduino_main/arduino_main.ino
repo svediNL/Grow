@@ -23,8 +23,11 @@ void setup(){
     overrule_pump_interlock[n] = false; 
     pump[n].init(PUMP_DIR_PIN[n], PUMP_PWM_PIN[n], PUMP_NAME[n]); // SETUP PUMP
   }
-  vlotter[0].init(23, "vlotter");   // SETUP FLOAT SWITCH - DigitalInput on pin=23
 
+  if(ENABLE_PUMP_INTERLOCK_SWITCH){
+    vlotter[0].init(FLOAT_SWITCH_PIN, "float switch");   // SETUP FLOAT SWITCH - DigitalInput on pin=23
+  }
+  
   // SETUP   T H E R M O C O U P L E
   // SET THERMOCOUPLE CALCULATION PARAMETERS
   vin = 5.0;        // INPUT VOLTAGE                  [V]
@@ -41,8 +44,9 @@ void setup(){
   for(int n=0;n<NR_LAMP; n++){ 
     lamp[n].init(LAMP_NAME[n],LAMP_RGBW_PIN[n][0],LAMP_RGBW_PIN[n][1],LAMP_RGBW_PIN[n][2],LAMP_RGBW_PIN[n][3]);  // SETUP LAMP - RGBWLed ON PINS 11,10,9,8
   }
-
-  doorSensor.init(25, "Door switch");
+  if(ENABLE_FRIDGE_DOOR){
+    doorSensor.init(DOOR_SWITTCH_PIN, "Door switch");
+  }
   // SETUP   M O I S T U R E 
   for(int n=0;n<NR_MOISTURE; n++){ 
     moisture[n].init(MOISTURE_INPUT_PIN[n], MOISTURE_NAME[n] , 1023, 100, "%");    // SETUP MOISTURE              - AnalogSensor on pin=A0, maxRawInput=1023, maxUserVal= 100%
@@ -59,11 +63,13 @@ void setup(){
 }
 
 void loop(){
-  if(vlotter[0].state() && !overrule_pump_interlock[0]) { pump[0].interlock(true);}
-  else { pump[0].interlock(false); };
-
+  if(ENABLE_PUMP_INTERLOCK_SWITCH){
+    if(vlotter[0].state() && !overrule_pump_interlock[0]) { pump[0].interlock(true);}
+    else { pump[0].interlock(false); };
+  }
+  
   // DIM LAMP WHEN DOOR OPENS
-  if (lamp[0].getStatus()>0){
+  if (lamp[0].getStatus()>0 && DOOR_SWITTCH_PIN){
     if(doorSensor.state() == true ){
     // DOOR IS OPEN
       for(int n=0; n<4; n++){

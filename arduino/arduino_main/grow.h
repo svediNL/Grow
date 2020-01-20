@@ -7,11 +7,8 @@
 #include "devices.h"
 
 // ENABLE/DISABLE DEVICES
-const bool  ENABLE_THERMOCOUPLES_ANALOG_VOLTAGE    = true;
-const bool  ENABLE_RELAY_DIGITIAL_OUPUTS          = true;
-const bool  ENABLE_MOSTURE_SENSOR_ANALOG_VOLTAGE  = true;
-const bool  ENABLE_PUMP_H_BRIGDE                  = true;
-const bool  ENABLE_LAMP_PWM                       = true;
+const bool  ENABLE_PUMP_INTERLOCK_SWITCH          = true;   // float switch to prevent overflow
+const bool  ENABLE_FRIDGE_DOOR                    = true;   // light dims when door opens
 
 // THERMOCOUPLE CONFIGURATION
 const int     NR_TC           = 2;                  // NUMBER OF THERMOCOUPLE TO BE CONFIGURED
@@ -49,6 +46,8 @@ const int     PUMP_DIR_PIN [NR_PUMP]  = {7};  // ARRAY OF PWM PINS
 const int     PUMP_PWM_PIN [NR_PUMP]  = {6};  // ARRAY OF PWM PINS
 const String  PUMP_NAME[NR_PUMP]      = {"pump on H-Bridge board"};
 
+const int     FLOAT_SWITCH_PIN        = 23; 
+
 MotorDriver pump[NR_PUMP];             // INSTANCE OF PUMP H-BRIDGE MOTOR DRIVER
 DigitalInput vlotter[NR_PUMP];         // INSTANCE OFFLOAT SWITCH FOR PUMP INTERLOCKING
 
@@ -58,6 +57,8 @@ DigitalInput vlotter[NR_PUMP];         // INSTANCE OFFLOAT SWITCH FOR PUMP INTER
 const int     NR_LAMP                   = 1;                // NUMBER OF LAMPS TO BE CONFIGURED
 const int     LAMP_RGBW_PIN[NR_LAMP][4] = { {11,10,9,8} };  // 2D ARRAY OF PWM PINS
 const String  LAMP_NAME[NR_LAMP]        = {"RGBW LED PWM output"};
+
+const int     DOOR_SWITTCH_PIN    = 25;
 
 RGBWLed lamp[NR_LAMP];                                // INSTANCE OF RGBW PWM LIGHT OUTPUT
 DigitalInput doorSensor;                              // INSTANCE OF DOOR SENSOR FOR DIMMING OF LIGHT

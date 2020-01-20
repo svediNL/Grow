@@ -236,6 +236,17 @@ class App( Frame ):
         except ValueError:
             print "Value Error"
 
+        if self.enable_daylight.get() ==0:
+            self.enable_relay[0].set(0)     # ENABLE 12V (FOR FAN & PWM LEVEL BOOSTER)
+            self.enable_relay[6].set(0)     # FANS ON LAMP
+            self.toggle_relay()
+
+        elif self.enable_daylight.get() ==1:
+            self.enable_relay[0].set(1)     # ENABLE 12V (FOR FAN & PWM LEVEL BOOSTER)
+            self.enable_relay[6].set(1)     # FANS ON LAMP
+            self.toggle_relay()
+
+
         return True 
 
 # HYDROLIC FUNCTIONS
@@ -327,7 +338,7 @@ class App( Frame ):
 
 
         # HEADER TEXT
-        self.label_header = Label(self.headerFrame, text= " +- ~ - ~ - ~ - ~ - ~ -+  G R O W   M A S T E R     v1.5  +- ~ - ~ - ~ - ~ - ~ -+ ")
+        self.label_header = Label(self.headerFrame, text= " +- ~ - ~ - ~ - ~ - ~ -+  G R O W   M A S T E R     v1.6  +- ~ - ~ - ~ - ~ - ~ -+ ")
         #self.label_header.pack(side = LEFT)
         self.label_header.grid(column = 0, row=0, sticky=N+S+W)
 
@@ -620,26 +631,27 @@ class App( Frame ):
         self.str_time.set(struct_time_str)
 
         if self.enable_daylight.get() == 1:
-
             if struct_time.tm_hour == int(float(self.daylight_tv_start_hour.get())):
+            # CURRENT = START HOUR
                 if struct_time.tm_min >= int(float(self.daylight_tv_start_min.get())):
+                # CURRENT = START MINUTE
                     self.daybool = True
                     self.nightbool = False
-                else:
-                    self.daybool = False
-            if struct_time.tm_hour == int(float(self.daylight_tv_end_hour.get())):
-                if struct_time.tm_min >= int(float(self.daylight_tv_end_min.get())):
-                    self.nightbool = True
-                    self.daybool = False
-                else:
+
+            elif struct_time.tm_hour > int(float(self.daylight_tv_start_hour.get())) and struct_time.tm_hour < int(float(self.daylight_tv_end_hour.get())):
+            #  START HOUR < CURRENT < END HOUR
+                    self.daybool = True
                     self.nightbool = False
+            elif struct_time.tm_hour == int(float(self.daylight_tv_end_hour.get())):
+            # CURRENT = END HOUR
+                if struct_time.tm_min >= int(float(self.daylight_tv_start_min.get())):
+                # CURRENT = END MINUTE
+                    self.daybool = False
+                    self.nightbool = True
             else:
-                if struct_time.tm_hour > int(float(self.daylight_tv_start_hour.get())) and struct_time.tm_hour < int(float(self.daylight_tv_end_hour.get())):
-                    self.daybool = True
-                    self.nightbool = False
-                else:
-                    self.daybool = False
-                    self.nightbool = True
+            # NOT BETWEEN START OR END -> SO NIGHT
+                self.daybool = False
+                self.nightbool = True
 
             if self.daybool:
             # TIME IS ABOVE DAY START TIME
@@ -684,7 +696,6 @@ class App( Frame ):
             self.daylight_status.set("DAYLIGHT DISABLED")
 
 # prepare animation buffer
-BUFF_LEN = 4096
 BUFF_FILL = 0
 valM = np.zeros( shape=(2,BUFF_LEN) )
 valH = np.zeros( shape=(2,BUFF_LEN) )
