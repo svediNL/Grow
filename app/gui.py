@@ -25,6 +25,32 @@ import time
 
 FIRST_SCAN = True
 
+# prepare animation buffer
+BUFF_FILL = 0
+valM = np.zeros( shape=(2,BUFF_LEN) )
+valH = np.zeros( shape=(2,BUFF_LEN) )
+valH1 = np.zeros( shape=(2,BUFF_LEN) )
+valP = np.zeros( shape=(2,BUFF_LEN) )
+valL = np.zeros( shape=(2,BUFF_LEN) )
+time_list = []
+label_list = []
+tick_list = []
+clear_list = []
+
+# FILL SAMPLE TIME
+for n in range(BUFF_LEN):
+    valM[0,n]= -1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
+    valH[0,n]= -1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
+    valH1[0,n]= -1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
+    valP[0,n]= -1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
+    valL[0,n]= -1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
+
+valMneat = np.flip(valM, 1)
+valHneat = np.flip(valH, 1)
+valH1neat = np.flip(valH1, 1)
+valPneat = np.flip(valP, 1)
+valLneat = np.flip(valL, 1)
+
 # DEFINE APP CLASS AS BASE FRAME
 class App( Frame ):
 
@@ -246,7 +272,6 @@ class App( Frame ):
             self.enable_relay[6].set(1)     # FANS ON LAMP
             self.toggle_relay()
 
-
         return True 
 
 # HYDROLIC FUNCTIONS
@@ -358,11 +383,38 @@ class App( Frame ):
         self.plotFrame = Frame(self.contentFrame, bd=1, relief = SUNKEN)
         #self.plotFrame.pack(fill = Y, side = LEFT, expand = True)
         self.plotFrame.grid(column = 0, row=0, sticky=N+S+E+W)
-        
+
+        # ADD NOTEBOOK TO SERIAL FRAME
+        self.plot_notebook = Notebook(self.plotFrame)
+        self.plot_notebook.pack(fill = BOTH, side = LEFT, expand = True)
+        #self.plot_notebook.grid(column = 0, row=0, sticky=N+S+E+W)  
+
+        # ADD CONNECTION FRAME TO NOTEBOOK
+        self.plot_overviewFrame = Frame(self.plot_notebook)
+        self.plot_notebook.add(self.plot_overviewFrame, text = 'overview')
+
+        # ADD CONNECTION FRAME TO NOTEBOOK
+        self.plot_hydroFrame = Frame(self.plot_notebook)
+        self.plot_notebook.add(self.plot_hydroFrame, text = 'hydro')
+
+        # ADD CONNECTION FRAME TO NOTEBOOK
+        self.plot_lightFrame = Frame(self.plot_notebook)
+        self.plot_notebook.add(self.plot_lightFrame, text = 'light')
+
         # ADD CANVAS TO FRAME
-        self.plot_canvas = FigureCanvasTkAgg(f, self.plotFrame)
+        self.plot_canvas = FigureCanvasTkAgg(f, self.plot_overviewFrame)
         self.plot_canvas.show()
-        self.plot_canvas.get_tk_widget().pack()
+        self.plot_canvas.get_tk_widget().pack(side= RIGHT, fill = BOTH, expand = True)
+
+        # ADD CANVAS TO FRAME
+        self.plot_canvas1 = FigureCanvasTkAgg(f1, self.plot_hydroFrame)
+        self.plot_canvas1.show()
+        self.plot_canvas1.get_tk_widget().pack(side= RIGHT, fill = BOTH, expand = True)
+
+        # ADD CANVAS TO FRAME
+        self.plot_canvas2 = FigureCanvasTkAgg(f2, self.plot_lightFrame)
+        self.plot_canvas2.show()
+        self.plot_canvas2.get_tk_widget().pack(side= RIGHT, fill = BOTH, expand = True)
 
 
     # D I R E C T   C O N T R O L   F R A M E
@@ -695,34 +747,296 @@ class App( Frame ):
         else:
             self.daylight_status.set("DAYLIGHT DISABLED")
 
-# prepare animation buffer
-BUFF_FILL = 0
-valM = np.zeros( shape=(2,BUFF_LEN) )
-valH = np.zeros( shape=(2,BUFF_LEN) )
-valH1 = np.zeros( shape=(2,BUFF_LEN) )
-valP = np.zeros( shape=(2,BUFF_LEN) )
-valL = np.zeros( shape=(2,BUFF_LEN) )
-time_list = []
-
-
-# FILL SAMPLE TIME
-for n in range(BUFF_LEN):
-    valM[0,n]= -1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
-    valH[0,n]= -1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
-    valH1[0,n]= -1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
-    valP[0,n]= -1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
-    valL[0,n]= -1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
-
 ##   A N I M A T I O N
 def animate(i):
 # GET SENSOR VALUES, ADD TO BUFFER & PLOT VALUES
-    global BUFF_FILL, FIRST_SCAN, valM, valH, valH1, valP, valL, time_list
+    global BUFF_FILL, FIRST_SCAN
+    global valM, valH, valH1, valP, valL
+    global valMneat,valHneat, valH1neat, valPneat, valLneat
+    global time_list, label_list, tick_list, clear_list
+
+    if not FIRST_SCAN and BUFF_FILL>0:
+    # UPDATE PLOTS
+        if DEBUG_MODE:
+            start = time.time()
+
+        if app.plot_notebook.index(app.plot_notebook.select()) == 0:
+            print "index 0"
+        #   F - UPDATE TEMOERATURE PLOT
+            heatPlot.clear()
+            hy_min = min(min(valHneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]), min(valH1neat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN])) - 1
+            hy_max = max(max(valHneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]), max(valH1neat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN])) + 1
+            heatPlot.set_ylim([ hy_min, hy_max ])
+            heatPlot.set_ylabel("TC Temp [*C]")
+                # SET X TICK TIME LABEL
+            if BUFF_FILL > 1:
+                heatPlot.set_xticks(tick_list)
+                heatPlot.set_xticklabels(clear_list)
+            heatPlot.grid(True)
+            heatPlot.plot( valHneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valHneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color='g' )
+            heatPlot.plot( valH1neat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valH1neat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color='b' )
+
+        #   F - UPDATE LAMP
+            lampPlot.clear()
+            lampPlot.set_ylim([ min(valLneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1, 
+                                max(valLneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1 ])
+            lampPlot.set_ylabel("LIGHT")
+
+            # SET X TICK TIME LABEL
+            if BUFF_FILL > 1:
+                lampPlot.set_xticks(tick_list)
+                lampPlot.set_xticklabels(clear_list)
+            lampPlot.grid(True)
+            lampPlot.plot( valLneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valLneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
+
+        #   F - UPDATE MOUSTURE PLOT
+            moistPlot.clear()
+            moistPlot.set_ylim([ min(valMneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1, 
+                                max(valMneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1 ])
+            moistPlot.set_ylabel("Moisture [%]")
+
+            # SET X TICK TIME LABEL
+            if BUFF_FILL > 1:
+                moistPlot.set_xticks(tick_list)
+                moistPlot.set_xticklabels(clear_list)
+            moistPlot.grid(True)   
+            moistPlot.plot( valMneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valMneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
+
+        #   F - UPDATE PUMP
+            pumpPlot.clear()
+            pumpPlot.set_ylim([ min(valPneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1, 
+                                max(valPneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1 ])
+            pumpPlot.set_ylabel("PUMP")
+            pumpPlot.set_xlabel("time [min]")
+
+            # SET X TICK TIME LABEL
+            if BUFF_FILL > 1:
+                pumpPlot.set_xticks(tick_list)
+                pumpPlot.set_xticklabels(label_list, rotation =45)
+
+            pumpPlot.grid(True)
+            pumpPlot.plot( valPneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valPneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
+
+    # DEBUG MODE
+        if DEBUG_MODE:
+            end = time.time()
+            print "plot flipped buffers " + str(end-start)
+            print "BUFF_FILL: " + str(BUFF_FILL)
+            print "- - - - - - - - - - - -"
+
+    if FIRST_SCAN:
+        FIRST_SCAN = False
+
+def animate1(i):
+# GET SENSOR VALUES, ADD TO BUFFER & PLOT VALUES
+    global BUFF_FILL, FIRST_SCAN
+    global valM, valH, valH1, valP, valL
+    global valMneat,valHneat, valH1neat, valPneat, valLneat
+    global time_list, label_list, tick_list, clear_list
+
+    if not FIRST_SCAN and BUFF_FILL>0:
+    # UPDATE PLOTS
+        if DEBUG_MODE:
+            start = time.time()
+
+        if app.plot_notebook.index(app.plot_notebook.select()) == 1:
+            print "index 1"
+        #   F1 - UPDATE MOUSTURE PLOT
+            moistPlot1.clear()
+            moistPlot1.set_ylim([ min(valMneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1, 
+                                max(valMneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1 ])
+            moistPlot1.set_ylabel("Moisture [%]")
+
+            # SET X TICK TIME LABEL
+            if BUFF_FILL > 1:
+                moistPlot1.set_xticks(tick_list)
+                moistPlot1.set_xticklabels(clear_list)
+            moistPlot1.grid(True)   
+            moistPlot1.plot( valMneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valMneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
+
+        #   F1 - UPDATE PUMP
+            pumpPlot1.clear()
+            pumpPlot1.set_ylim([ min(valPneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1, 
+                                max(valPneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1 ])
+            pumpPlot1.set_ylabel("PUMP")
+            pumpPlot1.set_xlabel("time [min]")
+
+            # SET X TICK TIME LABEL
+            if BUFF_FILL > 1:
+                pumpPlot1.set_xticks(tick_list)
+                pumpPlot1.set_xticklabels(label_list, rotation =45)
+
+            pumpPlot1.grid(True)
+            pumpPlot1.plot( valPneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valPneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
+
+    # DEBUG MODE
+        if DEBUG_MODE:
+            end = time.time()
+            print "plot flipped buffers " + str(end-start)
+            print "BUFF_FILL: " + str(BUFF_FILL)
+            print "- - - - - - - - - - - -"
+
+    if FIRST_SCAN:
+        FIRST_SCAN = False
+
+def animate2(i):
+# GET SENSOR VALUES, ADD TO BUFFER & PLOT VALUES
+    global BUFF_FILL, FIRST_SCAN
+    global valM, valH, valH1, valP, valL
+    global valMneat,valHneat, valH1neat, valPneat, valLneat
+    global time_list, label_list, tick_list, clear_list
+
+    if not FIRST_SCAN and BUFF_FILL>0:
+    # UPDATE PLOTS
+        if DEBUG_MODE:
+            start = time.time()
+
+        if app.plot_notebook.index(app.plot_notebook.select()) == 2:
+            print "index 2"
+        #   F2 - UPDATE TEMOERATURE PLOT
+            heatPlot2.clear()
+            hy2_min = min(min(valHneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]), min(valH1neat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN])) - 1
+            hy2_max = max(max(valHneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]), max(valH1neat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN])) + 1
+            heatPlot2.set_ylim([ hy2_min, hy2_max ])
+            heatPlot2.set_ylabel("TC Temp [*C]")
+                # SET X TICK TIME LABEL
+            if BUFF_FILL > 1:
+                heatPlot2.set_xticks(tick_list)
+                heatPlot2.set_xticklabels(clear_list)
+            heatPlot2.grid(True)
+            heatPlot2.plot( valHneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valHneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color='g' )
+            heatPlot2.plot( valH1neat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valH1neat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color='b' )
+
+        #   F2 - UPDATE LAMP
+            lampPlot2.clear()
+            lampPlot2.set_ylim([ min(valLneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1, 
+                                max(valLneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1 ])
+            lampPlot2.set_ylabel("LIGHT")
+
+            # SET X TICK TIME LABEL
+            if BUFF_FILL > 1:
+                lampPlot2.set_xticks(tick_list)
+                lampPlot2.set_xticklabels(clear_list)
+            lampPlot2.grid(True)
+            lampPlot2.plot( valLneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valLneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
+
+    # DEBUG MODE
+        if DEBUG_MODE:
+            end = time.time()
+            print "plot flipped buffers " + str(end-start)
+            print "BUFF_FILL: " + str(BUFF_FILL)
+            print "- - - - - - - - - - - -"
+
+    if FIRST_SCAN:
+        FIRST_SCAN = False
 
 
+## START PROGRAM / GUI
+#  DEFINE MATPLOT FUIGURE
+f = pp.Figure(figsize=(10,10),dpi = 75)
+gs = gridspec.GridSpec(4,1, height_ratios=[3,1,3,1])
+f.set_tight_layout(True)
+
+f1 = pp.Figure(figsize=(10,10),dpi = 75)
+gs1 = gridspec.GridSpec(2,1, height_ratios=[3,2])
+f1.set_tight_layout(True)
+
+f2 = pp.Figure(figsize=(10,10),dpi = 75)
+gs2 = gridspec.GridSpec(2,1, height_ratios=[3,2])
+f2.set_tight_layout(True)
+
+# ADD SUBPLOTS
+heatPlot = f.add_subplot(gs[0])
+lampPlot = f.add_subplot(gs[1])
+moistPlot = f.add_subplot(gs[2])
+pumpPlot = f.add_subplot(gs[3])
+
+moistPlot1 = f1.add_subplot(gs1[0])
+pumpPlot1 = f1.add_subplot(gs1[1])
+
+heatPlot2 = f2.add_subplot(gs2[0])
+lampPlot2 = f2.add_subplot(gs2[1])
+
+# SET Y LIMITS
+heatPlot.set_ylim([10,40])
+lampPlot.set_ylim([0,255])
+moistPlot.set_ylim([0,100])
+pumpPlot.set_ylim([0,100])
+
+moistPlot1.set_ylim([0,100])
+pumpPlot1.set_ylim([0,100])
+
+heatPlot2.set_ylim([10,40])
+lampPlot2.set_ylim([0,255])
+
+# SET Y LABEL
+heatPlot.set_ylabel("TC temp [*C]")
+lampPlot.set_ylabel("LIGHT")
+moistPlot.set_ylabel("Moisture [%]")
+pumpPlot.set_ylabel("PUMP")
+
+moistPlot1.set_ylabel("Moisture [%]")
+pumpPlot1.set_ylabel("PUMP")
+
+heatPlot2.set_ylabel("TC temp [*C]")
+lampPlot2.set_ylabel("LIGHT")
+
+# SETT GRID
+heatPlot.grid(True)
+lampPlot.grid(True)
+moistPlot.grid(True)
+pumpPlot.grid(True)
+
+moistPlot1.grid(True)
+pumpPlot1.grid(True)
+
+heatPlot2.grid(True)
+lampPlot2.grid(True)
+
+
+pumpPlot.set_xlabel("time [min]")
+
+heatPlot.plot([0,1], [10,40])
+lampPlot.plot([0,1], [0,255])
+moistPlot.plot([0,1], [0,100])
+pumpPlot.plot([0,1], [0,100])
+
+moistPlot1.plot([0,1], [0,100])
+pumpPlot1.plot([0,1], [0,100])
+
+heatPlot2.plot([0,1], [10,40])
+lampPlot2.plot([0,1], [0,255])
+
+
+# DEFINE TK STUFF
+root = Tk() #init Tk
+root.title ("G R O W  .  M A S T E R")
+app = App(master=root)  # assign tk to master frame
+
+# DEFINE PROGRAM
+def program():
+    global BUFF_FILL, FIRST_SCAN
+    global valM, valH, valH1, valP, valL
+    global valMneat,valHneat, valH1neat, valPneat, valLneat
+    global time_list, label_list, tick_list, clear_list
+
+    if DEBUG_MODE:
+        print "= = = = = = = = = = = ="
+        print "   P R O G R A M   "
+        start = time.time()
+
+    app.daylight_sequence()
+
+    if app.arduino.getStatus():
+        app.serial_connection_string.set("Connected")
+
+    else:
+        app.serial_connection_string.set("Disconnected")
 
     tick_list = []
     label_list = []
     clear_list = []
+    
     # GET SAMPLE IF ARDUINO IS CONNECTED
 #    if app.arduino.assumed_connection_status:
     
@@ -733,7 +1047,7 @@ def animate(i):
             print "   A N I M A T E   "
             start = time.time()
 
-    # SHIFT BUFFERS IN REVERSED ORDER
+# SHIFT BUFFERS IN REVERSED ORDER
         for n in reversed(range( 1, BUFF_LEN )):
             valM[1,n]= valM[1,n-1]
             valH[1,n]= valH[1,n-1]
@@ -746,7 +1060,7 @@ def animate(i):
             print "shift buffer time " + str(end-start)
             start = time.time()
 
-    # ADD VALUES TO BUFFERS
+# ADD VALUES TO BUFFERS
     #   HEAT
         #tmpVal = app.arduino.readCommand("GET_TEMP",["0"])
         tmpVal = str( (valH[1,0]+1) % 2 )
@@ -791,7 +1105,6 @@ def animate(i):
         else:
             valP[1,0] = float(tmpVal)
         
-
     #   LIGHT
         #tmpVal = app.arduino.readCommand("GET_LAMP",["0"])
         tmpVal = str( (valL[1,0]+1) % 2 )
@@ -817,7 +1130,6 @@ def animate(i):
         valPneat = np.flip(valP, 1)
         valLneat = np.flip(valL, 1)
         
-
     # MAKE LICK LIST
         time_list.insert(0, app.str_time.get())
         if BUFF_FILL>1:
@@ -846,125 +1158,7 @@ def animate(i):
                 tick_list.append(valP[0,BUFF_FILL-1])
                 clear_list.append("")
 
-    # UPDATE PLOTS
-        if DEBUG_MODE:
-            start = time.time()
 
-    #   UPDATE TEMOERATURE PLOT
-        heatPlot.clear()
-        hy_min = min(min(valHneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]), min(valH1neat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN])) - 1
-        hy_max = max(max(valHneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]), max(valH1neat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN])) + 1
-        heatPlot.set_ylim([ hy_min, hy_max ])
-        heatPlot.set_ylabel("TC Temp [*C]")
-            # SET X TICK TIME LABEL
-        if BUFF_FILL > 1:
-            heatPlot.set_xticks(tick_list)
-            heatPlot.set_xticklabels(clear_list)
-        heatPlot.grid(True)
-        heatPlot.plot( valHneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valHneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color='g' )
-        heatPlot.plot( valH1neat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valH1neat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color='b' )
-
-    #   UPDATE LAMP
-        lampPlot.clear()
-        lampPlot.set_ylim([ min(valLneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1, 
-                            max(valLneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1 ])
-        lampPlot.set_ylabel("LIGHT")
-            # SET X TICK TIME LABEL
-        if BUFF_FILL > 1:
-            lampPlot.set_xticks(tick_list)
-            lampPlot.set_xticklabels(clear_list)
-        lampPlot.grid(True)
-        lampPlot.plot( valLneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valLneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
-
-    #   UPDATE MOUSTURE PLOT
-        moistPlot.clear()
-        moistPlot.set_ylim([ min(valMneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1, 
-                            max(valMneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1 ])
-        moistPlot.set_ylabel("Moisture [%]")
-            # SET X TICK TIME LABEL
-        if BUFF_FILL > 1:
-            moistPlot.set_xticks(tick_list)
-            moistPlot.set_xticklabels(clear_list)
-        moistPlot.grid(True)   
-        moistPlot.plot( valMneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valMneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
-
-
-    #   UPDATE PUMP
-        pumpPlot.clear()
-        pumpPlot.set_ylim([ min(valPneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1, 
-                            max(valPneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1 ])
-        pumpPlot.set_ylabel("PUMP")
-        pumpPlot.set_xlabel("time [min]")
-
-    # SET X TICK TIME LABEL
-        if BUFF_FILL > 1:
-            pumpPlot.set_xticks(tick_list)
-            pumpPlot.set_xticklabels(label_list, rotation =45)
-
-        pumpPlot.grid(True)
-        pumpPlot.plot( valPneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valPneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
-
-        if DEBUG_MODE:
-            end = time.time()
-            print "plot flipped buffers " + str(end-start)
-            print "BUFF_FILL: " + str(BUFF_FILL)
-            print "- - - - - - - - - - - -"
-
-    if FIRST_SCAN:
-        FIRST_SCAN = False
-
-## START PROGRAM / GUI
-#  DEFINE MATPLOT FUIGURE
-f = pp.Figure(figsize=(10,10),dpi = 75)
-gs = gridspec.GridSpec(4,1, height_ratios=[3,1,3,1])
-f.set_tight_layout(True)
-
-heatPlot = f.add_subplot(gs[0])
-lampPlot = f.add_subplot(gs[1])
-moistPlot = f.add_subplot(gs[2])
-pumpPlot = f.add_subplot(gs[3])
-
-heatPlot.set_ylim([10,40])
-lampPlot.set_ylim([0,255])
-moistPlot.set_ylim([0,100])
-pumpPlot.set_ylim([0,100])
-
-heatPlot.set_ylabel("TC temp [*C]")
-lampPlot.set_ylabel("LIGHT")
-moistPlot.set_ylabel("Moisture [%]")
-pumpPlot.set_ylabel("PUMP")
-
-heatPlot.grid(True)
-lampPlot.grid(True)
-moistPlot.grid(True)
-pumpPlot.grid(True)
-
-pumpPlot.set_xlabel("time [min]")
-
-heatPlot.plot(0, 0)
-lampPlot.plot(0, 0)
-moistPlot.plot(0, 0)
-pumpPlot.plot(0, 0)
-
-# DEFINE TK STUFF
-root = Tk() #init Tk
-root.title ("G R O W  .  M A S T E R")
-app = App(master=root)  # assign tk to master frame
-
-# DEFINE PROGRAM
-def program():
-    if DEBUG_MODE:
-        print "= = = = = = = = = = = ="
-        print "   P R O G R A M   "
-        start = time.time()
-
-    app.daylight_sequence()
-
-    if app.arduino.getStatus():
-        app.serial_connection_string.set("Connected")
-
-    else:
-        app.serial_connection_string.set("Disconnected")
 
     if DEBUG_MODE:
         end = time.time()
@@ -976,6 +1170,8 @@ root.after(int(PROGRAM_CYLCETIME), program)
 
 # START GUI
 ani = animation.FuncAnimation(f, animate, interval = int(ANI_CYCLETIME))
+ani1 = animation.FuncAnimation(f1, animate1, interval = int(ANI_CYCLETIME))
+ani2 = animation.FuncAnimation(f2, animate2, interval = int(ANI_CYCLETIME))
 app.mainloop()
 app.arduino.closeConnection()
 sys.exit()

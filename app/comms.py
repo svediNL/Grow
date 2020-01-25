@@ -25,6 +25,7 @@ class SlaveComm:
 
         else:
             self.assumed_connection_status = True
+            self.ser.flush()
             print("device connected")
             print("o - o - o")
 
