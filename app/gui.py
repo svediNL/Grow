@@ -348,11 +348,14 @@ class App( Frame ):
 # BUILD GUI
     def create_widgets(self):
     # M A I N   F R A M E
+
         # CREATE MAIN FRAME
         self.mainframe = Frame(self)
         #self.mainframe.pack(fill = BOTH, expand = True)
         self.mainframe.grid(column = 0, row=0, sticky=E+W)
-
+        self.mainframe.grid_columnconfigure(0, weight =1)
+        self.mainframe.grid_columnconfigure(1, weight =1)
+        
     # H E A D E R   F R A M E
         # CREATE HEADER FRAME
         self.headerFrame=Frame(self.mainframe, bd=2, relief = SUNKEN)
@@ -360,7 +363,6 @@ class App( Frame ):
         self.headerFrame.grid(column = 0, columnspan = 2, row=0, sticky=N+S+E+W)
         self.headerFrame.grid_columnconfigure(0, weight =1)
         self.headerFrame.grid_columnconfigure(1, weight =1)
-
 
         # HEADER TEXT
         self.label_header = Label(self.headerFrame, text= " +- ~ - ~ - ~ - ~ - ~ -+  G R O W   M A S T E R     v1.6  +- ~ - ~ - ~ - ~ - ~ -+ ")
@@ -377,12 +379,15 @@ class App( Frame ):
         # CREATE CONTENT FRAME (PLOT AREA)
         self.contentFrame=Frame(self.mainframe, bd=2, relief = SUNKEN)
         #self.contentFrame.pack(side = BOTTOM, expand = True)
-        self.contentFrame.grid(column = 0, row=1, sticky=N+S+E+W)
+        self.contentFrame.grid(column = 0, row=1, columnspan = 2, sticky=N+S+E+W)
+        self.contentFrame.grid_columnconfigure(0, weight =1)
+        self.contentFrame.grid_columnconfigure(1, weight =1)
 
     # P L O T   F R A M E  
         self.plotFrame = Frame(self.contentFrame, bd=1, relief = SUNKEN)
         #self.plotFrame.pack(fill = Y, side = LEFT, expand = True)
         self.plotFrame.grid(column = 0, row=0, sticky=N+S+E+W)
+        self.plotFrame.grid_columnconfigure(0, weight =1)
 
         # ADD NOTEBOOK TO SERIAL FRAME
         self.plot_notebook = Notebook(self.plotFrame)
@@ -419,23 +424,27 @@ class App( Frame ):
 
     # D I R E C T   C O N T R O L   F R A M E
         # CREATE DIRECT CONTROL FRAME
-        self.dicoFrame = Frame(self.contentFrame, width = 600, bd=1, relief = SUNKEN)
+        self.dicoFrame = Frame(self.contentFrame, bd=1, relief = SUNKEN) # width = 600,
         #self.dicoFrame.pack(fill = BOTH, side = RIGHT, expand = True)
         self.dicoFrame.grid(column = 1, row=0, sticky=N+S+E+W)
-
+        self.dicoFrame.grid_columnconfigure(0,weight=1)
+        self.dicoFrame.grid_rowconfigure(0,weight=0)
+        self.dicoFrame.grid_rowconfigure(1,weight=1)
+        self.dicoFrame.grid_rowconfigure(2,weight=1)
 
     #   S E R I A L  F R A M E
         # ADD SERIAL FRAME TO DICO FRAME
         self.serial_frame = Frame(self.dicoFrame, bd=1, relief = SUNKEN)
         #self.serial_frame.pack(side = TOP, fill = Y, expand = True)
         self.serial_frame.grid(column = 0, row=0, sticky=N+S+E+W)
+        self.serial_frame.grid_columnconfigure(0,weight=1)
 
         # SERIAL HEADER TEXT
         self.serial_header_label = Label(self.serial_frame, text = "~  S E R I A L ")
         self.serial_header_label.grid(column = 0, row=0, sticky=N+S+W)
 
         # ADD NOTEBOOK TO SERIAL FRAME
-        self.serial_notebook = Notebook(self.serial_frame, width = 300)
+        self.serial_notebook = Notebook(self.serial_frame) #, width = 300)
         self.serial_notebook.grid(column = 0, row=1, sticky=N+S+E+W)
 
         # ADD CONNECTION FRAME TO NOTEBOOK
@@ -476,29 +485,44 @@ class App( Frame ):
         self.live_frame = Frame(self.dicoFrame, bd=1, relief= SUNKEN)
         self.live_frame.grid_columnconfigure(0, weight =1)
         self.live_frame.grid_columnconfigure(1, weight =1)
+        self.live_frame.grid_rowconfigure(0, weight =0)
+        self.live_frame.grid_rowconfigure(1, weight =2)
+
+
         #self.live_frame.pack(fill = BOTH, side = TOP, expand = True)
         self.live_frame.grid(column = 0, row=1, sticky=N+S+E+W)
 
         self.live_label = Label(self.live_frame, text = "~ L I V E   M O N I T O R")
         self.live_label.grid(column = 0, row = 0, columnspan = 2, sticky = N+S+W)
 
+        self.live_spacer = Label(self.live_frame, text = "")
+        self.live_spacer.grid(column = 0, row = 1, columnspan = 2, sticky = N+S+W)
+
         self.live_heat_label = []
         self.live_heat_value = []
         for n in range(NR_THERMO):
             tmp = NAMES_THERMO[n] + " value :   "
+            row_nr = (n+2)
+            self.live_frame.grid_rowconfigure(row_nr, weight =3)
+
             self.live_heat_label.append(Label(self.live_frame, text = tmp))
-            self.live_heat_label[n].grid(column = 0, row= (n+1), sticky=N+S+W)
+            self.live_heat_label[n].grid(column = 0, row= row_nr, sticky=N+S+W)
             self.live_heat_value.append(Label(self.live_frame, textvariab = self.temperature_var[n]))
-            self.live_heat_value[n].grid(column = 1, row= (n+1), sticky=E)
+            self.live_heat_value[n].grid(column = 1, row= row_nr, sticky=E)
+            
 
         self.live_moist_label = []
         self.live_moist_value = []
         for n in range(NR_MOISTURE):
             tmp = NAMES_MOISTURE[n] + " value :   "
+            row_nr = (NR_THERMO+n+2)
+            self.live_frame.grid_rowconfigure(row_nr, weight =3)
+
             self.live_moist_label.append(Label(self.live_frame, text = tmp))
-            self.live_moist_label[n].grid(column = 0, row= (NR_THERMO+n+1), sticky=N+S+W)
+            self.live_moist_label[n].grid(column = 0, row= row_nr, sticky=N+S+W)
             self.live_moist_value.append(Label(self.live_frame, textvariab = self.moisture_var[n]))
-            self.live_moist_value[n].grid(column = 1, row= (NR_THERMO+n+1), sticky=E)
+            self.live_moist_value[n].grid(column = 1, row= row_nr, sticky=E)
+            
 
 
     #   D E V I C E  C O N T R O L  F R A M E
@@ -506,12 +530,14 @@ class App( Frame ):
         self.devco_frame = Frame(self.dicoFrame , bd=1, relief = SUNKEN)
         #self.devco_frame.pack(fill = Y, side = TOP, expand = True)
         self.devco_frame.grid(column = 0, row=2, sticky=N+S+E+W)
+        self.devco_frame.grid_columnconfigure(0,weight=1)
+
         # DEVICE CONTROL HEADER TEXT
         self.devco_label = Label(self.devco_frame, text= "~  D E V I C E  C O N T R O L ")
         self.devco_label.grid(column = 0, row=0, sticky=N+S+W)
 
         # DEVICE CONTROL NOTEBOOL
-        self.devco_notebook = Notebook(self.devco_frame, width = 300)
+        self.devco_notebook = Notebook(self.devco_frame) #, width = 300
         self.devco_notebook.grid(column = 0, row=1, sticky=N+S+E+W)
 
     #   DEVCO NOTBOOK _ LAMP CONTROL
@@ -656,10 +682,26 @@ class App( Frame ):
             self.devco_relay.append(Checkbutton(self.devco_relay_frame, text= NAMES_RELAY[n], variable = self.enable_relay[n], onvalue= 1, offvalue=0, command = self.toggle_relay))
             self.devco_relay[n].grid(column = 0, row = n, columnspan = 4, sticky=S+W+N)
 
+        # SET BACKGROUND CLOUR
+        if DEBUG_MODE:
+            self.configure(bg='red')
+            self.mainframe.configure(bg='green')
+            self.headerFrame.configure(bg='blue')
+            self.contentFrame.configure(bg='yellow')
+            self.plotFrame.configure(bg='orange')
+            self.dicoFrame.configure(bg='magenta')
+        else:
+            self.configure(bg='white')
+            self.mainframe.configure(bg='white')
+            self.headerFrame.configure(bg='white')
+            self.contentFrame.configure(bg='white')
+            self.plotFrame.configure(bg='white')
+            self.dicoFrame.configure(bg='white')
+
     #   PACK SELF
         self.grid_columnconfigure(0, weight =1)
         self.grid_rowconfigure(0, weight =1)
-        self.pack()
+        self.pack(fill = BOTH, expand = True)
 
     def daylight_sequence(self):
         eptime = time.time()
@@ -1013,6 +1055,7 @@ root = Tk() #init Tk
 root.title ("G R O W  .  M A S T E R")
 app = App(master=root)  # assign tk to master frame
 
+
 # DEFINE PROGRAM
 def program():
     global BUFF_FILL, FIRST_SCAN
@@ -1038,125 +1081,135 @@ def program():
     clear_list = []
     
     # GET SAMPLE IF ARDUINO IS CONNECTED
-#    if app.arduino.assumed_connection_status:
+    if app.arduino.assumed_connection_status or DEBUG_MODE:
     
-    if not FIRST_SCAN:
+        if not FIRST_SCAN:
 
-        if DEBUG_MODE:
-            print "= = = = = = = = = = = ="
-            print "   A N I M A T E   "
-            start = time.time()
+            if DEBUG_MODE:
+                print " -   G E T   V A L U E S   - "
+                start = time.time()
 
-# SHIFT BUFFERS IN REVERSED ORDER
-        for n in reversed(range( 1, BUFF_LEN )):
-            valM[1,n]= valM[1,n-1]
-            valH[1,n]= valH[1,n-1]
-            valH1[1,n]= valH1[1,n-1]
-            valP[1,n]= valP[1,n-1]
-            valL[1,n]= valL[1,n-1]  
+    # SHIFT BUFFERS IN REVERSED ORDER
+            for n in reversed(range( 1, BUFF_LEN )):
+                valM[1,n]= valM[1,n-1]
+                valH[1,n]= valH[1,n-1]
+                valH1[1,n]= valH1[1,n-1]
+                valP[1,n]= valP[1,n-1]
+                valL[1,n]= valL[1,n-1]  
 
-        if  DEBUG_MODE:
-            end = time.time()
-            print "shift buffer time " + str(end-start)
-            start = time.time()
+            if  DEBUG_MODE:
+                end = time.time()
+                print "shift buffer time " + str(end-start)
+                start = time.time()
 
-# ADD VALUES TO BUFFERS
-    #   HEAT
-        #tmpVal = app.arduino.readCommand("GET_TEMP",["0"])
-        tmpVal = str( (valH[1,0]+1) % 2 )
-        app.temperature_var[0].set(tmpVal)
-        try:
-            float(tmpVal)
-        except ValueError:
-            valH[1,0] = float(0)
-        else:
-            valH[1,0] = float(tmpVal)  
-
-    #   HEAT 1
-        #tmpVal = app.arduino.readCommand("GET_TEMP",["1"])
-        tmpVal = str( ((valH1[1,0]+1)*7) % 3 )
-        app.temperature_var[1].set(tmpVal)
-        try:
-            float(tmpVal)
-        except ValueError:
-            valH1[1,0] = float(0)
-        else:
-            valH1[1,0] = float(tmpVal)   
-
-    #   MOISTURE
-        #tmpVal = app.arduino.readCommand("GET_MOISTURE",["0"])
-        tmpVal = str( valM[1,0] + 1 )
-        app.moisture_var[0].set(tmpVal)
-
-        try:
-            float(tmpVal)
-        except ValueError:
-            valM[1,0] = float(0)
-        else:
-            valM[1,0] = float(tmpVal)
-
-    #   PUMP
-        #tmpVal = app.arduino.readCommand("GET_PUMP",["0"])
-        tmpVal = str( (valP[1,0]+1) % 2 )
-        try:
-            float(tmpVal)
-        except ValueError:
-            valP[1,0] = float(0)
-        else:
-            valP[1,0] = float(tmpVal)
-        
-    #   LIGHT
-        #tmpVal = app.arduino.readCommand("GET_LAMP",["0"])
-        tmpVal = str( (valL[1,0]+1) % 2 )
-        try:
-            float(tmpVal)
-        except ValueError:
-            valL[1,0] = float(0)
-        else:
-            valL[1,0] = float(tmpVal)
-
-        if DEBUG_MODE:
-            end = time.time()
-            print "get values " + str(end-start)
-
-        if BUFF_FILL < BUFF_LEN:
-            BUFF_FILL = BUFF_FILL + 1
-
-    # FLIP BUFFERS
-        # reverse value array for neatness
-        valMneat = np.flip(valM, 1)
-        valHneat = np.flip(valH, 1)
-        valH1neat = np.flip(valH1, 1)
-        valPneat = np.flip(valP, 1)
-        valLneat = np.flip(valL, 1)
-        
-    # MAKE LICK LIST
-        time_list.insert(0, app.str_time.get())
-        if BUFF_FILL>1:
-            if BUFF_FILL>6:
-                label_list = []
-                tick_list = []
-                stepsize = BUFF_FILL/6.0
-
-                for n in range(6):
-                    label_list.append(time_list[int(n*stepsize)])
-                    tick_list.append(valP[0,int(n*stepsize)])
-                    clear_list.append("")
-                label_list.append(time_list[BUFF_FILL-1])
-                tick_list.append(valP[0,BUFF_FILL-1])
-                clear_list.append("")
-
+    # ADD VALUES TO BUFFERS
+        #   HEAT
+            if DEBUG_MODE:
+                tmpVal = str( (valH[1,0]+1) % 2 )
             else:
-                label_list = []
-                tick_list = []
-                clear_list = []
-                for n in range(BUFF_FILL-1):
-                    label_list.append(time_list[int(n)])
-                    tick_list.append(valP[0,n])
+                tmpVal = app.arduino.readCommand("GET_TEMP",["0"])
+
+            app.temperature_var[0].set(tmpVal)
+            try:
+                float(tmpVal)
+            except ValueError:
+                valH[1,0] = float(0)
+            else:
+                valH[1,0] = float(tmpVal)  
+
+        #   HEAT 1
+            if DEBUG_MODE:
+                tmpVal = str( ((valH1[1,0]+1)*7) % 3 )
+            else:
+                tmpVal = app.arduino.readCommand("GET_TEMP",["1"])
+            app.temperature_var[1].set(tmpVal)
+            try:
+                float(tmpVal)
+            except ValueError:
+                valH1[1,0] = float(0)
+            else:
+                valH1[1,0] = float(tmpVal)   
+
+        #   MOISTURE
+            if DEBUG_MODE:
+                tmpVal = str( valM[1,0] + 1 )
+            else:
+                tmpVal = app.arduino.readCommand("GET_MOISTURE",["0"])
+            app.moisture_var[0].set(tmpVal)
+
+            try:
+                float(tmpVal)
+            except ValueError:
+                valM[1,0] = float(0)
+            else:
+                valM[1,0] = float(tmpVal)
+
+        #   PUMP
+            if DEBUG_MODE:
+                tmpVal = str( (valP[1,0]+1) % 2 )
+            else:
+                tmpVal = app.arduino.readCommand("GET_PUMP",["0"])
+            try:
+                float(tmpVal)
+            except ValueError:
+                valP[1,0] = float(0)
+            else:
+                valP[1,0] = float(tmpVal)
+            
+        #   LIGHT
+            if DEBUG_MODE:
+                tmpVal = str( (valL[1,0]+1) % 2 )
+            else:
+                tmpVal = app.arduino.readCommand("GET_LAMP",["0"])
+            try:
+                float(tmpVal)
+            except ValueError:
+                valL[1,0] = float(0)
+            else:
+                valL[1,0] = float(tmpVal)
+
+            if DEBUG_MODE:
+                end = time.time()
+                print "get values " + str(end-start)
+
+            if BUFF_FILL < BUFF_LEN:
+                BUFF_FILL = BUFF_FILL + 1
+
+        # FLIP BUFFERS
+            # reverse value array for neatness
+            valMneat = np.flip(valM, 1)
+            valHneat = np.flip(valH, 1)
+            valH1neat = np.flip(valH1, 1)
+            valPneat = np.flip(valP, 1)
+            valLneat = np.flip(valL, 1)
+            
+        # MAKE LICK LIST
+            time_list.insert(0, app.str_time.get())
+            if BUFF_FILL>1:
+                if BUFF_FILL>6:
+                    label_list = []
+                    tick_list = []
+                    stepsize = BUFF_FILL/6.0
+
+                    for n in range(6):
+                        label_list.append(time_list[int(n*stepsize)])
+                        tick_list.append(valP[0,int(n*stepsize)])
+                        clear_list.append("")
+                    label_list.append(time_list[BUFF_FILL-1])
+                    tick_list.append(valP[0,BUFF_FILL-1])
                     clear_list.append("")
-                label_list.append(time_list[BUFF_FILL-1])
-                tick_list.append(valP[0,BUFF_FILL-1])
-                clear_list.append("")
+
+                else:
+                    label_list = []
+                    tick_list = []
+                    clear_list = []
+                    for n in range(BUFF_FILL-1):
+                        label_list.append(time_list[int(n)])
+                        tick_list.append(valP[0,n])
+                        clear_list.append("")
+                    label_list.append(time_list[BUFF_FILL-1])
+                    tick_list.append(valP[0,BUFF_FILL-1])
+                    clear_list.append("")
 
 
 
