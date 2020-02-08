@@ -753,7 +753,7 @@ class App( Frame ):
                 # OUTPUT IS NOT YET DONE RISING
                     self.daylight_output = float(self.daylight_output) + float(self.daylight_stepsize)
                     self.arduino.writeCommand("SET_LAMP", ["W", str(int(self.daylight_output))])
-                    self.arduino.writeCommand("ENABLE_LAMP", ["1"])
+                    self.arduino.writeCommand("ENABLE_LAMP", ["0","1"])
 
                     self.daylight_status.set("DAYTIME - SUNRISE")
                     self.lamp_state[0].set("AUTOMATIC CTRL - RAMPING UP")
@@ -761,7 +761,7 @@ class App( Frame ):
                 else:
                     # OUTPUT IS DONE RISING
                     self.arduino.writeCommand("SET_LAMP", ["W", str(int(float(self.daylight_brightness.get())))])
-                    self.arduino.writeCommand("ENABLE_LAMP", ["1"])
+                    self.arduino.writeCommand("ENABLE_LAMP", ["0","1"])
 
                     self.daylight_status.set("DAYTIME")
                     self.lamp_state[0].set("AUTOMATIC CTRL - FULL OUTPUT")
@@ -772,7 +772,7 @@ class App( Frame ):
                 # OUTPUT IS NOT YET DONE FALLING
                     self.daylight_output = self.daylight_output - self.daylight_stepsize
                     self.arduino.writeCommand("SET_LAMP", ["W", str(int(float(self.daylight_output)))])
-                    self.arduino.writeCommand("ENABLE_LAMP", ["1"])
+                    self.arduino.writeCommand("ENABLE_LAMP", ["0","1"])
 
                     self.daylight_status.set("DAYTIME - SUNSET")
                     self.lamp_state[0].set("AUTOMATIC CTRL - RAMPING DOWN")
@@ -780,7 +780,7 @@ class App( Frame ):
                 else:
                # OUTPUT IS NOT YET DONE FALLING
                     self.arduino.writeCommand("SET_LAMP", ["W", str(0)])
-                    self.arduino.writeCommand("ENABLE_LAMP", ["0"])
+                    self.arduino.writeCommand("ENABLE_LAMP", ["0","0"])
 
                     self.daylight_status.set("NIGHTTIME")
                     self.lamp_state[0].set("AUTOMATIC CTRL - DISABLED OUTPUT")
