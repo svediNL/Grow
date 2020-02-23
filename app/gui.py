@@ -39,22 +39,22 @@ clear_list = []
 
 # FILL SAMPLE TIME
 for n in range(BUFF_LEN):
-    valM[0,n]= -1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
-    valH[0,n]= -1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
-    valH1[0,n]= -1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
-    valP[0,n]= -1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
-    valL[0,n]= -1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
+    valM[0,n]  = -n # -1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
+    valH[0,n]  = -n #-1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
+    valH1[0,n] = -n #-1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
+    valP[0,n]  = -n #-1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
+    valL[0,n]  = -n #-1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
 
-valMneat = np.flip(valM, 1)
-valHneat = np.flip(valH, 1)
+valMneat  = np.flip(valM, 1)
+valHneat  = np.flip(valH, 1)
 valH1neat = np.flip(valH1, 1)
-valPneat = np.flip(valP, 1)
-valLneat = np.flip(valL, 1)
+valPneat  = np.flip(valP, 1)
+valLneat  = np.flip(valL, 1)
 
 # DEFINE APP CLASS AS BASE FRAME
 class App( Frame ):
 
-# INIT
+#   INIT
     def __init__(self, master=None):
         Frame.__init__(self, master)
 
@@ -192,7 +192,7 @@ class App( Frame ):
         else:
             self.serial_connection_string.set("Disconnected")
 
-# SERIAL FUNCTIONS
+#   SERIAL FUNCTIONS
     def open_serial_connection(self):
         self.arduino.setPort(self.serial_var_port.get())
         self.arduino.openConnection()
@@ -229,7 +229,7 @@ class App( Frame ):
         self.arduino.readCommand(self.serial_var_string.get())
         self.serial_var_string.set("")
 
-# LIGHTING FUNCTIONS
+#   LIGHTING FUNCTIONS
     def disable_lamp(self):
         self.lamp_state[0].set("LAMP DISABLED")
         self.arduino.writeCommand("ENABLE_LAMP", ["0","0"])
@@ -274,7 +274,7 @@ class App( Frame ):
 
         return True 
 
-# HYDROLIC FUNCTIONS
+#   HYDROLIC FUNCTIONS
     def update_pump(self, value):
         self.pump_pwm[0] = int(float(value))
         self.arduino.writeCommand("SET_PUMP", ["0",str(self.pump_pwm[0]), str(int(self.pump_enable[0]))] )
@@ -345,7 +345,7 @@ class App( Frame ):
                 self.enable_relay_prev[n] = self.enable_relay[n].get()
                 self.arduino.writeCommand("SET_RELAY", [str(n), str(self.enable_relay[n].get())])
 
-# BUILD GUI
+#   BUILD GUI
     def create_widgets(self):
     # M A I N   F R A M E
 
@@ -791,7 +791,7 @@ class App( Frame ):
 
 ##   A N I M A T I O N
 def animate(i):
-# GET SENSOR VALUES, ADD TO BUFFER & PLOT VALUES
+# PLOT VALUES
     global BUFF_FILL, FIRST_SCAN
     global valM, valH, valH1, valP, valL
     global valMneat,valHneat, valH1neat, valPneat, valLneat
@@ -800,9 +800,215 @@ def animate(i):
     if not FIRST_SCAN and BUFF_FILL>0:
     # UPDATE PLOTS
         if DEBUG_MODE:
+            print " "
+            print "= = = = = = = = = = = ="
+            print "   A N I M A T E   0   "
+            print app.plot_notebook.index(app.plot_notebook.select())
+            start_plot = time.time()
             start = time.time()
 
-        if app.plot_notebook.index(app.plot_notebook.select()) == 0:
+    #   F - UPDATE TEMOERATURE PLOT
+        heatPlot.clear()
+        hy_min = min(min(valHneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]), min(valH1neat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN])) - 1
+        hy_max = max(max(valHneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]), max(valH1neat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN])) + 1
+        heatPlot.set_ylim([ hy_min, hy_max ])
+        heatPlot.set_ylabel("TC Temp [*C]")
+            # SET X TICK TIME LABEL
+        if BUFF_FILL > 1:
+            heatPlot.set_xticks(tick_list)
+            heatPlot.set_xticklabels(clear_list)
+        heatPlot.grid(True)
+        heatPlot.plot( valHneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valHneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color='g' )
+        heatPlot.plot( valH1neat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valH1neat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color='b' )
+
+    #   F - UPDATE LAMP
+        lampPlot.clear()
+        lampPlot.set_ylim([ min(valLneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1, 
+                            max(valLneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1 ])
+        lampPlot.set_ylabel("LIGHT")
+
+        # SET X TICK TIME LABEL
+        if BUFF_FILL > 1:
+            lampPlot.set_xticks(tick_list)
+            lampPlot.set_xticklabels(clear_list)
+        lampPlot.grid(True)
+        lampPlot.plot( valLneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valLneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
+
+    #   F - UPDATE MOUSTURE PLOT
+        moistPlot.clear()
+        moistPlot.set_ylim([ min(valMneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1, 
+                            max(valMneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1 ])
+        moistPlot.set_ylabel("Moisture [%]")
+
+        # SET X TICK TIME LABEL
+        if BUFF_FILL > 1:
+            moistPlot.set_xticks(tick_list)
+            moistPlot.set_xticklabels(clear_list)
+        moistPlot.grid(True)   
+        moistPlot.plot( valMneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valMneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
+
+    #   F - UPDATE PUMP
+        pumpPlot.clear()
+        pumpPlot.set_ylim([ min(valPneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1, 
+                            max(valPneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1 ])
+        pumpPlot.set_ylabel("PUMP")
+        pumpPlot.set_xlabel("time [min]")
+
+        # SET X TICK TIME LABEL
+        if BUFF_FILL > 1:
+            pumpPlot.set_xticks(tick_list)
+            pumpPlot.set_xticklabels(label_list, rotation =45)
+
+        pumpPlot.grid(True)
+        pumpPlot.plot( valPneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valPneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
+
+        # PRINT PLOTTING TIME
+        if DEBUG_MODE:
+            end = time.time()
+            print "plot time: " + str(end-start)
+            print "BUFF_FILL: " + str(BUFF_FILL)
+                
+        if DEBUG_MODE:
+            end_plot = time.time()
+            print " "
+            print "ANIMATE time: " + str(end_plot-start_plot)
+            print "= = = = = = = = = = = ="
+            print " "
+
+    if FIRST_SCAN:
+        FIRST_SCAN = False
+
+def animate1(i):
+# PLOT VALUES
+    global BUFF_FILL, FIRST_SCAN
+    global valM, valP
+    global valMneat, valPneat
+    global time_list, label_list, tick_list, clear_list
+
+
+    if not FIRST_SCAN and BUFF_FILL>0:
+    # UPDATE PLOTS
+        if DEBUG_MODE:
+            print " "
+            print "= = = = = = = = = = = ="
+            print "   A N I M A T E   1   "
+            print app.plot_notebook.index(app.plot_notebook.select())
+            start_plot = time.time()
+            start = time.time()
+
+
+    #   F1 - UPDATE MOUSTURE PLOT
+        moistPlot1.clear()
+        moistPlot1.set_ylim([ min(valMneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1, 
+                            max(valMneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1 ])
+        moistPlot1.set_ylabel("Moisture [%]")
+
+        # SET X TICK TIME LABEL
+        if BUFF_FILL > 1:
+            moistPlot1.set_xticks(tick_list)
+            moistPlot1.set_xticklabels(clear_list)
+        moistPlot1.grid(True)   
+        moistPlot1.plot( valMneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valMneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
+
+    #   F1 - UPDATE PUMP
+        pumpPlot1.clear()
+        pumpPlot1.set_ylim([ min(valPneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1, 
+                            max(valPneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1 ])
+        pumpPlot1.set_ylabel("PUMP")
+        pumpPlot1.set_xlabel("time [min]")
+
+        # SET X TICK TIME LABEL
+        if BUFF_FILL > 1:
+            pumpPlot1.set_xticks(tick_list)
+            pumpPlot1.set_xticklabels(label_list, rotation =45)
+
+        pumpPlot1.grid(True)
+        pumpPlot1.plot( valPneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valPneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
+
+        # PRINT PLOTTING TIME
+        if DEBUG_MODE:
+            end = time.time()
+            print "plot time: " + str(end-start)
+            print "BUFF_FILL: " + str(BUFF_FILL)
+            
+        if DEBUG_MODE:
+            end_plot = time.time()
+            print " "
+            print "ANIMATE time: " + str(end_plot-start_plot)
+            print "= = = = = = = = = = = ="
+            print " "
+
+    if FIRST_SCAN:
+        FIRST_SCAN = False
+
+def animate2(i):
+# PLOT VALUES
+    global BUFF_FILL, FIRST_SCAN
+    global valH, valH1, valL
+    global valHneat, valH1neat, valLneat
+    global time_list, label_list, tick_list, clear_list
+
+    if not FIRST_SCAN and BUFF_FILL>0:
+    # UPDATE PLOTS
+        if DEBUG_MODE:
+            print " "
+            print "= = = = = = = = = = = ="
+            print "   A N I M A T E   2   "
+            print app.plot_notebook.index(app.plot_notebook.select())
+            start_plot = time.time()
+            start = time.time()
+
+    #   F2 - UPDATE TEMOERATURE PLOT
+        heatPlot2.clear()
+        hy2_min = min(min(valHneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]), min(valH1neat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN])) - 1
+        hy2_max = max(max(valHneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]), max(valH1neat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN])) + 1
+        heatPlot2.set_ylim([ hy2_min, hy2_max ])
+        heatPlot2.set_ylabel("TC Temp [*C]")
+            # SET X TICK TIME LABEL
+        if BUFF_FILL > 1:
+            heatPlot2.set_xticks(tick_list)
+            heatPlot2.set_xticklabels(clear_list)
+        heatPlot2.grid(True)
+        heatPlot2.plot( valHneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valHneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color='g' )
+        heatPlot2.plot( valH1neat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valH1neat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color='b' )
+
+    #   F2 - UPDATE LAMP
+        lampPlot2.clear()
+        lampPlot2.set_ylim([ min(valLneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1, 
+                            max(valLneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1 ])
+        lampPlot2.set_ylabel("LIGHT")
+
+        # SET X TICK TIME LABEL
+        if BUFF_FILL > 1:
+            lampPlot2.set_xticks(tick_list)
+            lampPlot2.set_xticklabels(label_list, rotation =45)
+        lampPlot2.grid(True)
+        lampPlot2.plot( valLneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valLneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
+
+        # PRINT PLOTTING TIME
+        if DEBUG_MODE:
+            end = time.time()
+            print "plot time: " + str(end-start)
+            print "BUFF_FILL: " + str(BUFF_FILL)
+                
+        if DEBUG_MODE:
+            end_plot = time.time()
+            print " "
+            print "ANIMATE time: " + str(end_plot-start_plot)
+            print "= = = = = = = = = = = ="
+            print " "
+
+    if FIRST_SCAN:
+        FIRST_SCAN = False
+
+def update_plot(index):
+    global BUFF_FILL, FIRST_SCAN
+    global valM, valH, valH1, valP, valL
+    global valMneat,valHneat, valH1neat, valPneat, valLneat
+    global time_list, label_list, tick_list, clear_list
+
+    if index == 0:
+        if not FIRST_SCAN and BUFF_FILL>0:
             print "index 0"
         #   F - UPDATE TEMOERATURE PLOT
             heatPlot.clear()
@@ -859,29 +1065,8 @@ def animate(i):
             pumpPlot.grid(True)
             pumpPlot.plot( valPneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valPneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
 
-    # DEBUG MODE
-        if DEBUG_MODE:
-            end = time.time()
-            print "plot flipped buffers " + str(end-start)
-            print "BUFF_FILL: " + str(BUFF_FILL)
-            print "- - - - - - - - - - - -"
-
-    if FIRST_SCAN:
-        FIRST_SCAN = False
-
-def animate1(i):
-# GET SENSOR VALUES, ADD TO BUFFER & PLOT VALUES
-    global BUFF_FILL, FIRST_SCAN
-    global valM, valH, valH1, valP, valL
-    global valMneat,valHneat, valH1neat, valPneat, valLneat
-    global time_list, label_list, tick_list, clear_list
-
-    if not FIRST_SCAN and BUFF_FILL>0:
-    # UPDATE PLOTS
-        if DEBUG_MODE:
-            start = time.time()
-
-        if app.plot_notebook.index(app.plot_notebook.select()) == 1:
+    elif index == 1:
+        if not FIRST_SCAN and BUFF_FILL>0:
             print "index 1"
         #   F1 - UPDATE MOUSTURE PLOT
             moistPlot1.clear()
@@ -911,29 +1096,8 @@ def animate1(i):
             pumpPlot1.grid(True)
             pumpPlot1.plot( valPneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valPneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
 
-    # DEBUG MODE
-        if DEBUG_MODE:
-            end = time.time()
-            print "plot flipped buffers " + str(end-start)
-            print "BUFF_FILL: " + str(BUFF_FILL)
-            print "- - - - - - - - - - - -"
-
-    if FIRST_SCAN:
-        FIRST_SCAN = False
-
-def animate2(i):
-# GET SENSOR VALUES, ADD TO BUFFER & PLOT VALUES
-    global BUFF_FILL, FIRST_SCAN
-    global valM, valH, valH1, valP, valL
-    global valMneat,valHneat, valH1neat, valPneat, valLneat
-    global time_list, label_list, tick_list, clear_list
-
-    if not FIRST_SCAN and BUFF_FILL>0:
-    # UPDATE PLOTS
-        if DEBUG_MODE:
-            start = time.time()
-
-        if app.plot_notebook.index(app.plot_notebook.select()) == 2:
+    elif index == 2:
+        if not FIRST_SCAN and BUFF_FILL>0:
             print "index 2"
         #   F2 - UPDATE TEMOERATURE PLOT
             heatPlot2.clear()
@@ -958,19 +1122,9 @@ def animate2(i):
             # SET X TICK TIME LABEL
             if BUFF_FILL > 1:
                 lampPlot2.set_xticks(tick_list)
-                lampPlot2.set_xticklabels(clear_list)
+                lampPlot2.set_xticklabels(label_list, rotation =45)
             lampPlot2.grid(True)
             lampPlot2.plot( valLneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valLneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
-
-    # DEBUG MODE
-        if DEBUG_MODE:
-            end = time.time()
-            print "plot flipped buffers " + str(end-start)
-            print "BUFF_FILL: " + str(BUFF_FILL)
-            print "- - - - - - - - - - - -"
-
-    if FIRST_SCAN:
-        FIRST_SCAN = False
 
 
 ## START PROGRAM / GUI
@@ -1055,169 +1209,189 @@ root = Tk() #init Tk
 root.title ("G R O W  .  M A S T E R")
 app = App(master=root)  # assign tk to master frame
 
+cycle_counter = 0
+plot_index_prev = 0
+plot_index = 0
 
-# DEFINE PROGRAM
+# PROGRAM TO CALL EVERY .. 
 def program():
     global BUFF_FILL, FIRST_SCAN
     global valM, valH, valH1, valP, valL
     global valMneat,valHneat, valH1neat, valPneat, valLneat
     global time_list, label_list, tick_list, clear_list
+    global cycle_counter, plot_index, plot_index_prev
+
 
     if DEBUG_MODE:
+        print " "
         print "= = = = = = = = = = = ="
         print "   P R O G R A M   "
-        start = time.time()
+        start_prog = time.time()
 
+    # CALL DAYLIGHT SCHEDULER
     app.daylight_sequence()
 
+#   UPDATE ARDUINO STATUS
     if app.arduino.getStatus():
         app.serial_connection_string.set("Connected")
 
     else:
         app.serial_connection_string.set("Disconnected")
 
+#   GET NEW SAMPLES
     tick_list = []
     label_list = []
     clear_list = []
-    
+
+    # RESET COUNTER IF IT IS TIME TO SAMPLE
+    if cycle_counter >= SAMPLE_RATE:
+        cycle_counter = 0
+
     # GET SAMPLE IF ARDUINO IS CONNECTED
-    if app.arduino.assumed_connection_status or DEBUG_MODE:
-    
-        if not FIRST_SCAN:
+    if not FIRST_SCAN and (app.arduino.assumed_connection_status or DEBUG_MODE) and cycle_counter == 0:
 
-            if DEBUG_MODE:
-                print " -   G E T   V A L U E S   - "
-                start = time.time()
+        if DEBUG_MODE:
+            start = time.time()
 
-    # SHIFT BUFFERS IN REVERSED ORDER
-            for n in reversed(range( 1, BUFF_LEN )):
-                valM[1,n]= valM[1,n-1]
-                valH[1,n]= valH[1,n-1]
-                valH1[1,n]= valH1[1,n-1]
-                valP[1,n]= valP[1,n-1]
-                valL[1,n]= valL[1,n-1]  
+#   SHIFT BUFFERS IN REVERSED ORDER
+        for n in reversed(range( 1, BUFF_LEN )):
+            valM[1,n]= valM[1,n-1]
+            valH[1,n]= valH[1,n-1]
+            valH1[1,n]= valH1[1,n-1]
+            valP[1,n]= valP[1,n-1]
+            valL[1,n]= valL[1,n-1]  
 
-            if  DEBUG_MODE:
-                end = time.time()
-                print "shift buffer time " + str(end-start)
-                start = time.time()
+        if  DEBUG_MODE:
+            end = time.time()
+            print "- Shift buffers: " + str(end-start)
+            start = time.time()
 
-    # ADD VALUES TO BUFFERS
-        #   HEAT
-            if DEBUG_MODE:
-                tmpVal = str( (valH[1,0]+1) % 2 )
-            else:
-                tmpVal = app.arduino.readCommand("GET_TEMP",["0"])
+#   ADD VALUES TO BUFFERS
+    #   HEAT
+        if DEBUG_MODE:
+            tmpVal = str( (valH[1,0]+1) % 2 )
+        else:
+            tmpVal = app.arduino.readCommand("GET_TEMP",["0"])
 
-            app.temperature_var[0].set(tmpVal)
-            try:
-                float(tmpVal)
-            except ValueError:
-                valH[1,0] = float(0)
-            else:
-                valH[1,0] = float(tmpVal)  
+        app.temperature_var[0].set(tmpVal)
+        try:
+            float(tmpVal)
+        except ValueError:
+            valH[1,0] = float(0)
+        else:
+            valH[1,0] = float(tmpVal)  
 
-        #   HEAT 1
-            if DEBUG_MODE:
-                tmpVal = str( ((valH1[1,0]+1)*7) % 3 )
-            else:
-                tmpVal = app.arduino.readCommand("GET_TEMP",["1"])
-            app.temperature_var[1].set(tmpVal)
-            try:
-                float(tmpVal)
-            except ValueError:
-                valH1[1,0] = float(0)
-            else:
-                valH1[1,0] = float(tmpVal)   
+    #   HEAT 1
+        if DEBUG_MODE:
+            tmpVal = str( ((valH1[1,0]+1)*7) % 3 ) 
+        else:
+            tmpVal = app.arduino.readCommand("GET_TEMP",["1"])
+        app.temperature_var[1].set(tmpVal)
+        try:
+            float(tmpVal)
+        except ValueError:
+            valH1[1,0] = float(0)
+        else:
+            valH1[1,0] = float(tmpVal)   
 
-        #   MOISTURE
-            if DEBUG_MODE:
-                tmpVal = str( valM[1,0] + 1 )
-            else:
-                tmpVal = app.arduino.readCommand("GET_MOISTURE",["0"])
-            app.moisture_var[0].set(tmpVal)
+    #   MOISTURE
+        if DEBUG_MODE:
+            tmpVal = str( valM[1,0] + 1 )
+        else:
+            tmpVal = app.arduino.readCommand("GET_MOISTURE",["0"])
+        app.moisture_var[0].set(tmpVal)
 
-            try:
-                float(tmpVal)
-            except ValueError:
-                valM[1,0] = float(0)
-            else:
-                valM[1,0] = float(tmpVal)
+        try:
+            float(tmpVal)
+        except ValueError:
+            valM[1,0] = float(0)
+        else:
+            valM[1,0] = float(tmpVal)
 
-        #   PUMP
-            if DEBUG_MODE:
-                tmpVal = str( (valP[1,0]+1) % 2 )
-            else:
-                tmpVal = app.arduino.readCommand("GET_PUMP",["0"])
-            try:
-                float(tmpVal)
-            except ValueError:
-                valP[1,0] = float(0)
-            else:
-                valP[1,0] = float(tmpVal)
-            
-        #   LIGHT
-            if DEBUG_MODE:
-                tmpVal = str( (valL[1,0]+1) % 2 )
-            else:
-                tmpVal = app.arduino.readCommand("GET_LAMP",["0"])
-            try:
-                float(tmpVal)
-            except ValueError:
-                valL[1,0] = float(0)
-            else:
-                valL[1,0] = float(tmpVal)
+    #   PUMP
+        if DEBUG_MODE:
+            tmpVal = str( (valP[1,0]+1) % 2 )
+        else:
+            tmpVal = app.arduino.readCommand("GET_PUMP",["0"])
+        try:
+            float(tmpVal)
+        except ValueError:
+            valP[1,0] = float(0)
+        else:
+            valP[1,0] = float(tmpVal)
+        
+    #   LIGHT
+        if DEBUG_MODE:
+            tmpVal = str( (valL[1,0]+1) % 2 )
+        else:
+            tmpVal = app.arduino.readCommand("GET_LAMP",["0"])
+        try:
+            float(tmpVal)
+        except ValueError:
+            valL[1,0] = float(0)
+        else:
+            valL[1,0] = float(tmpVal)
 
-            if DEBUG_MODE:
-                end = time.time()
-                print "get values " + str(end-start)
+        if DEBUG_MODE:
+            end = time.time()
+            print "- Get values: " + str(end-start)
 
-            if BUFF_FILL < BUFF_LEN:
-                BUFF_FILL = BUFF_FILL + 1
+        if BUFF_FILL < BUFF_LEN:
+            BUFF_FILL = BUFF_FILL + 1
 
-        # FLIP BUFFERS
-            # reverse value array for neatness
-            valMneat = np.flip(valM, 1)
-            valHneat = np.flip(valH, 1)
-            valH1neat = np.flip(valH1, 1)
-            valPneat = np.flip(valP, 1)
-            valLneat = np.flip(valL, 1)
-            
-        # MAKE LICK LIST
-            time_list.insert(0, app.str_time.get())
-            if BUFF_FILL>1:
-                if BUFF_FILL>6:
-                    label_list = []
-                    tick_list = []
-                    stepsize = BUFF_FILL/6.0
+#   FLIP BUFFERS
+        # reverse value array for neatness
+        valMneat = np.flip(valM, 1)
+        valHneat = np.flip(valH, 1)
+        valH1neat = np.flip(valH1, 1)
+        valPneat = np.flip(valP, 1)
+        valLneat = np.flip(valL, 1)
+        
+#   MAKE LICK LIST
+        time_list.insert(0, app.str_time.get())
+        if BUFF_FILL>1:
+            if BUFF_FILL>6:
+                label_list = []
+                tick_list = []
+                stepsize = BUFF_FILL/6.0
 
-                    for n in range(6):
-                        label_list.append(time_list[int(n*stepsize)])
-                        tick_list.append(valP[0,int(n*stepsize)])
-                        clear_list.append("")
-                    label_list.append(time_list[BUFF_FILL-1])
-                    tick_list.append(valP[0,BUFF_FILL-1])
+                for n in range(6):
+                    label_list.append(time_list[int(n*stepsize)])
+                    tick_list.append(valP[0,int(n*stepsize)])
                     clear_list.append("")
+                label_list.append(time_list[BUFF_FILL-1])
+                tick_list.append(valP[0,BUFF_FILL-1])
+                clear_list.append("")
 
-                else:
-                    label_list = []
-                    tick_list = []
-                    clear_list = []
-                    for n in range(BUFF_FILL-1):
-                        label_list.append(time_list[int(n)])
-                        tick_list.append(valP[0,n])
-                        clear_list.append("")
-                    label_list.append(time_list[BUFF_FILL-1])
-                    tick_list.append(valP[0,BUFF_FILL-1])
+            else:
+                label_list = []
+                tick_list = []
+                clear_list = []
+                for n in range(BUFF_FILL-1):
+                    label_list.append(time_list[int(n)])
+                    tick_list.append(valP[0,n])
                     clear_list.append("")
+                label_list.append(time_list[BUFF_FILL-1])
+                tick_list.append(valP[0,BUFF_FILL-1])
+                clear_list.append("")
 
-
+#   UPDATE PLOT ON TAB CHANGE
+    plot_index = app.plot_notebook.index(app.plot_notebook.select())
+    if plot_index != plot_index_prev:
+        print " - TAB CHANGED - "
+        update_plot(plot_index)
+    plot_index_prev = plot_index
 
     if DEBUG_MODE:
-        end = time.time()
-        print "program execution time " + str(end-start)
-        print "- - - - - - - - - - - -"
+        end_prog = time.time()
+        print " "
+        print "PROGRAM() time: " + str(end_prog-start_prog)
+        print "= = = = = = = = = = = ="
+        print " "
 
+#   UPDATE CYCLE COUNTER AND SCHEDULE NEW PROGRAM CYCLE
+    cycle_counter = cycle_counter + 1
+    FIRST_SCAN = False
     root.after(int(PROGRAM_CYLCETIME), program)
 root.after(int(PROGRAM_CYLCETIME), program)
 

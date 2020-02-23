@@ -12,50 +12,53 @@ class SlaveComm:
         self.ser.baudrate = baud
 
     def openConnection(self):
-        print("o - o - o")
-        print("opening connection to "+ self.ser.port)
+        print("~ ~ ~ ~ ~")
+        print("* Opening connection to "+ self.ser.port)
         
         try:
             self.ser.open()
                     
         except serial.serialutil.SerialException:
             self.assumed_connection_status = False
-            print("device connection failed")
-            print("x - x - x")
+            print("Error: device connection failed")
+            print("~ ~ ~ ~ ~")
 
         else:
             self.assumed_connection_status = True
             self.ser.flush()
-            print("device connected")
-            print("o - o - o")
+            print("* Device connected succesfully")
+            print("~ ~ ~ ~ ~")
+        print(" ")
 
     def closeConnection(self):
-        # print("x - x - x")
-        # print("closing connection to "+ self.ser.port)
+        print("~ ~ ~ ~ ~")
+        print("* Closing connection to "+ self.ser.port)
 
         try:
             self.ser.close()
             
         except serial.serialutil.SerialException:
             if self.assumed_connection_status:
-                print("failed closing "+ self.ser.port)
-                print("o - o - o")
+                print("Error: failed closing "+ self.ser.port)
+                print("~ ~ ~ ~ ~")
             else:
-                print("device disconnected with errors")
-                print("x - x - x")
+                print("Error: device disconnected with errors")
+                print("~ ~ ~ ~ ~")
                 
         else:
             self.assumed_connection_status = False
-            # print("device succesfully disconnected")
-            # print("x - x - x")
+            print("* Device disconnected succesfully")
+            print("~ ~ ~ ~ ~")
+        print(" ")
 
 
 
     def writeString(self, output_string):
+        print "> " + output_string
+
         if not self.assumed_connection_status:
             self.openConnection()
         
-        print "> " + output_string
         if self.assumed_connection_status:
             tmp = output_string + "\n"
             try:
