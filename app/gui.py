@@ -350,7 +350,7 @@ class App( Frame ):
     # M A I N   F R A M E
 
         # CREATE MAIN FRAME
-        self.mainframe = Frame(self, bd=4, relief = SUNKEN)
+        self.mainframe = Frame(self, bd=4, relief = SUNKEN , bg = "white")
         #self.mainframe.pack(fill = BOTH, expand = True)
         self.mainframe.grid(column = 0, row=0, sticky=E+W)
         self.mainframe.grid_columnconfigure(0, weight =1)
@@ -358,33 +358,33 @@ class App( Frame ):
         
     # H E A D E R   F R A M E
         # CREATE HEADER FRAME
-        self.headerFrame=Frame(self.mainframe, bd=2, relief = SUNKEN)
+        self.headerFrame=Frame(self.mainframe, bd=2, relief = SUNKEN , bg = "white")
         #self.headerFrame.pack(fill = BOTH, side = TOP, expand = True)
         self.headerFrame.grid(column = 0, columnspan = 2, row=0, sticky=N+S+E+W)
         self.headerFrame.grid_columnconfigure(0, weight =1)
         self.headerFrame.grid_columnconfigure(1, weight =1)
 
         # HEADER TEXT
-        self.label_header = Label(self.headerFrame, text= " +- ~ - ~ - ~ - ~ - ~ -+  G R O W   M A S T E R     v1.6  +- ~ - ~ - ~ - ~ - ~ -+ ")
+        self.label_header = Label(self.headerFrame, text= " +- ~ - ~ - ~ - ~ - ~ -+  G R O W   M A S T E R     v1.6  +- ~ - ~ - ~ - ~ - ~ -+ " , bg = "white")
         #self.label_header.pack(side = LEFT)
         self.label_header.grid(column = 0, row=0, sticky=N+S+W)
 
         # CURRENT TIME LABEL
-        self.label_time = Label(self.headerFrame, textvariable = self.str_time)
+        self.label_time = Label(self.headerFrame, textvariable = self.str_time , bg = "white")
         #self.label_time.pack(side = RIGHT)
         self.label_time.grid(column = 1, row=0, sticky=N+S+E)
 
 
     # C O N T E N T   F R A M E
         # CREATE CONTENT FRAME (PLOT AREA)
-        self.contentFrame=Frame(self.mainframe, bd=2, relief = SUNKEN)
+        self.contentFrame=Frame(self.mainframe, bd=2, relief = SUNKEN, bg = "white")
         #self.contentFrame.pack(side = BOTTOM, expand = True)
         self.contentFrame.grid(column = 0, row=1, columnspan = 2, sticky=N+S+E+W)
         self.contentFrame.grid_columnconfigure(0, weight =2)
         self.contentFrame.grid_columnconfigure(1, weight =1)
 
     # P L O T   F R A M E  
-        self.plotFrame = Frame(self.contentFrame, bd=2, relief = SUNKEN)
+        self.plotFrame = Frame(self.contentFrame, bd=2, relief = SUNKEN, bg = "white")
         #self.plotFrame.pack(fill = Y, side = LEFT, expand = True)
         self.plotFrame.grid(column = 0, row=0, sticky=N+S+E+W)
         self.plotFrame.grid_columnconfigure(0, weight =1)
@@ -424,7 +424,7 @@ class App( Frame ):
 
     # D I R E C T   C O N T R O L   F R A M E
         # CREATE DIRECT CONTROL FRAME
-        self.dicoFrame = Frame(self.contentFrame, bd=2, relief = SUNKEN) # width = 600,
+        self.dicoFrame = Frame(self.contentFrame, bd=2, relief = SUNKEN, bg = "white") # width = 600,
         #self.dicoFrame.pack(fill = BOTH, side = RIGHT, expand = True)
 
         self.dicoFrame.grid(column = 1, row=0, sticky=N+S+E+W)
@@ -583,7 +583,7 @@ class App( Frame ):
         self.devco_notebook.grid(column = 0, row=1, sticky=N+S+E+W)
 
     #   DEVCO NOTBOOK _ LAMP CONTROL
-        self.devco_lamp_frame = Frame(self.devco_notebook)
+        self.devco_lamp_frame = Frame(self.devco_notebook, bg = "white")
         self.devco_notebook.add(self.devco_lamp_frame, text = 'LIGHT', sticky=N+S+E+W)
         self.devco_lamp_notebook = Notebook(self.devco_lamp_frame)
         self.devco_lamp_notebook.pack(side=TOP , fill = BOTH)
@@ -596,7 +596,7 @@ class App( Frame ):
         self.devco_button_lampOn=[]
         self.devco_lamp_direct_frame=[]
         for n in range(NR_LAMP):
-            self.devco_lamp_direct_frame.append(Frame(self.devco_lamp_frame, bd=2, relief = SUNKEN))
+            self.devco_lamp_direct_frame.append(Frame(self.devco_lamp_frame, bd=2, relief = SUNKEN, bg = "white"))
             self.devco_lamp_notebook.add(self.devco_lamp_direct_frame[n], text = NAMES_LAMP[n], sticky =N+S+E+W)
             self.devco_lamp_direct_frame[n].grid_columnconfigure(0, weight =1)
             self.devco_lamp_direct_frame[n].grid_columnconfigure(1, weight =1)
@@ -633,7 +633,7 @@ class App( Frame ):
             self.devco_button_lampOn[n].grid(column = 2, columnspan = 2, row = (3*n)+len(CHANNELS_LAMP[n])+1, sticky=N+S+E+W)
 
         # AUTOMATIC LIGHT MODE
-        self.devco_lamp_daylight_frame = Frame(self.devco_lamp_frame, bd=2, relief = SUNKEN)
+        self.devco_lamp_daylight_frame = Frame(self.devco_lamp_frame, bd=2, relief = SUNKEN, bg = "white")
         self.devco_lamp_daylight_frame.pack(side=TOP , fill = BOTH)
         self.devco_lamp_daylight_frame.grid_columnconfigure(0, weight =1)
         self.devco_lamp_daylight_frame.grid_columnconfigure(1, weight =1)
