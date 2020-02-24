@@ -58,3 +58,14 @@ DEFAULT_RANGE_LAMP		= [0, 255]
 DEFAULT_RANGE_MOISTURE 	= [0, 100]
 DEFAULT_RANGE_PUMP		= [0, 255]
 
+## G U I   D E S I G N
+BG_MAIN		=	"gray93"
+BG_SUB 		= "gray96"
+BG_SUBSUB 	= "white"
+BG_TOG_A	= "gray96"
+BG_TOG_B 	= "gray93"
+BG_TAB 		= "gray85"
+BG_TAB_ACTIVE = "gray96"
+BG_ENTRY		= "white"
+
+
