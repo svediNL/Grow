@@ -65,6 +65,22 @@ def get_clear_list():
     global clear_list
     return clear_list
 
+def set_time_list(val):
+    global time_list
+    time_list = val
+
+def set_label_list(val):
+    global label_list
+    label_list = val
+
+def set_tick_list(val):
+    global tick_list
+    tick_list = val
+
+def set_clear_list(val):
+    global clear_list
+    clear_list = val
+
 # FILL SAMPLE TIME
 for n in range(BUFF_LEN):
     valM[0,n]  = -n # -1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
@@ -1392,9 +1408,9 @@ def program():
     global BUFF_FILL, FIRST_SCAN
     global valM, valH, valH1, valP, valL
     global valMneat,valHneat, valH1neat, valPneat, valLneat
-    global time_list, label_list, tick_list, clear_list
     global cycle_counter, plot_index, plot_index_prev
 
+    my_time_list = get_time_list()
 
     if DEBUG_MODE:
         print " "
@@ -1413,9 +1429,9 @@ def program():
         app.serial_connection_string.set("Disconnected")
 
 #   GET NEW SAMPLES
-    tick_list = []
-    label_list = []
-    clear_list = []
+    my_tick_list = []
+    my_label_list = []
+    my_clear_list = []
 
     # RESET COUNTER IF IT IS TIME TO SAMPLE
     if cycle_counter >= SAMPLE_RATE:
@@ -1522,35 +1538,38 @@ def program():
         valLneat = np.flip(valL, 1)
         
 #   MAKE LICK LIST
-        time_list.insert(0, app.str_time.get())
+        my_time_list.insert(0, app.str_time.get())
         if BUFF_FILL>1:
             if BUFF_FILL>6:
-                label_list = []
-                tick_list = []
+                my_label_list = []
+                my_tick_list = []
                 stepsize = BUFF_FILL/6.0
 
                 for n in range(6):
-                    label_list.append(time_list[int(n*stepsize)])
-                    tick_list.append(valP[0,int(n*stepsize)])
-                    clear_list.append("")
-                label_list.append(time_list[BUFF_FILL-1])
-                tick_list.append(valP[0,BUFF_FILL-1])
-                clear_list.append("")
+                    my_label_list.append(my_time_list[int(n*stepsize)])
+                    my_tick_list.append(valP[0,int(n*stepsize)])
+                    my_clear_list.append("")
+                my_label_list.append(my_time_list[BUFF_FILL-1])
+                my_tick_list.append(valP[0,BUFF_FILL-1])
+                my_clear_list.append("")
 
             else:
-                label_list = []
-                tick_list = []
-                clear_list = []
+                my_label_list = []
+                my_tick_list = []
+                my_clear_list = []
                 for n in range(BUFF_FILL-1):
-                    label_list.append(time_list[int(n)])
-                    tick_list.append(valP[0,n])
-                    clear_list.append("")
-                label_list.append(time_list[BUFF_FILL-1])
-                tick_list.append(valP[0,BUFF_FILL-1])
-                clear_list.append("")
-            print tick_list
-            print label_list
-
+                    my_label_list.append(time_list[int(n)])
+                    my_tick_list.append(valP[0,n])
+                    my_clear_list.append("")
+                my_label_list.append(time_list[BUFF_FILL-1])
+                my_tick_list.append(valP[0,BUFF_FILL-1])
+                my_clear_list.append("")
+            print my_tick_list
+            print my_label_list
+            set_tick_list(my_tick_list)
+            set_time_list(my_time_list)
+            set_label_list(my_label_list)
+            set_clear_list(my_clear_list)
 #   UPDATE PLOT ON TAB CHANGE
     plot_index = app.plot_notebook.index(app.plot_notebook.select())
     if plot_index != plot_index_prev:
