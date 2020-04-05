@@ -21,6 +21,9 @@ else:
 from comms import SlaveComm
 from configuration import *
 
+import pandas as pd
+import os.path
+
 import time
 
 FIRST_SCAN = True
@@ -1229,6 +1232,38 @@ def update_plot(index):
             lampPlot2.grid(True)
             lampPlot2.plot( valLneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valLneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
 
+def init_log():
+    global LOG_NAME
+
+    if os.path.isfile(LOG_NAME):
+    # FILE EXISTS
+        if ( time.time() ) - ( os.path.getmtime(LOG_NAME) ) > 600:
+        # CHECK IF LOG HAS EXPIRED
+            os.remove(LOG_NAME)
+            file = open(LOG_NAME, 'w')
+            file.close()
+
+        else:
+        # LOAD DATA
+            my_data_frame = pd.read_csv(LOG_NAME)
+            my_data = my_data_frame.values.to_list()
+
+    else:
+    # CREATE FILE
+        file = open(LOG_NAME, 'w')
+        file.close()
+
+
+def log_data(my_data):
+    global FIRST_SCAN, LOG_NAME
+    my_data_frame = pd.DataFrame()
+
+    # APPEND TO FILE
+    my_data_frame.append(my_data[0,1])
+
+
+
+
 
 ## START PROGRAM / GUI
 #  DEFINE MATPLOT FUIGURE
@@ -1315,6 +1350,8 @@ app = App(master=root)  # assign tk to master frame
 cycle_counter = 0
 plot_index_prev = 0
 plot_index = 0
+
+exportData  = pd.DataFrame()
 
 # PROGRAM TO CALL EVERY .. 
 def program():
@@ -1477,6 +1514,8 @@ def program():
                 label_list.append(time_list[BUFF_FILL-1])
                 tick_list.append(valP[0,BUFF_FILL-1])
                 clear_list.append("")
+            print tick_list
+            print label_list
 
 #   UPDATE PLOT ON TAB CHANGE
     plot_index = app.plot_notebook.index(app.plot_notebook.select())
@@ -1484,6 +1523,8 @@ def program():
         print " - TAB CHANGED - "
         update_plot(plot_index)
     plot_index_prev = plot_index
+
+    # log_data('logging', valM)
 
     if DEBUG_MODE:
         end_prog = time.time()
