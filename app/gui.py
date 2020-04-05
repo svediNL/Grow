@@ -43,10 +43,27 @@ valH = np.zeros( shape=(2,BUFF_LEN) )
 valH1 = np.zeros( shape=(2,BUFF_LEN) )
 valP = np.zeros( shape=(2,BUFF_LEN) )
 valL = np.zeros( shape=(2,BUFF_LEN) )
+
 time_list = []
 label_list = []
 tick_list = []
 clear_list = []
+
+def get_time_list():
+    global time_list
+    return time_list
+
+def get_label_list():
+    global label_list
+    return label_list
+
+def get_tick_list():
+    global tick_list
+    return tick_list
+
+def get_clear_list():
+    global clear_list
+    return clear_list
 
 # FILL SAMPLE TIME
 for n in range(BUFF_LEN):
@@ -901,7 +918,12 @@ def animate(i):
     global BUFF_FILL, FIRST_SCAN
     global valM, valH, valH1, valP, valL
     global valMneat,valHneat, valH1neat, valPneat, valLneat
-    global time_list, label_list, tick_list, clear_list
+
+    my_time_list = get_time_list()
+    my_label_list = get_label_list()
+    my_tick_list = get_tick_list()
+    my_clear_list = get_clear_list()
+
 
     if not FIRST_SCAN and BUFF_FILL>0:
     # UPDATE PLOTS
@@ -921,22 +943,24 @@ def animate(i):
         heatPlot.set_ylabel("TC Temp [*C]")
             # SET X TICK TIME LABEL
         if BUFF_FILL > 1:
-            heatPlot.set_xticks(tick_list)
-            heatPlot.set_xticklabels(clear_list)
+            heatPlot.set_xticks(my_tick_list)
+            heatPlot.set_xticklabels(my_clear_list)
         heatPlot.grid(True)
         heatPlot.plot( valHneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valHneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color='g' )
         heatPlot.plot( valH1neat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valH1neat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color='b' )
 
     #   F - UPDATE LAMP
         lampPlot.clear()
-        lampPlot.set_ylim([ min(valLneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1, 
-                            max(valLneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1 ])
+        # dynamic range
+        # lampPlot.set_ylim([ min(valLneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1, 
+        #                     max(valLneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1 ])
+        lampPlot.set_ylim(DEFAULT_RANGE_LAMP)
         lampPlot.set_ylabel("LIGHT")
 
         # SET X TICK TIME LABEL
         if BUFF_FILL > 1:
-            lampPlot.set_xticks(tick_list)
-            lampPlot.set_xticklabels(clear_list)
+            lampPlot.set_xticks(my_tick_list)
+            lampPlot.set_xticklabels(my_clear_list)
         lampPlot.grid(True)
         lampPlot.plot( valLneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valLneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
 
@@ -948,8 +972,8 @@ def animate(i):
 
         # SET X TICK TIME LABEL
         if BUFF_FILL > 1:
-            moistPlot.set_xticks(tick_list)
-            moistPlot.set_xticklabels(clear_list)
+            moistPlot.set_xticks(my_tick_list)
+            moistPlot.set_xticklabels(my_clear_list)
         moistPlot.grid(True)   
         moistPlot.plot( valMneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valMneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
 
@@ -962,8 +986,12 @@ def animate(i):
 
         # SET X TICK TIME LABEL
         if BUFF_FILL > 1:
-            pumpPlot.set_xticks(tick_list)
-            pumpPlot.set_xticklabels(label_list, rotation =45)
+            pumpPlot.set_xticks(my_tick_list)
+            pumpPlot.set_xticklabels(my_label_list, rotation =45)
+
+        print "moment of truth"
+        print my_tick_list
+        print my_label_list
 
         pumpPlot.grid(True)
         pumpPlot.plot( valPneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valPneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
@@ -989,7 +1017,10 @@ def animate1(i):
     global BUFF_FILL, FIRST_SCAN
     global valM, valP
     global valMneat, valPneat
-    global time_list, label_list, tick_list, clear_list
+    my_time_list = get_time_list()
+    my_label_list = get_label_list()
+    my_tick_list = get_tick_list()
+    my_clear_list = get_clear_list()
 
 
     if not FIRST_SCAN and BUFF_FILL>0:
@@ -1011,8 +1042,8 @@ def animate1(i):
 
         # SET X TICK TIME LABEL
         if BUFF_FILL > 1:
-            moistPlot1.set_xticks(tick_list)
-            moistPlot1.set_xticklabels(clear_list)
+            moistPlot1.set_xticks(my_tick_list)
+            moistPlot1.set_xticklabels(my_clear_list)
         moistPlot1.grid(True)   
         moistPlot1.plot( valMneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valMneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
 
@@ -1025,8 +1056,8 @@ def animate1(i):
 
         # SET X TICK TIME LABEL
         if BUFF_FILL > 1:
-            pumpPlot1.set_xticks(tick_list)
-            pumpPlot1.set_xticklabels(label_list, rotation =45)
+            pumpPlot1.set_xticks(my_tick_list)
+            pumpPlot1.set_xticklabels(my_label_list, rotation =45)
 
         pumpPlot1.grid(True)
         pumpPlot1.plot( valPneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valPneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
@@ -1052,7 +1083,10 @@ def animate2(i):
     global BUFF_FILL, FIRST_SCAN
     global valH, valH1, valL
     global valHneat, valH1neat, valLneat
-    global time_list, label_list, tick_list, clear_list
+    my_time_list = get_time_list()
+    my_label_list = get_label_list()
+    my_tick_list = get_tick_list()
+    my_clear_list = get_clear_list()
 
     if not FIRST_SCAN and BUFF_FILL>0:
     # UPDATE PLOTS
@@ -1072,8 +1106,8 @@ def animate2(i):
         heatPlot2.set_ylabel("TC Temp [*C]")
             # SET X TICK TIME LABEL
         if BUFF_FILL > 1:
-            heatPlot2.set_xticks(tick_list)
-            heatPlot2.set_xticklabels(clear_list)
+            heatPlot2.set_xticks(my_tick_list)
+            heatPlot2.set_xticklabels(my_clear_list)
         heatPlot2.grid(True)
         heatPlot2.plot( valHneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valHneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color='g' )
         heatPlot2.plot( valH1neat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valH1neat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color='b' )
@@ -1086,8 +1120,8 @@ def animate2(i):
 
         # SET X TICK TIME LABEL
         if BUFF_FILL > 1:
-            lampPlot2.set_xticks(tick_list)
-            lampPlot2.set_xticklabels(label_list, rotation =45)
+            lampPlot2.set_xticks(my_tick_list)
+            lampPlot2.set_xticklabels(my_label_list, rotation =45)
         lampPlot2.grid(True)
         lampPlot2.plot( valLneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valLneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
 
