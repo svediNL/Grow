@@ -51,35 +51,43 @@ clear_list = []
 
 def get_time_list():
     global time_list
+    print ("get_time_list", time_list)
     return time_list
 
 def get_label_list():
     global label_list
+    print ("get_label_list", label_list)
     return label_list
 
 def get_tick_list():
     global tick_list
+    print ("get_tick_list", tick_list)
     return tick_list
 
 def get_clear_list():
     global clear_list
+    print ("get_clear_list", clear_list)
     return clear_list
 
 def set_time_list(val):
     global time_list
     time_list = val
+    print ("set_time_list", time_list)
 
 def set_label_list(val):
     global label_list
     label_list = val
+    print ("set_time_list", label_list)
 
 def set_tick_list(val):
     global tick_list
     tick_list = val
+    print ("set_time_list", tick_list)
 
 def set_clear_list(val):
     global clear_list
     clear_list = val
+    print ("set_time_list", clear_list)
 
 # FILL SAMPLE TIME
 for n in range(BUFF_LEN):
