@@ -51,43 +51,35 @@ clear_list = []
 
 def get_time_list():
     global time_list
-    print ("get_time_list", time_list)
     return time_list
 
 def get_label_list():
     global label_list
-    print ("get_label_list", label_list)
     return label_list
 
 def get_tick_list():
     global tick_list
-    print ("get_tick_list", tick_list)
     return tick_list
 
 def get_clear_list():
     global clear_list
-    print ("get_clear_list", clear_list)
     return clear_list
 
 def set_time_list(val):
     global time_list
     time_list = val
-    print ("set_time_list", time_list)
 
 def set_label_list(val):
     global label_list
     label_list = val
-    print ("set_time_list", label_list)
 
 def set_tick_list(val):
     global tick_list
     tick_list = val
-    print ("set_time_list", tick_list)
 
 def set_clear_list(val):
     global clear_list
     clear_list = val
-    print ("set_time_list", clear_list)
 
 # FILL SAMPLE TIME
 for n in range(BUFF_LEN):
@@ -120,14 +112,16 @@ class App( Frame ):
                                                              },
                                                 "TNotebook.Tab": { "configure": 
                                                                         { "padding": [5, 1], 
-                                                                          "background": BG_TAB },
+                                                                          "background": BG_TAB,
+                                                                          "foreground": FG_TEXT },
                                                                     "map":
                                                                         { "background": [("selected", BG_TAB_ACTIVE)], 
                                                                           "expand": [("selected", [3, 2, 3, 1])] } 
                                                                  },
                                                 "TEntry": { "configure": 
                                                                         { "background": "black",
-                                                                          "bordercolor": "black" }
+                                                                          "bordercolor": "black",
+                                                                          "selectbackground": "black" }
                                                                  }
                                             }
                                 )
@@ -239,9 +233,10 @@ class App( Frame ):
         # SERIAL VARIABLES
         self.serial_var_string = StringVar()
         self.serial_connection_string = StringVar()
+        self.serial_entry_string = StringVar()
         self.serial_var_port = StringVar()
-        self.serial_var_port.set("/dev/ttyACM0")
-        self.arduino = SlaveComm("/dev/ttyACM0", 115200)
+        self.serial_var_port.set(SERIAL_PORT)
+        self.arduino = SlaveComm(SERIAL_PORT, BAUD_RATE)
 
         # CREATE WIDGETS
         self.create_widgets()
@@ -297,12 +292,16 @@ class App( Frame ):
             self.serial_connection_string.set("Disconnected")
 
     def write_serial_string(self):
-        self.arduino.writeString(self.serial_var_string.get())
+        tmp_string = self.arduino.writeString(self.serial_var_string.get())
+        self.serial_entry_string.set( tmp_string )
         self.serial_var_string.set("")
+        
 
     def read_serial_string(self):
-        self.arduino.readCommand(self.serial_var_string.get())
+        tmp_string = "< "+self.arduino.readCommand(self.serial_var_string.get())
+        self.serial_entry_string.set(tmp_string)
         self.serial_var_string.set("")
+        
 
 #   LIGHTING FUNCTIONS
     def disable_lamp(self):
@@ -425,43 +424,72 @@ class App( Frame ):
     # M A I N   F R A M E
 
         # CREATE MAIN FRAME
-        self.mainframe = Frame(self, bg = BG_MAIN, bd=4, relief = SUNKEN )
-        #self.mainframe.pack(fill = BOTH, expand = True)
+        self.mainframe = Frame( self, 
+                                bg = BG_MAIN, 
+                                bd = 4, 
+                                relief = SUNKEN )
         self.mainframe.grid(column = 0, row=0, sticky=E+W)
+        #self.mainframe.pack(fill = BOTH, expand = True)
+
         self.mainframe.grid_columnconfigure(0, weight =1)
         self.mainframe.grid_columnconfigure(1, weight =1)
         
     # H E A D E R   F R A M E
         # CREATE HEADER FRAME
-        self.headerFrame=Frame(self.mainframe, bg = BG_MAIN, bd=2, relief = SUNKEN )
-        #self.headerFrame.pack(fill = BOTH, side = TOP, expand = True)
+        self.headerFrame=Frame( self.mainframe, 
+                                bg      = BG_MAIN, 
+                                bd      = 2, 
+                                relief  = SUNKEN )
+        
         self.headerFrame.grid(column = 0, columnspan = 2, row=0, sticky=N+S+E+W)
+        #self.headerFrame.pack(fill = BOTH, side = TOP, expand = True)
+
+        # GRID HEADER FRAME
         self.headerFrame.grid_columnconfigure(0, weight =1)
         self.headerFrame.grid_columnconfigure(1, weight =1)
 
         # HEADER TEXT
-        self.label_header = Label(self.headerFrame, text= " +- ~ - ~ - ~ - ~ - ~ -+  G R O W   M A S T E R     v2.0  +- ~ - ~ - ~ - ~ - ~ -+ ", bg = BG_MAIN, bd=4)
-        #self.label_header.pack(side = LEFT)
+        self.label_header = Label(  self.headerFrame, 
+                                    text    = " +- ~ - ~ - ~ - ~ - ~ -+  G R O W   M A S T E R     v2.0  +- ~ - ~ - ~ - ~ - ~ -+ ", 
+                                    bg      = BG_MAIN, 
+                                    fg      = FG_TEXT, 
+                                    bd      = 4)
         self.label_header.grid(column = 0, row=0, sticky=N+S+W)
+        #self.label_header.pack(side = LEFT)
 
         # CURRENT TIME LABEL
-        self.label_time = Label(self.headerFrame, textvariable = self.str_time, bg = BG_MAIN, bd=4)
-        #self.label_time.pack(side = RIGHT)
+        self.label_time = Label(    self.headerFrame, 
+                                    textvariable = self.str_time, 
+                                    bg           = BG_MAIN, 
+                                    fg           = FG_TEXT, 
+                                    bd           = 4)
         self.label_time.grid(column = 1, row=0, sticky=N+S+E)
+        #self.label_time.pack(side = RIGHT)
 
 
     # C O N T E N T   F R A M E
-        # CREATE CONTENT FRAME (PLOT AREA)
-        self.contentFrame=Frame(self.mainframe, bd=2, relief = SUNKEN, bg = BG_MAIN)
-        #self.contentFrame.pack(side = BOTTOM, expand = True)
+        # CREATE CONTENT FRAME
+        self.contentFrame=Frame(    self.mainframe, 
+                                    bd      = 2, 
+                                    relief  = SUNKEN, 
+                                    bg      = BG_MAIN)
         self.contentFrame.grid(column = 0, row=1, columnspan = 2, sticky=N+S+E+W)
+        #self.contentFrame.pack(side = BOTTOM, expand = True)
+
+        # GRID CONTENT FRAME
         self.contentFrame.grid_columnconfigure(0, weight =2)
         self.contentFrame.grid_columnconfigure(1, weight =1)
 
     # P L O T   F R A M E  
-        self.plotFrame = Frame(self.contentFrame, bd=2, relief = SUNKEN, bg = BG_MAIN)
-        #self.plotFrame.pack(fill = Y, side = LEFT, expand = True)
+        # CREATE PLOT FRAME
+        self.plotFrame = Frame( self.contentFrame, 
+                                bd=2, 
+                                relief = SUNKEN, 
+                                bg = BG_MAIN)
         self.plotFrame.grid(column = 0, row=0, sticky=N+S+E+W)
+        #self.plotFrame.pack(fill = Y, side = LEFT, expand = True)
+
+        # GRID PLOT FRAME
         self.plotFrame.grid_columnconfigure(0, weight =1)
 
         # ADD NOTEBOOK TO SERIAL FRAME
@@ -470,15 +498,18 @@ class App( Frame ):
         #self.plot_notebook.grid(column = 0, row=0, sticky=N+S+E+W)  
 
         # ADD CONNECTION FRAME TO NOTEBOOK
-        self.plot_overviewFrame = Frame(self.plot_notebook, bg = BG_SUB)
+        self.plot_overviewFrame = Frame( self.plot_notebook, 
+                                         bg = BG_SUB)
         self.plot_notebook.add(self.plot_overviewFrame, text = 'overview')
 
         # ADD CONNECTION FRAME TO NOTEBOOK
-        self.plot_hydroFrame = Frame(self.plot_notebook, bg = BG_SUB)
+        self.plot_hydroFrame = Frame(   self.plot_notebook, 
+                                        bg = BG_SUB)
         self.plot_notebook.add(self.plot_hydroFrame, text = 'hydro')
 
         # ADD CONNECTION FRAME TO NOTEBOOK
-        self.plot_lightFrame = Frame(self.plot_notebook, bg = BG_SUB)
+        self.plot_lightFrame = Frame(   self.plot_notebook, 
+                                        bg = BG_SUB)
         self.plot_notebook.add(self.plot_lightFrame, text = 'light')
 
         # ADD CANVAS TO FRAME
@@ -499,34 +530,48 @@ class App( Frame ):
 
     # D I R E C T   C O N T R O L   F R A M E
         # CREATE DIRECT CONTROL FRAME
-        self.dicoFrame = Frame(self.contentFrame, bd=2, relief = SUNKEN, bg = BG_MAIN) # width = 600,
+        self.dicoFrame = Frame( self.contentFrame, 
+                                bd      =2, 
+                                relief  = SUNKEN, 
+                                bg      = BG_MAIN)
+        self.dicoFrame.grid(column = 1, row=0, sticky=N+S+E+W)
         #self.dicoFrame.pack(fill = BOTH, side = RIGHT, expand = True)
 
-        self.dicoFrame.grid(column = 1, row=0, sticky=N+S+E+W)
+        # GRID DIRECTO CONTROL FRAME
         self.dicoFrame.grid_columnconfigure(0,weight=1)
         self.dicoFrame.grid_rowconfigure(0,weight=1)
         self.dicoFrame.grid_rowconfigure(1,weight=1)
         self.dicoFrame.grid_rowconfigure(2,weight=2)
 
     #   S E R I A L  F R A M E
-        # ADD SERIAL FRAME TO DICO FRAME
-        self.serial_frame = Frame(self.dicoFrame, bd=1, bg = BG_MAIN, relief = SUNKEN)
-        #self.serial_frame.pack(side = TOP, fill = Y, expand = True)
+        # CREATE SERIAL FRAME IN DICO FRAME
+        self.serial_frame = Frame(  self.dicoFrame, 
+                                    bd      = 1, 
+                                    bg      = BG_MAIN, 
+                                    relief  = SUNKEN)
         self.serial_frame.grid(column = 0, row=0, sticky=N+S+E+W)
+        #self.serial_frame.pack(side = TOP, fill = Y, expand = True)
+
+        # GRID SERIAL FRAME
         self.serial_frame.grid_columnconfigure(0,weight=1)
         self.serial_frame.grid_rowconfigure(0,weight=0)
         self.serial_frame.grid_rowconfigure(1,weight=1)
 
-        # SERIAL HEADER TEXT
-        self.serial_header_frame = Frame(self.serial_frame, bg = BG_MAIN)
+        # ADD HEADER TEXT
+        self.serial_header_frame = Frame(   self.serial_frame, 
+                                            bg = BG_MAIN)
         self.serial_header_frame.grid(column = 0, row=0, sticky=N+S+E+W)
         self.serial_header_frame.grid_columnconfigure(0,weight=1)
 
-        self.serial_header_label = Label(self.serial_header_frame, text = "~  S E R I A L ", bg = BG_MAIN)
+        self.serial_header_label = Label(   self.serial_header_frame, 
+                                            text = "~  S E R I A L ", 
+                                            bg   = BG_MAIN, 
+                                            fg   = FG_TEXT)
         self.serial_header_label.grid(column = 0, row=0, sticky=N+S+W)
 
         # ADD NOTEBOOK TO SERIAL FRAME
-        self.serial_notebook_frame = Frame(self.serial_frame, bg = BG_MAIN)
+        self.serial_notebook_frame = Frame( self.serial_frame, 
+                                            bg = BG_MAIN)
         self.serial_notebook_frame.grid(column = 0, row=1, sticky=N+S+E+W)
         self.serial_notebook_frame.grid_columnconfigure(0,weight=1)
         self.serial_notebook_frame.grid_rowconfigure(0,weight=1)
@@ -534,55 +579,91 @@ class App( Frame ):
         self.serial_notebook = Notebook(self.serial_notebook_frame) #, width = 300)
         self.serial_notebook.grid(column = 0, row=0, sticky=N+S+E+W)
 
-        # ADD CONNECTION FRAME TO NOTEBOOK
-        self.serial_connectionFrame = Frame(self.serial_notebook, bg = BG_SUB)
+        # CREATE CONNECTION FRAME IN NOTEBOOK
+        self.serial_connectionFrame = Frame( self.serial_notebook, 
+                                             bg = BG_SUB)
         self.serial_connectionFrame.grid_columnconfigure(0,weight=1)
         self.serial_connectionFrame.grid_columnconfigure(1,weight=1)
-        self.serial_connectionFrame.grid_rowconfigure(0,weight=0)
-        self.serial_connectionFrame.grid_rowconfigure(1,weight=1)
+        self.serial_connectionFrame.grid_rowconfigure(0,weight=1)
+        self.serial_connectionFrame.grid_rowconfigure(1,weight=0)
         self.serial_connectionFrame.grid_rowconfigure(2,weight=1)
-        self.serial_connectionFrame.grid_rowconfigure(3,weight=2)
+        self.serial_connectionFrame.grid_rowconfigure(3,weight=1)
+        self.serial_connectionFrame.grid_rowconfigure(4,weight=2)
         self.serial_notebook.add(self.serial_connectionFrame, text = 'connect')
         
-        # ADD PROMPT FOR PORT TO CONNECTION FRAME
-        self.serial_entry_port = Entry(self.serial_connectionFrame, textvariable= self.serial_var_port, bg = BG_ENTRY)
-        self.serial_entry_port.grid(column = 0, row=0, columnspan = 2, sticky=N+S+E+W)
+        # ADD ENTRY FOR PORT TO CONNECTION FRAME
+        self.serial_entry_port = Entry( self.serial_connectionFrame, 
+                                        textvariable        = self.serial_var_port, 
+                                        highlightbackground = BG_SUB, 
+                                        selectforeground    = 'black',
+                                        bg                  = BG_ENTRY, 
+                                        fg                  = FG_ENTRY )
+        self.serial_entry_port.grid(column = 0, row=1, columnspan = 2, sticky=N+S+E+W)
 
         # ADD LABEL FOR STATUS TO CONNECTION FRAME
-        self.serial_label_status = Label(self.serial_connectionFrame, textvariable = self.serial_connection_string, bg = BG_SUB)
-        self.serial_label_status.grid(column = 0, row=1, columnspan = 2, sticky=N+S+E+W)
+        self.serial_label_status = Label(   self.serial_connectionFrame, 
+                                            textvariable = self.serial_connection_string, 
+                                            bg           = BG_SUB, 
+                                            fg           = FG_TEXT)
+        self.serial_label_status.grid(column = 0, row=2, columnspan = 2, sticky=N+S+E+W)
 
         # ADD OPEN CONNECTION BUTTON TO CONNECTION FRAME
-        self.serial_button_open= Button(self.serial_connectionFrame, text = "open", command= self.open_serial_connection)
-        self.serial_button_open.grid(column = 0, row=2, sticky=N+S+E+W)
+        self.serial_button_open= Button(    self.serial_connectionFrame, 
+                                            text    = "open", 
+                                            command = self.open_serial_connection)
+        self.serial_button_open.grid(column = 0, row =3, sticky=N+S+E+W)
 
-        self.serial_button_close = Button(self.serial_connectionFrame,text = "close", command= self.close_serial_connection)
-        self.serial_button_close.grid(column = 1, row=2, sticky=N+S+E+W)
+        self.serial_button_close = Button(  self.serial_connectionFrame,
+                                            text    = "close", 
+                                            command = self.close_serial_connection)
+        self.serial_button_close.grid(column = 1, row=3, sticky=N+S+E+W)
 
 
 
         # SERIAL NOTEBOOK _ DIRECT INTERFACE
-        self.serial_interfaceFrame = Frame(self.serial_notebook, bg = BG_SUB)    
+        self.serial_interfaceFrame = Frame( self.serial_notebook, 
+                                            bg = BG_SUB)    
         self.serial_notebook.add(self.serial_interfaceFrame, text = 'comm')
         self.serial_interfaceFrame.grid_columnconfigure(0,weight=1)
         self.serial_interfaceFrame.grid_columnconfigure(1,weight=1)
-        self.serial_interfaceFrame.grid_rowconfigure(0,weight=0)
-        self.serial_interfaceFrame.grid_rowconfigure(1,weight=1)
-        self.serial_interfaceFrame.grid_rowconfigure(2,weight=2)
+        self.serial_interfaceFrame.grid_rowconfigure(0,weight=1)
+        self.serial_interfaceFrame.grid_rowconfigure(1,weight=0)
+        self.serial_interfaceFrame.grid_rowconfigure(2,weight=1)
+        self.serial_interfaceFrame.grid_rowconfigure(3,weight=1)
+        self.serial_interfaceFrame.grid_rowconfigure(4,weight=2)
 
-        self.serial_entry_command = Entry(self.serial_interfaceFrame, textvariable= self.serial_var_string,  bg = BG_ENTRY)
-        self.serial_entry_command.grid(column = 0, row=0, columnspan = 2, sticky=N+S+E+W)
+        self.serial_entry_command = Entry(  self.serial_interfaceFrame, 
+                                            textvariable        = self.serial_var_string,  
+                                            highlightbackground = BG_SUB, 
+                                            selectforeground    = 'black',
+                                            bg                  = BG_ENTRY, 
+                                            fg                  = FG_ENTRY)
+        self.serial_entry_command.grid(column = 0, row=1, columnspan = 2, sticky=N+S+E+W)
 
-        self.serial_button_read= Button(self.serial_interfaceFrame, text = "read", command= self.read_serial_string)
-        self.serial_button_read.grid(column = 0, row=1, sticky=N+S+E+W)
+        # ADD LABEL FOR STATUS TO CONNECTION FRAME
+        self.serial_entry_label = Label(    self.serial_interfaceFrame, 
+                                            textvariable = self.serial_entry_string, 
+                                            bg           = BG_SUB, 
+                                            fg           = FG_TEXT)
+        self.serial_entry_label.grid(column = 0, row=2, columnspan = 2, sticky=N+S+E+W)
 
-        self.serial_button_write= Button(self.serial_interfaceFrame, text = "write", command= self.write_serial_string)
-        self.serial_button_write.grid(column = 1, row=1, sticky=N+S+E+W)
+        self.serial_button_read= Button(    self.serial_interfaceFrame, 
+                                            text    = "read", 
+                                            command = self.read_serial_string)
+        self.serial_button_read.grid(column = 0, row=3, sticky=N+S+E+W)
+
+        self.serial_button_write= Button(   self.serial_interfaceFrame, 
+                                            text    = "write", 
+                                            command = self.write_serial_string)
+        self.serial_button_write.grid(column = 1, row=3, sticky=N+S+E+W)
 
 
     #   L I V E   S T A T U S   F R A M E
         # ADD LIVE STATUS FRAME TO DICO FRAME
-        self.live_frame = Frame(self.dicoFrame, bd=1, relief= SUNKEN, bg = BG_MAIN)
+        self.live_frame = Frame( self.dicoFrame, 
+                                 bd=1, 
+                                 relief= SUNKEN, 
+                                 bg = BG_MAIN)
         self.live_frame.grid_columnconfigure(0, weight =1)
         # self.live_frame.grid_columnconfigure(1, weight =1)
         self.live_frame.grid_rowconfigure(0, weight =1)
@@ -591,73 +672,123 @@ class App( Frame ):
         #self.live_frame.pack(fill = BOTH, side = TOP, expand = True)
         self.live_frame.grid(column = 0, row=1, sticky=N+S+E+W)
 
-        self.live_header_frame = Frame(self.live_frame, bg = BG_MAIN)
+        self.live_header_frame = Frame( self.live_frame, 
+                                        bg = BG_MAIN)
         self.live_header_frame.grid(column = 0, row=0, sticky=N+S+E+W)
         self.live_header_frame.grid_rowconfigure(0, weight =1)
 
-        self.live_content_frame = Frame(self.live_frame, bg = BG_MAIN)
+        self.live_content_frame = Frame( self.live_frame, 
+                                         bg = BG_MAIN)
         self.live_content_frame.grid(column = 0, row=1, sticky=N+S+E+W)
-        self.live_content_frame.grid_columnconfigure(0, weight =0)
-        self.live_content_frame.grid_columnconfigure(1, weight =3)
-        self.live_content_frame.grid_columnconfigure(2, weight =0)
-        self.live_content_frame.grid_columnconfigure(3, weight =0)
+        self.live_content_frame.grid_columnconfigure(0, weight =1)
 
-        self.live_label = Label(self.live_header_frame, text = "~ L I V E   M O N I T O R", bg = BG_MAIN)
+
+        self.live_label = Label( self.live_header_frame, 
+                                 text = "~ L I V E   M O N I T O R", 
+                                 bg = BG_MAIN, 
+                                 fg = FG_TEXT)
         self.live_label.grid(column = 0, row = 0, sticky = N+S+W)
 
         self.live_content_frame.grid_rowconfigure(0, weight =2)
-        self.live_top_padding = Label(self.live_content_frame, text = "", bg = BG_MAIN)
+        self.live_top_padding = Label(  self.live_content_frame, 
+                                        text = "", 
+                                        bg = BG_MAIN, 
+                                        fg = FG_TEXT)
         self.live_top_padding.grid(column = 0, row = 0, columnspan = 2, sticky = N+S+W)
 
         self.color_index = 0
         self.color_toggle = [BG_TOG_A,BG_TOG_B]
+        self.live_heat_frame = []
         self.live_heat_label = []
         self.live_heat_pad =[]
         self.live_heat_value = []
         self.live_heat_unit = []
         for n in range(NR_THERMO):
             tmp = NAMES_THERMO[n] + " :   "
-            row_nr = (n+1)
+            row_nr = (self.color_index+1)
             self.live_content_frame.grid_rowconfigure(row_nr, weight =3)
 
-            self.live_heat_label.append(Label(self.live_content_frame, text = tmp, bg = self.color_toggle[self.color_index % 2] ))
-            self.live_heat_label[n].grid(column = 0, row= row_nr, sticky=N+S+W+E)
-            self.live_heat_pad.append(Label(self.live_content_frame, text = "", bg = self.color_toggle[self.color_index % 2] ))
-            self.live_heat_pad[n].grid(column = 1, row= row_nr, sticky=N+S+W+E)
-            self.live_heat_value.append(Label(self.live_content_frame, textvariab = self.temperature_var[n], bg = self.color_toggle[self.color_index % 2] ))
-            self.live_heat_value[n].grid(column = 2, row= row_nr, sticky=N+S+E+W)
-            self.live_heat_unit.append(Label(self.live_content_frame, text = UNIT_THERMO, bg = self.color_toggle[self.color_index % 2] ))
-            self.live_heat_unit[n].grid(column = 3, row= row_nr, sticky=N+S+E+W)
+            self.live_heat_frame.append( Frame( self.live_content_frame, 
+                                                bg = self.color_toggle[self.color_index % 2]) )
+            self.live_heat_frame[n].grid(column = 0, row= row_nr, sticky=N+S+W+E)
+            self.live_heat_frame[n].grid_rowconfigure(0, weight =1)
+            self.live_heat_frame[n].grid_columnconfigure(0, weight =1)
+            self.live_heat_frame[n].grid_columnconfigure(1, weight =2)
+            self.live_heat_frame[n].grid_columnconfigure(2, weight =1)
+            self.live_heat_frame[n].grid_columnconfigure(3, weight =0)
+
+            self.live_heat_label.append( Label( self.live_heat_frame[n], 
+                                                text = tmp, 
+                                                bg = self.color_toggle[self.color_index % 2], 
+                                                fg = FG_TEXT ))
+            self.live_heat_label[n].grid(column = 0, row= 0, sticky=N+S+W)
+            #self.live_heat_pad.append(Label(self.live_heat_frame[n], text = "", bg = self.color_toggle[self.color_index % 2], fg = FG_TEXT ))
+            #self.live_heat_pad[n].grid(column = 1, row= 0, sticky=N+S+W+E)
+
+            self.live_heat_value.append( Label( self.live_heat_frame[n], 
+                                                textvariab = self.temperature_var[n], 
+                                                bg = self.color_toggle[self.color_index % 2], 
+                                                fg = FG_TEXT) )
+            self.live_heat_value[n].grid(column = 2, row= 0, sticky=N+S+E)
+
+            self.live_heat_unit.append( Label(  self.live_heat_frame[n], 
+                                                text = UNIT_THERMO, 
+                                                bg = self.color_toggle[self.color_index % 2], 
+                                                fg = FG_TEXT ) )
+            self.live_heat_unit[n].grid(column = 3, row= 0, sticky=N+S+E)
             self.color_index = self.color_index + 1
             
-
+        self.live_moist_frame = []
         self.live_moist_label = []
         self.live_moist_value = []
         self.live_moist_pad =[]
         self.live_moist_unit = []
         for n in range(NR_MOISTURE):
             tmp = NAMES_MOISTURE[n] + "  :   "
-            row_nr = (NR_THERMO+n+1)
+            row_nr = (self.color_index+1)
             self.live_content_frame.grid_rowconfigure(row_nr, weight =3)
 
-            self.live_moist_label.append(Label(self.live_content_frame, text = tmp, bg = self.color_toggle[self.color_index % 2] ))
-            self.live_moist_label[n].grid(column = 0, row= row_nr, sticky=N+S+W+E)
-            self.live_moist_pad.append(Label(self.live_content_frame, text = "", bg = self.color_toggle[self.color_index % 2] ))
-            self.live_moist_pad[n].grid(column = 1, row= row_nr, sticky=N+S+W+E)
-            self.live_moist_value.append(Label(self.live_content_frame, textvariab = self.moisture_var[n], bg = self.color_toggle[self.color_index % 2] ))
-            self.live_moist_value[n].grid(column = 2, row= row_nr, sticky=N+S+E+W)
-            self.live_moist_unit.append(Label(self.live_content_frame, text = UNIT_MOISTURE, bg = self.color_toggle[self.color_index % 2] ))
-            self.live_moist_unit[n].grid(column = 3, row= row_nr, sticky=N+S+E+W)
+            self.live_moist_frame.append( Frame( self.live_content_frame, 
+                                                 bg = self.color_toggle[self.color_index % 2] ) )
+            self.live_moist_frame[n].grid(column = 0, row= row_nr, sticky=N+S+W+E)
+            self.live_moist_frame[n].grid_rowconfigure(0, weight =1)
+            self.live_moist_frame[n].grid_columnconfigure(0, weight =1)
+            self.live_moist_frame[n].grid_columnconfigure(1, weight =2)
+            self.live_moist_frame[n].grid_columnconfigure(2, weight =1)
+            self.live_moist_frame[n].grid_columnconfigure(3, weight =0)
+
+            self.live_moist_label.append( Label( self.live_moist_frame[n], 
+                                                 text = tmp, 
+                                                 bg = self.color_toggle[self.color_index % 2], 
+                                                 fg = FG_TEXT ) )
+            self.live_moist_label[n].grid(column = 0, row= 0, sticky=N+S+W)
+            #self.live_moist_pad.append(Label(self.live_moist_frame[n], text = "", bg = self.color_toggle[self.color_index % 2], fg = FG_TEXT ))
+            #self.live_moist_pad[n].grid(column = 1, row= 0, sticky=N+S+W+E)
+            self.live_moist_value.append( Label( self.live_moist_frame[n], 
+                                                 textvariab = self.moisture_var[n], 
+                                                 bg = self.color_toggle[self.color_index % 2], 
+                                                 fg = FG_TEXT ) )
+            self.live_moist_value[n].grid(column = 2, row= 0, sticky=N+S+E)
+            self.live_moist_unit.append( Label( self.live_moist_frame[n], 
+                                                text = UNIT_MOISTURE, 
+                                                bg = self.color_toggle[self.color_index % 2], 
+                                                fg = FG_TEXT ) )
+            self.live_moist_unit[n].grid(column = 3, row= 0, sticky=N+S+E)
             self.color_index = self.color_index + 1
             
-        row_nr = (NR_THERMO+NR_MOISTURE+1)
+        row_nr = (self.color_index+1)
         self.live_content_frame.grid_rowconfigure(0, weight =2)
-        self.live_bottom_padding = Label(self.live_content_frame, text = "", bg = BG_MAIN)
+        self.live_bottom_padding = Label(   self.live_content_frame, 
+                                            text = "", bg = BG_MAIN, 
+                                            fg = FG_TEXT )
         self.live_bottom_padding.grid(column = 0, row = row_nr, columnspan = 2, sticky = N+S+W)
 
     #   D E V I C E  C O N T R O L  F R A M E
         # ADD DEVICE CONTROL TO DICOFRAME
-        self.devco_frame = Frame(self.dicoFrame , bd=1, relief = SUNKEN, bg = BG_MAIN)
+        self.devco_frame = Frame( self.dicoFrame, 
+                                  bd=1, 
+                                  relief = SUNKEN, 
+                                  bg = BG_MAIN)
         #self.devco_frame.pack(fill = Y, side = TOP, expand = True)
         self.devco_frame.grid(column = 0, row=2, sticky=N+S+E+W)
         self.devco_frame.grid_columnconfigure(0,weight=1)
@@ -665,7 +796,7 @@ class App( Frame ):
         self.devco_frame.grid_rowconfigure(1,weight=1)
 
         # DEVICE CONTROL HEADER TEXT
-        self.devco_label = Label(self.devco_frame, text= "~  D E V I C E  C O N T R O L ", bg = BG_MAIN)
+        self.devco_label = Label(self.devco_frame, text= "~  D E V I C E  C O N T R O L ", bg = BG_MAIN, fg = FG_TEXT)
         self.devco_label.grid(column = 0, row=0, sticky=N+S+W)
 
         # DEVICE CONTROL NOTEBOOL
@@ -702,10 +833,10 @@ class App( Frame ):
             self.devco_lamp_state_frame.grid_columnconfigure(0, weight =1)
             self.devco_lamp_state_frame.grid_rowconfigure(0, weight =0)
 
-            self.devco_label_lampName.append( Label(self.devco_lamp_state_frame, text = NAMES_LAMP[n], bg= BG_SUB))
+            self.devco_label_lampName.append( Label(self.devco_lamp_state_frame, text = NAMES_LAMP[n], bg= BG_SUB, fg = FG_TEXT))
             self.devco_label_lampName[n].grid(column = 0, row = 0, sticky = N+S+W)
 
-            self.devco_label_lampState.append( Label(self.devco_lamp_state_frame, textvariable = self.lamp_state[n], bg=BG_SUB))
+            self.devco_label_lampState.append( Label(self.devco_lamp_state_frame, textvariable = self.lamp_state[n], bg=BG_SUB, fg = FG_TEXT))
             self.devco_label_lampState[n].grid(column = 1, row =0, sticky = N+S+E+W)
 
             tmp0 = []
@@ -718,8 +849,8 @@ class App( Frame ):
 
             for m in range(len(CHANNELS_LAMP[n])):
                 # SLIDER LABELS
-                tmp0.append( Label(self.devco_lamp_slider_frame, text=(CHANNELS_LAMP[n][m] + "-channel"), bg=BG_SUB))
-                tmp1.append( Scale(self.devco_lamp_slider_frame, orient= HORIZONTAL, variable = self.lamp_output[n][m], command= self.update_lamp, to = 255, bg=BG_SUB))
+                tmp0.append( Label(self.devco_lamp_slider_frame, text=(CHANNELS_LAMP[n][m] + "-channel"), bg=BG_SUB, fg = FG_TEXT))
+                tmp1.append( Scale(self.devco_lamp_slider_frame, orient= HORIZONTAL, variable = self.lamp_output[n][m], command= self.update_lamp, to = 255, bg=BG_SUB, fg=FG_TEXT))
 
             self.devco_label_slider.append(tmp0)
             self.devco_slider_lamp.append(tmp1)   
@@ -752,42 +883,42 @@ class App( Frame ):
         self.devco_lamp_daylight_frame.grid_columnconfigure(2, weight =1)
         self.devco_lamp_daylight_frame.grid_columnconfigure(3, weight =1)
 
-        self.devco_daylight_toggle = Checkbutton(self.devco_lamp_daylight_frame, text= "Toggle automatic daylight mode", variable = self.enable_daylight, onvalue= 1, offvalue=0, command = self.update_daylight_params, bg =BG_MAIN)
+        self.devco_daylight_toggle = Checkbutton(self.devco_lamp_daylight_frame, text= "Toggle automatic daylight mode", variable = self.enable_daylight, onvalue= 1, offvalue=0, command = self.update_daylight_params, bg =BG_MAIN, fg=FG_TEXT)
         self.devco_daylight_toggle.grid(column = 0, row = 1, columnspan = 4, sticky=S+W+N+E)
 
-        self.devco_daylight_status = Label(self.devco_lamp_daylight_frame, textvariable= self.daylight_status, bg = BG_MAIN)
+        self.devco_daylight_status = Label(self.devco_lamp_daylight_frame, textvariable= self.daylight_status, bg = BG_MAIN, fg = FG_TEXT)
         self.devco_daylight_status.grid(column = 0, row = 2, columnspan = 4, sticky=S+W+N+E)
 
-        self.devco_daylight_start_label = Label(self.devco_lamp_daylight_frame, text = "Day start", bg=BG_MAIN)
+        self.devco_daylight_start_label = Label(self.devco_lamp_daylight_frame, text = "Day start", bg=BG_MAIN, fg = FG_TEXT)
         self.devco_daylight_start_label.grid(column = 0, row = 3, columnspan = 1, sticky=S+W+N)
 
-        self.devco_daylight_start_hour = Entry(self.devco_lamp_daylight_frame, textvariable = self.daylight_tv_start_hour, width =3, bg = BG_ENTRY, bd = 0, relief = FLAT)
+        self.devco_daylight_start_hour = Entry(self.devco_lamp_daylight_frame, textvariable = self.daylight_tv_start_hour, width =3, bg=BG_ENTRY, fg = FG_ENTRY, highlightbackground = BG_MAIN)
         self.devco_daylight_start_hour.grid(column = 2, row = 3)
 
-        self.devco_daylight_start_minute = Entry(self.devco_lamp_daylight_frame, textvariable = self.daylight_tv_start_min, width =3, bg = BG_ENTRY, bd = 0, relief = FLAT)
+        self.devco_daylight_start_minute = Entry(self.devco_lamp_daylight_frame, textvariable = self.daylight_tv_start_min, width =3, bg=BG_ENTRY, fg = FG_ENTRY, highlightbackground = BG_MAIN)
         self.devco_daylight_start_minute.grid(column = 3, row = 3)
 
-        self.devco_daylight_end_label = Label(self.devco_lamp_daylight_frame, text = "Day end", bg=BG_MAIN)
+        self.devco_daylight_end_label = Label(self.devco_lamp_daylight_frame, text = "Day end", bg=BG_MAIN, fg = FG_TEXT)
         self.devco_daylight_end_label.grid(column = 0, row = 4, columnspan = 1, sticky=S+W+N)
 
-        self.devco_daylight_end_hour = Entry(self.devco_lamp_daylight_frame, textvariable = self.daylight_tv_end_hour, width =3)
+        self.devco_daylight_end_hour = Entry(self.devco_lamp_daylight_frame, textvariable = self.daylight_tv_end_hour, width =3, bg=BG_ENTRY, fg = FG_ENTRY, highlightbackground = BG_MAIN)
         self.devco_daylight_end_hour.grid(column = 2, row = 4)
 
-        self.devco_daylight_end_minute = Entry(self.devco_lamp_daylight_frame, textvariable = self.daylight_tv_end_min, width =3)
+        self.devco_daylight_end_minute = Entry(self.devco_lamp_daylight_frame, textvariable = self.daylight_tv_end_min, width =3, bg=BG_ENTRY, fg = FG_ENTRY, highlightbackground = BG_MAIN)
         self.devco_daylight_end_minute.grid(column = 3, row = 4)
 
-        self.devco_daylight_ramp_label = Label(self.devco_lamp_daylight_frame, text = "Sunrise/set period", bg=BG_MAIN)
+        self.devco_daylight_ramp_label = Label(self.devco_lamp_daylight_frame, text = "Sunrise/set period", bg=BG_MAIN, fg = FG_TEXT)
         self.devco_daylight_ramp_label.grid(column = 0, row = 5, columnspan = 1, sticky=S+W+N)
 
-        self.devco_daylight_ramp_hour = Entry(self.devco_lamp_daylight_frame, textvariable = self.daylight_tv_ramp_hour,validate = "all", validatecommand = self.update_daylight_params, width =3, bg = BG_ENTRY)
+        self.devco_daylight_ramp_hour = Entry(self.devco_lamp_daylight_frame, textvariable = self.daylight_tv_ramp_hour,validate = "all", validatecommand = self.update_daylight_params, width =3, bg=BG_ENTRY, fg = FG_ENTRY, highlightbackground = BG_MAIN)
         self.devco_daylight_ramp_hour.grid(column = 2, row = 5)
 
-        self.devco_daylight_ramp_minute = Entry(self.devco_lamp_daylight_frame, textvariable = self.daylight_tv_ramp_min,validate = "all", validatecommand = self.update_daylight_params, width =3, bg = BG_ENTRY)
+        self.devco_daylight_ramp_minute = Entry(self.devco_lamp_daylight_frame, textvariable = self.daylight_tv_ramp_min,validate = "all", validatecommand = self.update_daylight_params, width =3, bg=BG_ENTRY, fg = FG_ENTRY, highlightbackground = BG_MAIN)
         self.devco_daylight_ramp_minute.grid(column = 3, row = 5)
 
-        self.devco_daylight_brightness_label = Label(self.devco_lamp_daylight_frame, text = "Full brightness", bg=BG_MAIN)
+        self.devco_daylight_brightness_label = Label(self.devco_lamp_daylight_frame, text = "Full brightness", bg=BG_MAIN, fg = FG_TEXT)
         self.devco_daylight_brightness_label.grid(column = 0, row = 6, columnspan = 1, sticky=S+W+N)
-        self.devco_daylight_brightness_value = Entry(self.devco_lamp_daylight_frame, textvariable = self.daylight_brightness, width =3, bg = BG_ENTRY)
+        self.devco_daylight_brightness_value = Entry(self.devco_lamp_daylight_frame, textvariable = self.daylight_brightness, width =3, bg=BG_ENTRY, fg = FG_ENTRY, highlightbackground = BG_MAIN)
         self.devco_daylight_brightness_value.grid(column = 3, row = 6)
 
     #   DEVCO NOTBOOK _ HYDROLICS
@@ -799,11 +930,11 @@ class App( Frame ):
         self.devco_notebook.add(self.devco_hydro_frame, text = 'HYDROLICS', sticky=N+S+E+W)
 
         # PUMP RUNNING FB
-        self.devco_label_pumpRunning = Label(self.devco_hydro_frame, textvariable = self.pump_state[0], bg = BG_SUB)
+        self.devco_label_pumpRunning = Label(self.devco_hydro_frame, textvariable = self.pump_state[0], bg = BG_SUB, fg = FG_TEXT)
         self.devco_label_pumpRunning.grid(column = 0, row = 0, columnspan = 4, sticky=S+W+N+E)
 
         # PUMP SLIDER
-        self.devco_slider_pumpValue = Scale(self.devco_hydro_frame, orient= HORIZONTAL, command= self.update_pump, to = 255, bg = BG_SUB)
+        self.devco_slider_pumpValue = Scale(self.devco_hydro_frame, orient= HORIZONTAL, command= self.update_pump, to = 255, bg = BG_SUB, fg=FG_TEXT)
         self.devco_slider_pumpValue.grid(column = 0, row = 1, columnspan = 4, sticky=S+W+N+E)
 
         # TOGGLE PUMP STATE
@@ -813,14 +944,14 @@ class App( Frame ):
         self.devco_button_pumpDisable = Button(self.devco_hydro_frame, command = self.set_pumpDisable, text = "Disable pump")
         self.devco_button_pumpDisable.grid(column = 2, row = 2, columnspan = 2, sticky=S+W+N+E)
 
-        self.devco_check_overrule_pump = Checkbutton(self.devco_hydro_frame, variable = self.overrule_pump_interlock[0], onvalue= 1, offvalue=0, command = self.toggle_pump_interlock, text = "Overrule Pump Interlock", bg = BG_SUB)
+        self.devco_check_overrule_pump = Checkbutton(self.devco_hydro_frame, variable = self.overrule_pump_interlock[0], onvalue= 1, offvalue=0, command = self.toggle_pump_interlock, text = "Overrule Pump Interlock", bg = BG_SUB, fg=FG_TEXT)
         self.devco_check_overrule_pump.grid(column = 0, row = 3, columnspan = 4, sticky=S+W+N+E)
 
         self.devco_flow=[]
         for n in range(NR_FLOW):
-            self.devco_flow.append(Radiobutton(self.devco_hydro_frame, text= NAMES_FLOW[n], value = n, variable = self.flow_state, command = self.set_flow_circuit, bg = BG_SUB))
+            self.devco_flow.append(Radiobutton(self.devco_hydro_frame, text= NAMES_FLOW[n], value = n, variable = self.flow_state, command = self.set_flow_circuit, bg = BG_SUB, fg=FG_TEXT))
             self.devco_flow[n].grid(column = 0, row = (4+n), columnspan = 4, sticky=S+W+N)
-        self.devco_flow.append(Radiobutton(self.devco_hydro_frame, text= "DISABLED", value = NR_FLOW, variable = self.flow_state, command = self.set_flow_circuit, bg = BG_SUB))
+        self.devco_flow.append(Radiobutton(self.devco_hydro_frame, text= "DISABLED", value = NR_FLOW, variable = self.flow_state, command = self.set_flow_circuit, bg = BG_SUB, fg=FG_TEXT))
         self.devco_flow[NR_FLOW].grid(column = 0, row = (4+NR_FLOW), columnspan = 4, sticky=S+W+N)
 
     #   DEVCO NOTBOOK _ RELAY CONTROL
@@ -833,7 +964,7 @@ class App( Frame ):
 
         self.devco_relay = []
         for n in range(NR_RELAY):
-            self.devco_relay.append(Checkbutton(self.devco_relay_frame, text= NAMES_RELAY[n], variable = self.enable_relay[n], onvalue= 1, offvalue=0, command = self.toggle_relay, bg = BG_SUB))
+            self.devco_relay.append(Checkbutton(self.devco_relay_frame, text= NAMES_RELAY[n], variable = self.enable_relay[n], onvalue= 1, offvalue=0, command = self.toggle_relay, bg = BG_SUB, fg=FG_TEXT))
             self.devco_relay[n].grid(column = 0, row = n, columnspan = 4, sticky=S+W+N)
 
         # SET BACKGROUND CLOUR
@@ -850,6 +981,7 @@ class App( Frame ):
         self.grid_rowconfigure(0, weight =1)
         self.pack(fill = BOTH, expand = True)
 
+#   DAYLIGHT SEQUENCE
     def daylight_sequence(self):
         eptime = time.time()
         struct_time = time.localtime(eptime)
@@ -871,7 +1003,7 @@ class App( Frame ):
 
         self.str_time.set(struct_time_str)
 
-        if self.enable_daylight.get() == 1:
+        if self.enable_daylight.get() == 1 and self.arduino.getStatus():
             if struct_time.tm_hour == int(float(self.daylight_tv_start_hour.get())):
             # CURRENT = START HOUR
                 if struct_time.tm_min >= int(float(self.daylight_tv_start_min.get())):
@@ -1012,10 +1144,6 @@ def animate(i):
         if BUFF_FILL > 1:
             pumpPlot.set_xticks(my_tick_list)
             pumpPlot.set_xticklabels(my_label_list, rotation =45)
-
-        print "moment of truth"
-        print my_tick_list
-        print my_label_list
 
         pumpPlot.grid(True)
         pumpPlot.plot( valPneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valPneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
@@ -1572,8 +1700,7 @@ def program():
                 my_label_list.append(time_list[BUFF_FILL-1])
                 my_tick_list.append(valP[0,BUFF_FILL-1])
                 my_clear_list.append("")
-            print my_tick_list
-            print my_label_list
+
             set_tick_list(my_tick_list)
             set_time_list(my_time_list)
             set_label_list(my_label_list)

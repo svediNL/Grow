@@ -1,28 +1,32 @@
 ### USE THIS DOCUMENT TO CONFIGURE WHAT DEVICES YOU WANT TO ADD TO YOUR SETUP
 ## GUI WILL AUTO GENERATE BASED ON DEVICES LISTED HERE
-DEBUG_MODE = True
+DEBUG_MODE = False
 
 ## D E V I C E   D E F I N I T I O N
+# ARDUINO
+SERIAL_PORT = "/dev/ttyAMC0"	# DEFAULT SERIAL PORT TO USE AT INIT
+BAUD_RATE   = 115200			# STANDARD BAUD RATE USED AT INIT
+
+
 # THERMOCOUPLES
-NAMES_THERMO 	= ["cold spot", "grow zone"]		# DISPLAY NAMES OF THERMOCOUPLES ->	example: NAMES_THERMO = ["ground temperature", "air temperature"]
+NAMES_THERMO 	= ["TC_A", "TC_B"]		# DISPLAY NAMES OF THERMOCOUPLES ->	example: NAMES_THERMO = ["ground temperature", "air temperature"]
 UNIT_THERMO	= "[deg. C]"			# MEASURED UNITS OF THERMOCOUPLE
 NR_THERMO 		= len(NAMES_THERMO)		# NR OF THERMOCOUPLES	(CALCULATED)
 
-
 # LED DRIVER (PWM)					
-NAMES_LAMP 		= [ "Main Lamp" ]		# DISPLAY NAME OF LAMP UNITS ->	example: NAMES_LAMP = ["my RGBW Lamp", "my Simple Lamp"]													
+NAMES_LAMP 		= [ "LED_A" ]		# DISPLAY NAME OF LAMP UNITS ->	example: NAMES_LAMP = ["my RGBW Lamp", "my Simple Lamp"]													
 CHANNELS_LAMP	= [ ['W'] ]			# RGBW CHANNELS FOR EACH LAMP MODULE ->	2D-array [lamp, channel] ->	example: CHANNELS_LAMP = [ ['R','G','B','W'] , ['W'] ]		
 UNIT_LAMP	= "[-]"								# MEASURED UNITS OF LAMP			
 NR_LAMP 		= len(NAMES_LAMP)	# NR OF CONTROLABLE LAMPS	(CALCULATED)
 
 # MOISTURE SENSORS
-NAMES_MOISTURE 	= ["Moringa pot"]		# DISPLAY NAMES OF ANALOG RESISTIVE MOISTURE SENSORS ->	example: NAMES_MOISTURE = ["moisture small pot", "moisture big pot"]
+NAMES_MOISTURE 	= ["MOISTURE_A"]		# DISPLAY NAMES OF ANALOG RESISTIVE MOISTURE SENSORS ->	example: NAMES_MOISTURE = ["moisture small pot", "moisture big pot"]
 UNIT_MOISTURE	= "[%]"								# MEASURED UNITS OF MOISTURE SENSOR
 NR_MOISTURE 	= len(NAMES_MOISTURE)	# NR OF ANALOG RESISTIVE MOISTURE SENSORS (CALCULATED)
 
 
 # H-BRIDGE BASED PUMP (PWM, DIRECTION)
-NAMES_PUMP	= ["Main pump"]			# PUMP DISPLAY NAMES -> ONLY ONE IS SUPPORTED ATM
+NAMES_PUMP	= ["PUMP_A"]			# PUMP DISPLAY NAMES -> ONLY ONE IS SUPPORTED ATM
 UNIT_PUMP	= "[-]"								# MEASURED UNITS OF PUMP
 NR_PUMP 	= len(NAMES_PUMP)	# NUMBER OF PUMPS	(CALCULATED)
 
@@ -62,13 +66,17 @@ LOG_NAME	= 'myLog.csv'
 
 
 ## G U I   D E S I G N
-BG_MAIN		=	"gray93"
-BG_SUB 		= "gray96"
-BG_SUBSUB 	= "white"
-BG_TOG_A	= "gray96"
-BG_TOG_B 	= "gray93"
-BG_TAB 		= "gray85"
-BG_TAB_ACTIVE = "gray96"
-BG_ENTRY		= "white"
+BG_MAIN			= "gray30"	#"gray93"
+BG_SUB 			= "gray33"	#"gray96"
+BG_SUBSUB 		= "white"	#"white"
+BG_TOG_A		= "gray44"	#"gray96"
+BG_TOG_B 		= "gray30"	#"gray93"
+BG_TAB 			= "gray44"	#"gray85"
+BG_TAB_ACTIVE 	= "gray33"	#"gray96"
+BG_ENTRY		= "gray60"	#"white"
+BG_BUTTON		= "black"
+
+FG_TEXT			= "white"	#"black"
+FG_ENTRY		= "white"
 
 

@@ -54,19 +54,22 @@ class SlaveComm:
 
 
     def writeString(self, output_string):
-        print "> " + output_string
+        tmp = output_string + "\n"
+        print "> " + tmp
 
         if not self.assumed_connection_status:
             self.openConnection()
         
         if self.assumed_connection_status:
-            tmp = output_string + "\n"
+            
             try:
                 self.sio.write(unicode(tmp))
                 self.sio.flush()
                 
             except serial.serialutil.SerialException:
                 self.closeConnection()
+
+        return output_string
                 
                 
     def writeCommand(self, command="help", parameters=[]):
@@ -79,7 +82,7 @@ class SlaveComm:
             else:
                 tmp=tmp+")"
         
-        self.writeString(tmp)
+        return self.writeString(tmp)
 
     def readCommand(self, command= "help", parameters= []):
         if self.assumed_connection_status:
