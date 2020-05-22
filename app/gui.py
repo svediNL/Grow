@@ -117,11 +117,6 @@ class App( Frame ):
                                                                     "map":
                                                                         { "background": [("selected", BG_TAB_ACTIVE)], 
                                                                           "expand": [("selected", [3, 2, 3, 1])] } 
-                                                                 },
-                                                "TEntry": { "configure": 
-                                                                        { "background": "black",
-                                                                          "bordercolor": "black",
-                                                                          "selectbackground": "black" }
                                                                  }
                                             }
                                 )
@@ -796,7 +791,10 @@ class App( Frame ):
         self.devco_frame.grid_rowconfigure(1,weight=1)
 
         # DEVICE CONTROL HEADER TEXT
-        self.devco_label = Label(self.devco_frame, text= "~  D E V I C E  C O N T R O L ", bg = BG_MAIN, fg = FG_TEXT)
+        self.devco_label = Label( self.devco_frame, 
+                                  text= "~  D E V I C E  C O N T R O L ", 
+                                  bg = BG_MAIN, 
+                                  fg = FG_TEXT )
         self.devco_label.grid(column = 0, row=0, sticky=N+S+W)
 
         # DEVICE CONTROL NOTEBOOL
@@ -804,7 +802,10 @@ class App( Frame ):
         self.devco_notebook.grid(column = 0, row=1, sticky=N+S+E+W)
 
     #   DEVCO NOTBOOK _ LAMP CONTROL
-        self.devco_lamp_frame = Frame(self.devco_notebook, bd=1, relief = SUNKEN, bg = BG_MAIN)
+        self.devco_lamp_frame = Frame(  self.devco_notebook, 
+                                        bd=1, 
+                                        relief = SUNKEN, 
+                                        bg = BG_MAIN)
         self.devco_lamp_frame.grid_rowconfigure(0, weight =1)
         self.devco_lamp_frame.grid_rowconfigure(1, weight =1)
         self.devco_notebook.add(self.devco_lamp_frame, text = 'LIGHT', sticky=N+S+E+W)
@@ -819,7 +820,8 @@ class App( Frame ):
         self.devco_button_lampOn=[]
         self.devco_lamp_direct_frame=[]
         for n in range(NR_LAMP):
-            self.devco_lamp_direct_frame.append(Frame(self.devco_lamp_frame, bg = BG_SUB))
+            self.devco_lamp_direct_frame.append( Frame( self.devco_lamp_frame, 
+                                                        bg = BG_SUB) )
             self.devco_lamp_notebook.add(self.devco_lamp_direct_frame[n], text = NAMES_LAMP[n], sticky =N+S+E+W)
             self.devco_lamp_direct_frame[n].grid_columnconfigure(0, weight =1)
             self.devco_lamp_direct_frame[n].grid_rowconfigure(0, weight =0)
@@ -827,21 +829,29 @@ class App( Frame ):
             self.devco_lamp_direct_frame[n].grid_rowconfigure(2, weight =1)
             self.devco_lamp_direct_frame[n].grid_rowconfigure(3, weight =2)
             # LAMP STATE
-            self.devco_lamp_state_frame = Frame(self.devco_lamp_direct_frame[n], bg = BG_SUB)
+            self.devco_lamp_state_frame = Frame( self.devco_lamp_direct_frame[n], 
+                                                 bg = BG_SUB)
             self.devco_lamp_state_frame.grid(column = 0, row = 0, sticky = N+S+E+W)
             self.devco_lamp_state_frame.grid_columnconfigure(0, weight =1)
             self.devco_lamp_state_frame.grid_columnconfigure(0, weight =1)
             self.devco_lamp_state_frame.grid_rowconfigure(0, weight =0)
 
-            self.devco_label_lampName.append( Label(self.devco_lamp_state_frame, text = NAMES_LAMP[n], bg= BG_SUB, fg = FG_TEXT))
+            self.devco_label_lampName.append( Label( self.devco_lamp_state_frame, 
+                                                     text = NAMES_LAMP[n], 
+                                                     bg = BG_SUB, 
+                                                     fg = FG_TEXT) )
             self.devco_label_lampName[n].grid(column = 0, row = 0, sticky = N+S+W)
 
-            self.devco_label_lampState.append( Label(self.devco_lamp_state_frame, textvariable = self.lamp_state[n], bg=BG_SUB, fg = FG_TEXT))
+            self.devco_label_lampState.append( Label( self.devco_lamp_state_frame, 
+                                                      textvariable = self.lamp_state[n], 
+                                                      bg = BG_SUB, 
+                                                      fg = FG_TEXT) )
             self.devco_label_lampState[n].grid(column = 1, row =0, sticky = N+S+E+W)
 
             tmp0 = []
             tmp1 = []
-            self.devco_lamp_slider_frame = Frame(self.devco_lamp_direct_frame[n], bg = BG_SUB)
+            self.devco_lamp_slider_frame = Frame( self.devco_lamp_direct_frame[n], 
+                                                  bg = BG_SUB)
             self.devco_lamp_slider_frame.grid(column = 0, row = 1, sticky = N+S+E+W)
             self.devco_lamp_slider_frame.grid_columnconfigure(0, weight =1)
             self.devco_lamp_slider_frame.grid_columnconfigure(1, weight =2)
@@ -849,8 +859,18 @@ class App( Frame ):
 
             for m in range(len(CHANNELS_LAMP[n])):
                 # SLIDER LABELS
-                tmp0.append( Label(self.devco_lamp_slider_frame, text=(CHANNELS_LAMP[n][m] + "-channel"), bg=BG_SUB, fg = FG_TEXT))
-                tmp1.append( Scale(self.devco_lamp_slider_frame, orient= HORIZONTAL, variable = self.lamp_output[n][m], command= self.update_lamp, to = 255, bg=BG_SUB, fg=FG_TEXT))
+                tmp0.append( Label( self.devco_lamp_slider_frame, 
+                                    text = (CHANNELS_LAMP[n][m] + "-channel"), 
+                                    bg = BG_SUB, 
+                                    fg = FG_TEXT) )
+
+                tmp1.append( Scale( self.devco_lamp_slider_frame, 
+                                    orient = HORIZONTAL, 
+                                    variable = self.lamp_output[n][m], 
+                                    command = self.update_lamp, 
+                                    to = 255, 
+                                    bg = BG_SUB, 
+                                    fg = FG_TEXT) )
 
             self.devco_label_slider.append(tmp0)
             self.devco_slider_lamp.append(tmp1)   
@@ -861,7 +881,8 @@ class App( Frame ):
                 self.devco_label_slider[n][m].grid(column = 0, row = m, sticky=S+W)
                 self.devco_slider_lamp[n][m].grid(column = 1, row = m, columnspan = 3, sticky=S+W+N+E)
 
-            self.devco_lamp_switch_frame = Frame(self.devco_lamp_direct_frame[n], bg = BG_SUB)
+            self.devco_lamp_switch_frame = Frame( self.devco_lamp_direct_frame[n], 
+                                                  bg = BG_SUB)
             self.devco_lamp_switch_frame.grid(column = 0, row = 2, sticky = N+S+E+W)
             self.devco_lamp_switch_frame.grid_columnconfigure(0, weight =1)
             self.devco_lamp_switch_frame.grid_columnconfigure(1, weight =1)
@@ -876,53 +897,115 @@ class App( Frame ):
             self.devco_button_lampOn[n].grid(column = 1,  row = 0, sticky=N+S+E+W)
 
         # AUTOMATIC LIGHT MODE
-        self.devco_lamp_daylight_frame = Frame(self.devco_lamp_frame, bg = BG_MAIN)
+        self.devco_lamp_daylight_frame = Frame( self.devco_lamp_frame, 
+                                                bg = BG_MAIN)
         self.devco_lamp_daylight_frame.pack(side=TOP , fill = BOTH)
         self.devco_lamp_daylight_frame.grid_columnconfigure(0, weight =1)
         self.devco_lamp_daylight_frame.grid_columnconfigure(1, weight =1)
         self.devco_lamp_daylight_frame.grid_columnconfigure(2, weight =1)
         self.devco_lamp_daylight_frame.grid_columnconfigure(3, weight =1)
 
-        self.devco_daylight_toggle = Checkbutton(self.devco_lamp_daylight_frame, text= "Toggle automatic daylight mode", variable = self.enable_daylight, onvalue= 1, offvalue=0, command = self.update_daylight_params, bg =BG_MAIN, fg=FG_TEXT)
+        self.devco_daylight_toggle = Checkbutton( self.devco_lamp_daylight_frame, 
+                                                  text = "Toggle automatic daylight mode", 
+                                                  variable = self.enable_daylight, 
+                                                  onvalue = 1, 
+                                                  offvalue =0, 
+                                                  command = self.update_daylight_params, 
+                                                  bg = BG_MAIN, 
+                                                  fg = FG_TEXT)
         self.devco_daylight_toggle.grid(column = 0, row = 1, columnspan = 4, sticky=S+W+N+E)
 
-        self.devco_daylight_status = Label(self.devco_lamp_daylight_frame, textvariable= self.daylight_status, bg = BG_MAIN, fg = FG_TEXT)
+        self.devco_daylight_status = Label( self.devco_lamp_daylight_frame, 
+                                            textvariable = self.daylight_status, 
+                                            bg = BG_MAIN, 
+                                            fg = FG_TEXT)
         self.devco_daylight_status.grid(column = 0, row = 2, columnspan = 4, sticky=S+W+N+E)
 
-        self.devco_daylight_start_label = Label(self.devco_lamp_daylight_frame, text = "Day start", bg=BG_MAIN, fg = FG_TEXT)
+        self.devco_daylight_start_label = Label( self.devco_lamp_daylight_frame, 
+                                                 text = "Day start", 
+                                                 bg = BG_MAIN, 
+                                                 fg = FG_TEXT)
         self.devco_daylight_start_label.grid(column = 0, row = 3, columnspan = 1, sticky=S+W+N)
 
-        self.devco_daylight_start_hour = Entry(self.devco_lamp_daylight_frame, textvariable = self.daylight_tv_start_hour, width =3, bg=BG_ENTRY, fg = FG_ENTRY, highlightbackground = BG_MAIN)
+        self.devco_daylight_start_hour = Entry( self.devco_lamp_daylight_frame, 
+                                                textvariable = self.daylight_tv_start_hour, 
+                                                width = 3, 
+                                                bg = BG_ENTRY, 
+                                                fg = FG_ENTRY, 
+                                                highlightbackground = BG_MAIN)
         self.devco_daylight_start_hour.grid(column = 2, row = 3)
 
-        self.devco_daylight_start_minute = Entry(self.devco_lamp_daylight_frame, textvariable = self.daylight_tv_start_min, width =3, bg=BG_ENTRY, fg = FG_ENTRY, highlightbackground = BG_MAIN)
+        self.devco_daylight_start_minute = Entry( self.devco_lamp_daylight_frame, 
+                                                  textvariable = self.daylight_tv_start_min, 
+                                                  width =3, 
+                                                  bg =BG_ENTRY, 
+                                                  fg = FG_ENTRY, 
+                                                  highlightbackground = BG_MAIN)
         self.devco_daylight_start_minute.grid(column = 3, row = 3)
 
-        self.devco_daylight_end_label = Label(self.devco_lamp_daylight_frame, text = "Day end", bg=BG_MAIN, fg = FG_TEXT)
+        self.devco_daylight_end_label = Label( self.devco_lamp_daylight_frame, 
+                                               text = "Day end", 
+                                               bg = BG_MAIN, 
+                                               fg = FG_TEXT)
         self.devco_daylight_end_label.grid(column = 0, row = 4, columnspan = 1, sticky=S+W+N)
 
-        self.devco_daylight_end_hour = Entry(self.devco_lamp_daylight_frame, textvariable = self.daylight_tv_end_hour, width =3, bg=BG_ENTRY, fg = FG_ENTRY, highlightbackground = BG_MAIN)
+        self.devco_daylight_end_hour = Entry( self.devco_lamp_daylight_frame, 
+                                              textvariable = self.daylight_tv_end_hour, 
+                                              width = 3, 
+                                              bg = BG_ENTRY, 
+                                              fg = FG_ENTRY, 
+                                              highlightbackground = BG_MAIN)
         self.devco_daylight_end_hour.grid(column = 2, row = 4)
 
-        self.devco_daylight_end_minute = Entry(self.devco_lamp_daylight_frame, textvariable = self.daylight_tv_end_min, width =3, bg=BG_ENTRY, fg = FG_ENTRY, highlightbackground = BG_MAIN)
+        self.devco_daylight_end_minute = Entry( self.devco_lamp_daylight_frame, 
+                                                textvariable = self.daylight_tv_end_min, 
+                                                width = 3, 
+                                                bg = BG_ENTRY, 
+                                                fg = FG_ENTRY, 
+                                                highlightbackground = BG_MAIN)
         self.devco_daylight_end_minute.grid(column = 3, row = 4)
 
-        self.devco_daylight_ramp_label = Label(self.devco_lamp_daylight_frame, text = "Sunrise/set period", bg=BG_MAIN, fg = FG_TEXT)
+        self.devco_daylight_ramp_label = Label( self.devco_lamp_daylight_frame, 
+                                                text = "Sunrise/set period", 
+                                                bg = BG_MAIN, 
+                                                fg = FG_TEXT)
         self.devco_daylight_ramp_label.grid(column = 0, row = 5, columnspan = 1, sticky=S+W+N)
 
-        self.devco_daylight_ramp_hour = Entry(self.devco_lamp_daylight_frame, textvariable = self.daylight_tv_ramp_hour,validate = "all", validatecommand = self.update_daylight_params, width =3, bg=BG_ENTRY, fg = FG_ENTRY, highlightbackground = BG_MAIN)
+        self.devco_daylight_ramp_hour = Entry(  self.devco_lamp_daylight_frame, 
+                                                textvariable = self.daylight_tv_ramp_hour,
+                                                validate = "all", 
+                                                validatecommand = self.update_daylight_params, 
+                                                width =3, 
+                                                bg=BG_ENTRY, 
+                                                fg = FG_ENTRY, 
+                                                highlightbackground = BG_MAIN)
         self.devco_daylight_ramp_hour.grid(column = 2, row = 5)
 
-        self.devco_daylight_ramp_minute = Entry(self.devco_lamp_daylight_frame, textvariable = self.daylight_tv_ramp_min,validate = "all", validatecommand = self.update_daylight_params, width =3, bg=BG_ENTRY, fg = FG_ENTRY, highlightbackground = BG_MAIN)
+        self.devco_daylight_ramp_minute = Entry( self.devco_lamp_daylight_frame, 
+                                                 textvariable = self.daylight_tv_ramp_min,
+                                                 validate = "all", 
+                                                 validatecommand = self.update_daylight_params, 
+                                                 width =3, bg=BG_ENTRY, 
+                                                 fg = FG_ENTRY, 
+                                                 highlightbackground = BG_MAIN)
         self.devco_daylight_ramp_minute.grid(column = 3, row = 5)
 
-        self.devco_daylight_brightness_label = Label(self.devco_lamp_daylight_frame, text = "Full brightness", bg=BG_MAIN, fg = FG_TEXT)
+        self.devco_daylight_brightness_label = Label( self.devco_lamp_daylight_frame, 
+                                                      text = "Full brightness", 
+                                                      bg=BG_MAIN, 
+                                                      fg = FG_TEXT)
         self.devco_daylight_brightness_label.grid(column = 0, row = 6, columnspan = 1, sticky=S+W+N)
-        self.devco_daylight_brightness_value = Entry(self.devco_lamp_daylight_frame, textvariable = self.daylight_brightness, width =3, bg=BG_ENTRY, fg = FG_ENTRY, highlightbackground = BG_MAIN)
+        self.devco_daylight_brightness_value = Entry( self.devco_lamp_daylight_frame, 
+                                                      textvariable = self.daylight_brightness, 
+                                                      width =3, 
+                                                      bg=BG_ENTRY, 
+                                                      fg = FG_ENTRY, 
+                                                      highlightbackground = BG_MAIN)
         self.devco_daylight_brightness_value.grid(column = 3, row = 6)
 
     #   DEVCO NOTBOOK _ HYDROLICS
-        self.devco_hydro_frame = Frame(self.devco_notebook, bg = BG_SUB)
+        self.devco_hydro_frame = Frame( self.devco_notebook, 
+                                        bg = BG_SUB)
         self.devco_hydro_frame.grid_columnconfigure(0, weight =1)
         self.devco_hydro_frame.grid_columnconfigure(1, weight =1)
         self.devco_hydro_frame.grid_columnconfigure(2, weight =1)
@@ -930,32 +1013,63 @@ class App( Frame ):
         self.devco_notebook.add(self.devco_hydro_frame, text = 'HYDROLICS', sticky=N+S+E+W)
 
         # PUMP RUNNING FB
-        self.devco_label_pumpRunning = Label(self.devco_hydro_frame, textvariable = self.pump_state[0], bg = BG_SUB, fg = FG_TEXT)
+        self.devco_label_pumpRunning = Label( self.devco_hydro_frame, 
+                                              textvariable = self.pump_state[0], 
+                                              bg = BG_SUB, 
+                                              fg = FG_TEXT)
         self.devco_label_pumpRunning.grid(column = 0, row = 0, columnspan = 4, sticky=S+W+N+E)
 
         # PUMP SLIDER
-        self.devco_slider_pumpValue = Scale(self.devco_hydro_frame, orient= HORIZONTAL, command= self.update_pump, to = 255, bg = BG_SUB, fg=FG_TEXT)
+        self.devco_slider_pumpValue = Scale( self.devco_hydro_frame, 
+                                             orient = HORIZONTAL, 
+                                             command = self.update_pump, 
+                                             to = 255, 
+                                             bg = BG_SUB, 
+                                             fg=FG_TEXT)
         self.devco_slider_pumpValue.grid(column = 0, row = 1, columnspan = 4, sticky=S+W+N+E)
 
         # TOGGLE PUMP STATE
-        self.devco_button_pumpEnable = Button(self.devco_hydro_frame, command = self.set_pumpEnable, text = "Enable pump")
+        self.devco_button_pumpEnable = Button(  self.devco_hydro_frame, 
+                                                command = self.set_pumpEnable, 
+                                                text = "Enable pump")
         self.devco_button_pumpEnable.grid(column = 0, row = 2, columnspan = 2, sticky=S+W+N+E)
 
-        self.devco_button_pumpDisable = Button(self.devco_hydro_frame, command = self.set_pumpDisable, text = "Disable pump")
+        self.devco_button_pumpDisable = Button( self.devco_hydro_frame, 
+                                                command = self.set_pumpDisable, 
+                                                text = "Disable pump")
         self.devco_button_pumpDisable.grid(column = 2, row = 2, columnspan = 2, sticky=S+W+N+E)
 
-        self.devco_check_overrule_pump = Checkbutton(self.devco_hydro_frame, variable = self.overrule_pump_interlock[0], onvalue= 1, offvalue=0, command = self.toggle_pump_interlock, text = "Overrule Pump Interlock", bg = BG_SUB, fg=FG_TEXT)
+        self.devco_check_overrule_pump = Checkbutton( self.devco_hydro_frame, 
+                                                      variable = self.overrule_pump_interlock[0], 
+                                                      onvalue= 1, 
+                                                      offvalue=0, 
+                                                      command = self.toggle_pump_interlock, 
+                                                      text = "Overrule Pump Interlock", 
+                                                      bg = BG_SUB, 
+                                                      fg=FG_TEXT)
         self.devco_check_overrule_pump.grid(column = 0, row = 3, columnspan = 4, sticky=S+W+N+E)
 
         self.devco_flow=[]
         for n in range(NR_FLOW):
-            self.devco_flow.append(Radiobutton(self.devco_hydro_frame, text= NAMES_FLOW[n], value = n, variable = self.flow_state, command = self.set_flow_circuit, bg = BG_SUB, fg=FG_TEXT))
+            self.devco_flow.append( Radiobutton( self.devco_hydro_frame, 
+                                                 text= NAMES_FLOW[n], 
+                                                 value = n, 
+                                                 variable = self.flow_state, 
+                                                 command = self.set_flow_circuit, 
+                                                 bg = BG_SUB, 
+                                                 fg=FG_TEXT) )
             self.devco_flow[n].grid(column = 0, row = (4+n), columnspan = 4, sticky=S+W+N)
-        self.devco_flow.append(Radiobutton(self.devco_hydro_frame, text= "DISABLED", value = NR_FLOW, variable = self.flow_state, command = self.set_flow_circuit, bg = BG_SUB, fg=FG_TEXT))
+        self.devco_flow.append( Radiobutton( self.devco_hydro_frame, 
+                                             text= "DISABLED", 
+                                             value = NR_FLOW, 
+                                             variable = self.flow_state, 
+                                             command = self.set_flow_circuit, 
+                                             bg = BG_SUB, fg=FG_TEXT) )
         self.devco_flow[NR_FLOW].grid(column = 0, row = (4+NR_FLOW), columnspan = 4, sticky=S+W+N)
 
     #   DEVCO NOTBOOK _ RELAY CONTROL
-        self.devco_relay_frame = Frame(self.devco_notebook, bg = BG_SUB)
+        self.devco_relay_frame = Frame( self.devco_notebook, 
+                                        bg = BG_SUB)
         self.devco_relay_frame.grid_columnconfigure(0, weight =1)
         self.devco_relay_frame.grid_columnconfigure(1, weight =1)
         self.devco_relay_frame.grid_columnconfigure(2, weight =1)
@@ -964,7 +1078,14 @@ class App( Frame ):
 
         self.devco_relay = []
         for n in range(NR_RELAY):
-            self.devco_relay.append(Checkbutton(self.devco_relay_frame, text= NAMES_RELAY[n], variable = self.enable_relay[n], onvalue= 1, offvalue=0, command = self.toggle_relay, bg = BG_SUB, fg=FG_TEXT))
+            self.devco_relay.append( Checkbutton( self.devco_relay_frame, 
+                                                  text= NAMES_RELAY[n], 
+                                                  variable = self.enable_relay[n], 
+                                                  onvalue= 1, 
+                                                  offvalue=0, 
+                                                  command = self.toggle_relay, 
+                                                  bg = BG_SUB, 
+                                                  fg=FG_TEXT) )
             self.devco_relay[n].grid(column = 0, row = n, columnspan = 4, sticky=S+W+N)
 
         # SET BACKGROUND CLOUR
