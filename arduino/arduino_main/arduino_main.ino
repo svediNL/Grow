@@ -24,8 +24,10 @@ void setup(){
     pump[n].init(PUMP_DIR_PIN[n], PUMP_PWM_PIN[n], PUMP_NAME[n]); // SETUP PUMP
   }
 
-  if(ENABLE_PUMP_INTERLOCK_SWITCH){
-    vlotter[0].init(FLOAT_SWITCH_PIN, "float switch");   // SETUP FLOAT SWITCH - DigitalInput on pin=23
+  if(ENABLE_PUMP_INTERLOCK_SWITCH && NR_FLOAT_SWITCH>0){
+    for(int n=0;n<NR_LAMP; n++){ 
+      vlotter[n].init(FLOAT_SWITCH_PIN[n], "float switch");   // SETUP FLOAT SWITCH - DigitalInput on pin=23
+    }
   }
   
   // SETUP   T H E R M O C O U P L E
@@ -45,7 +47,7 @@ void setup(){
     lamp[n].init(LAMP_NAME[n],LAMP_RGBW_PIN[n][0],LAMP_RGBW_PIN[n][1],LAMP_RGBW_PIN[n][2],LAMP_RGBW_PIN[n][3]);  // SETUP LAMP - RGBWLed ON PINS 11,10,9,8
   }
   if(ENABLE_FRIDGE_DOOR){
-    doorSensor.init(DOOR_SWITTCH_PIN, "Door switch");
+    doorSensor.init(DOOR_SWITCH_PIN, "Door switch");
   }
   // SETUP   M O I S T U R E 
   for(int n=0;n<NR_MOISTURE; n++){ 
