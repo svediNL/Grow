@@ -1,9 +1,9 @@
 from math import *
 import matplotlib 
+matplotlib.use("TkAgg")
 from matplotlib import pyplot as pp
 import matplotlib.animation as animation
 from matplotlib import gridspec
-matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg #, NavigationToolbar2TkAgg
 from matplotlib.ticker import AutoMinorLocator, MultipleLocator
 
@@ -27,14 +27,6 @@ import os.path
 import time
 
 FIRST_SCAN = True
-
-# BG_MAIN     =   "gray93"
-# BG_SUB      = "gray96"
-# BG_SUBSUB   = "white"
-# BG_TOG_A    = "gray96"
-# BG_TOG_B    = "gray93"
-# BG_TAB      = "gray90"
-# BG_TAB_ACTIVE = "gray96"
 
 # prepare animation buffer
 BUFF_FILL = 0
@@ -365,7 +357,6 @@ class App( Frame ):
         self.arduino.writeCommand("ENABLE_PUMP", ["0",str(0)])
         self.pump_state[0].set("PUMP STOPPED")
         self.reset_flow_circuit()
-
 
     def toggle_pump_interlock(self):
         if FORCE_INTERLOCK[self.flow_state.get()] == True:
@@ -912,7 +903,8 @@ class App( Frame ):
                                                   offvalue =0, 
                                                   command = self.update_daylight_params, 
                                                   bg = BG_MAIN, 
-                                                  fg = FG_TEXT)
+                                                  fg = FG_TEXT,
+                                                  selectcolor = BG_CHECK)
         self.devco_daylight_toggle.grid(column = 0, row = 1, columnspan = 4, sticky=S+W+N+E)
 
         self.devco_daylight_status = Label( self.devco_lamp_daylight_frame, 
@@ -1046,7 +1038,8 @@ class App( Frame ):
                                                       command = self.toggle_pump_interlock, 
                                                       text = "Overrule Pump Interlock", 
                                                       bg = BG_SUB, 
-                                                      fg=FG_TEXT)
+                                                      fg=FG_TEXT,
+                                                      selectcolor = BG_CHECK)
         self.devco_check_overrule_pump.grid(column = 0, row = 3, columnspan = 4, sticky=S+W+N+E)
 
         self.devco_flow=[]
@@ -1057,14 +1050,15 @@ class App( Frame ):
                                                  variable = self.flow_state, 
                                                  command = self.set_flow_circuit, 
                                                  bg = BG_SUB, 
-                                                 fg=FG_TEXT) )
+                                                 fg=FG_TEXT,
+                                                 selectcolor = BG_CHECK) )
             self.devco_flow[n].grid(column = 0, row = (4+n), columnspan = 4, sticky=S+W+N)
         self.devco_flow.append( Radiobutton( self.devco_hydro_frame, 
                                              text= "DISABLED", 
                                              value = NR_FLOW, 
                                              variable = self.flow_state, 
                                              command = self.set_flow_circuit, 
-                                             bg = BG_SUB, fg=FG_TEXT) )
+                                             bg = BG_SUB, fg=FG_TEXT, selectcolor = BG_CHECK) )
         self.devco_flow[NR_FLOW].grid(column = 0, row = (4+NR_FLOW), columnspan = 4, sticky=S+W+N)
 
     #   DEVCO NOTBOOK _ RELAY CONTROL
@@ -1085,7 +1079,8 @@ class App( Frame ):
                                                   offvalue=0, 
                                                   command = self.toggle_relay, 
                                                   bg = BG_SUB, 
-                                                  fg=FG_TEXT) )
+                                                  fg=FG_TEXT,
+                                                  selectcolor = BG_CHECK) )
             self.devco_relay[n].grid(column = 0, row = n, columnspan = 4, sticky=S+W+N)
 
         # SET BACKGROUND CLOUR

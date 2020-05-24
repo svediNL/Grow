@@ -75,6 +75,7 @@ BG_TAB 			= "gray44"	#"gray85"
 BG_TAB_ACTIVE 	= "gray33"	#"gray96"
 BG_ENTRY		= "gray60"	#"white"
 BG_BUTTON		= "black"
+BG_CHECK		= "gray40"
 
 FG_TEXT			= "white"	#"black"
 FG_ENTRY		= "white"
