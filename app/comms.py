@@ -1,4 +1,5 @@
 import serial
+import serial.tools.list_ports
 import io
 
 class SlaveComm:
@@ -108,10 +109,24 @@ class SlaveComm:
     def getStatus(self):
         return self.assumed_connection_status   
 
+    def scan_ports(self):
+        self.portscan = serial.tools.list_ports.comports();
+        self.devices = []
+        for n in range(len(self.portscan)):
+            self.devices.append(self.portscan[n].device)
+        print self.devices
+
+    def get_ports(self):
+        self.scan_ports();
+        return self.devices
+
     def __init__(self, serial_port, baud):
         self.ser = serial.Serial(timeout = 1)
         self.ser.baudrate = baud
         self.ser.port = serial_port
         self.sio = io.TextIOWrapper(    buffer = io.BufferedRWPair(self.ser, self.ser),newline = '\n')
         self.assumed_connection_status = False
-        self.openConnection()
+        self.devices = []
+        self.scan_ports()
+        if serial_port != "":
+            self.openConnection()

@@ -138,20 +138,27 @@ class App( Frame ):
         self.flow_state = IntVar()
         self.flow_state.set(NR_FLOW)
 
+        # FIND & ADD ALL RELAYS RELATED TO VALVE CIRCUIT
         self.flow_control_relays = []
         for n in range( len(VALVES_FLOW) ):
+        # CYCLE FLOW CIRCUITS
             for m in range( len(VALVES_FLOW[n]) ):
+            # CYCLE VALVES IN FLOW CICRUIT
                 if len(self.flow_control_relays) > 0:
+                    # CHECK IF CURRENT VALUE IS ALREADY IN LIST
                     append_valves_list = True
                     for k in range(len(self.flow_control_relays)):
                         if self.flow_control_relays[k] == VALVES_FLOW[n][m]:
                             append_valves_list = False
+
+                    # APPEND VALVE IF NOT YET PRESENT
                     if append_valves_list:
                         self.flow_control_relays.append(VALVES_FLOW[n][m])
+
                 else:
-                    print "except"
+                # FIST INDEX
                     self.flow_control_relays.append(VALVES_FLOW[n][m])
-                print self.flow_control_relays
+        # SORT LIST
         self.flow_control_relays.sort()
         print self.flow_control_relays
 
@@ -223,7 +230,12 @@ class App( Frame ):
         self.serial_entry_string = StringVar()
         self.serial_var_port = StringVar()
         self.serial_var_port.set(SERIAL_PORT)
+
         self.arduino = SlaveComm(SERIAL_PORT, BAUD_RATE)
+        self.serial_port_list = self.arduino.get_ports()
+        self.serial_port_hist = [SERIAL_PORT]
+        self.serial_combo_list = []
+        self.serial_combo_sel = 0
 
         # CREATE WIDGETS
         self.create_widgets()
@@ -252,6 +264,7 @@ class App( Frame ):
 #   SERIAL FUNCTIONS
     def open_serial_connection(self):
         self.arduino.setPort(self.serial_var_port.get())
+        self.serial_port_hist.append(self.serial_var_port.get())
         self.arduino.openConnection()
 
         if self.arduino.getStatus():
@@ -289,6 +302,19 @@ class App( Frame ):
         self.serial_entry_string.set(tmp_string)
         self.serial_var_string.set("")
         
+    def postcom_port_list(self):
+        # BUILD LIST OF PORT HISTORY & AVAILABLE PORTS
+        self.serial_combo_list = [""] # EMPTY ITEM FOR NO SELECTION
+        for n in range(len(self.serial_port_hist)):
+            self.serial_combo_list.append(self.serial_port_hist[n]) # APPEND HISTORY
+        for n in range(len(self.serial_port_list)):
+            self.serial_combo_list.append(self.serial_port_list[n]) # APPEND AVAILABLE PORTS
+        self.serial_combo_port['values'] = self.serial_combo_list   # SET LIST
+
+    def update_serial(self):
+        if self.serial_combo_sel != self.serial_combo_port.current() and self.serial_combo_port.get() != "":
+            self.serial_var_port.set(self.serial_combo_port.get())
+            self.serial_combo_sel = self.serial_combo_port.current()
 
 #   LIGHTING FUNCTIONS
     def disable_lamp(self):
@@ -414,12 +440,14 @@ class App( Frame ):
                                 bg = BG_MAIN, 
                                 bd = 4, 
                                 relief = SUNKEN )
-        self.mainframe.grid(column = 0, row=0, sticky=E+W)
+        self.mainframe.grid(column = 0, row=0, sticky=N+S+E+W)
         #self.mainframe.pack(fill = BOTH, expand = True)
 
         self.mainframe.grid_columnconfigure(0, weight =1)
         self.mainframe.grid_columnconfigure(1, weight =1)
-        
+        self.mainframe.grid_rowconfigure(0, weight =0)
+        self.mainframe.grid_rowconfigure(1, weight =2)
+
     # H E A D E R   F R A M E
         # CREATE HEADER FRAME
         self.headerFrame=Frame( self.mainframe, 
@@ -433,6 +461,7 @@ class App( Frame ):
         # GRID HEADER FRAME
         self.headerFrame.grid_columnconfigure(0, weight =1)
         self.headerFrame.grid_columnconfigure(1, weight =1)
+        self.headerFrame.grid_rowconfigure(0, weight =0)
 
         # HEADER TEXT
         self.label_header = Label(  self.headerFrame, 
@@ -465,6 +494,7 @@ class App( Frame ):
         # GRID CONTENT FRAME
         self.contentFrame.grid_columnconfigure(0, weight =2)
         self.contentFrame.grid_columnconfigure(1, weight =1)
+        self.contentFrame.grid_rowconfigure(0, weight =1)
 
     # P L O T   F R A M E  
         # CREATE PLOT FRAME
@@ -572,11 +602,18 @@ class App( Frame ):
         self.serial_connectionFrame.grid_columnconfigure(1,weight=1)
         self.serial_connectionFrame.grid_rowconfigure(0,weight=1)
         self.serial_connectionFrame.grid_rowconfigure(1,weight=0)
-        self.serial_connectionFrame.grid_rowconfigure(2,weight=1)
+        self.serial_connectionFrame.grid_rowconfigure(2,weight=0)
         self.serial_connectionFrame.grid_rowconfigure(3,weight=1)
-        self.serial_connectionFrame.grid_rowconfigure(4,weight=2)
+        self.serial_connectionFrame.grid_rowconfigure(4,weight=1)
+        self.serial_connectionFrame.grid_rowconfigure(5,weight=2)
         self.serial_notebook.add(self.serial_connectionFrame, text = 'connect')
         
+        # ADD COMBOBOX
+        self.serial_combo_port = Combobox( self.serial_connectionFrame,
+                                          values = self.serial_combo_list,
+                                          postcommand = self.postcom_port_list)
+        self.serial_combo_port.grid(column = 0, row=1, columnspan = 2, sticky=N+S+E+W)
+
         # ADD ENTRY FOR PORT TO CONNECTION FRAME
         self.serial_entry_port = Entry( self.serial_connectionFrame, 
                                         textvariable        = self.serial_var_port, 
@@ -584,28 +621,28 @@ class App( Frame ):
                                         selectforeground    = 'black',
                                         bg                  = BG_ENTRY, 
                                         fg                  = FG_ENTRY )
-        self.serial_entry_port.grid(column = 0, row=1, columnspan = 2, sticky=N+S+E+W)
+        self.serial_entry_port.grid(column = 0, row=2, columnspan = 2, sticky=N+S+E+W)
 
         # ADD LABEL FOR STATUS TO CONNECTION FRAME
         self.serial_label_status = Label(   self.serial_connectionFrame, 
                                             textvariable = self.serial_connection_string, 
                                             bg           = BG_SUB, 
                                             fg           = FG_TEXT)
-        self.serial_label_status.grid(column = 0, row=2, columnspan = 2, sticky=N+S+E+W)
+        self.serial_label_status.grid(column = 0, row=3, columnspan = 2, sticky=N+S+E+W)
 
         # ADD OPEN CONNECTION BUTTON TO CONNECTION FRAME
         self.serial_button_open= Button(    self.serial_connectionFrame, 
                                             text    = "open", 
                                             command = self.open_serial_connection)
-        self.serial_button_open.grid(column = 0, row =3, sticky=N+S+E+W)
+        self.serial_button_open.grid(column = 0, row =4, sticky=N+S+E+W)
 
         self.serial_button_close = Button(  self.serial_connectionFrame,
                                             text    = "close", 
                                             command = self.close_serial_connection)
-        self.serial_button_close.grid(column = 1, row=3, sticky=N+S+E+W)
+        self.serial_button_close.grid(column = 1, row=4, sticky=N+S+E+W)
 
 
-
+        self.postcom_port_list()    # call post command to have initial value in list
         # SERIAL NOTEBOOK _ DIRECT INTERFACE
         self.serial_interfaceFrame = Frame( self.serial_notebook, 
                                             bg = BG_SUB)    
@@ -893,8 +930,9 @@ class App( Frame ):
         self.devco_lamp_daylight_frame.pack(side=TOP , fill = BOTH)
         self.devco_lamp_daylight_frame.grid_columnconfigure(0, weight =1)
         self.devco_lamp_daylight_frame.grid_columnconfigure(1, weight =1)
-        self.devco_lamp_daylight_frame.grid_columnconfigure(2, weight =1)
-        self.devco_lamp_daylight_frame.grid_columnconfigure(3, weight =1)
+        self.devco_lamp_daylight_frame.grid_columnconfigure(2, weight =0)
+        self.devco_lamp_daylight_frame.grid_columnconfigure(3, weight =0)
+        self.devco_lamp_daylight_frame.grid_columnconfigure(4, weight =0)
 
         self.devco_daylight_toggle = Checkbutton( self.devco_lamp_daylight_frame, 
                                                   text = "Toggle automatic daylight mode", 
@@ -905,13 +943,13 @@ class App( Frame ):
                                                   bg = BG_MAIN, 
                                                   fg = FG_TEXT,
                                                   selectcolor = BG_CHECK)
-        self.devco_daylight_toggle.grid(column = 0, row = 1, columnspan = 4, sticky=S+W+N+E)
+        self.devco_daylight_toggle.grid(column = 0, row = 1, columnspan = 5, sticky=S+W+N+E)
 
         self.devco_daylight_status = Label( self.devco_lamp_daylight_frame, 
                                             textvariable = self.daylight_status, 
                                             bg = BG_MAIN, 
                                             fg = FG_TEXT)
-        self.devco_daylight_status.grid(column = 0, row = 2, columnspan = 4, sticky=S+W+N+E)
+        self.devco_daylight_status.grid(column = 0, row = 2, columnspan = 5, sticky=S+W+N+E)
 
         self.devco_daylight_start_label = Label( self.devco_lamp_daylight_frame, 
                                                  text = "Day start", 
@@ -925,7 +963,13 @@ class App( Frame ):
                                                 bg = BG_ENTRY, 
                                                 fg = FG_ENTRY, 
                                                 highlightbackground = BG_MAIN)
-        self.devco_daylight_start_hour.grid(column = 2, row = 3)
+        self.devco_daylight_start_hour.grid(column = 2, row = 3, sticky=S+E+N)
+
+        self.devco_daylight_start_sep = Label( self.devco_lamp_daylight_frame, 
+                                                 text = " : ", 
+                                                 bg = BG_MAIN, 
+                                                 fg = FG_TEXT)
+        self.devco_daylight_start_sep.grid(column = 3, row = 3, columnspan = 1, sticky=S+E+W+N)
 
         self.devco_daylight_start_minute = Entry( self.devco_lamp_daylight_frame, 
                                                   textvariable = self.daylight_tv_start_min, 
@@ -933,7 +977,7 @@ class App( Frame ):
                                                   bg =BG_ENTRY, 
                                                   fg = FG_ENTRY, 
                                                   highlightbackground = BG_MAIN)
-        self.devco_daylight_start_minute.grid(column = 3, row = 3)
+        self.devco_daylight_start_minute.grid(column = 4, row = 3, sticky=S+W+N)
 
         self.devco_daylight_end_label = Label( self.devco_lamp_daylight_frame, 
                                                text = "Day end", 
@@ -949,13 +993,19 @@ class App( Frame ):
                                               highlightbackground = BG_MAIN)
         self.devco_daylight_end_hour.grid(column = 2, row = 4)
 
+        self.devco_daylight_end_sep = Label( self.devco_lamp_daylight_frame, 
+                                                 text = " : ", 
+                                                 bg = BG_MAIN, 
+                                                 fg = FG_TEXT)
+        self.devco_daylight_end_sep.grid(column = 3, row = 4, columnspan = 1, sticky=S+E+W+N)
+
         self.devco_daylight_end_minute = Entry( self.devco_lamp_daylight_frame, 
                                                 textvariable = self.daylight_tv_end_min, 
                                                 width = 3, 
                                                 bg = BG_ENTRY, 
                                                 fg = FG_ENTRY, 
                                                 highlightbackground = BG_MAIN)
-        self.devco_daylight_end_minute.grid(column = 3, row = 4)
+        self.devco_daylight_end_minute.grid(column = 4, row = 4)
 
         self.devco_daylight_ramp_label = Label( self.devco_lamp_daylight_frame, 
                                                 text = "Sunrise/set period", 
@@ -973,6 +1023,12 @@ class App( Frame ):
                                                 highlightbackground = BG_MAIN)
         self.devco_daylight_ramp_hour.grid(column = 2, row = 5)
 
+        self.devco_daylight_ramp_sep = Label( self.devco_lamp_daylight_frame, 
+                                         text = " : ", 
+                                         bg = BG_MAIN, 
+                                         fg = FG_TEXT)
+        self.devco_daylight_ramp_sep.grid(column = 3, row = 5, columnspan = 1, sticky=S+E+W+N)
+
         self.devco_daylight_ramp_minute = Entry( self.devco_lamp_daylight_frame, 
                                                  textvariable = self.daylight_tv_ramp_min,
                                                  validate = "all", 
@@ -980,7 +1036,7 @@ class App( Frame ):
                                                  width =3, bg=BG_ENTRY, 
                                                  fg = FG_ENTRY, 
                                                  highlightbackground = BG_MAIN)
-        self.devco_daylight_ramp_minute.grid(column = 3, row = 5)
+        self.devco_daylight_ramp_minute.grid(column = 4, row = 5)
 
         self.devco_daylight_brightness_label = Label( self.devco_lamp_daylight_frame, 
                                                       text = "Full brightness", 
@@ -993,7 +1049,7 @@ class App( Frame ):
                                                       bg=BG_ENTRY, 
                                                       fg = FG_ENTRY, 
                                                       highlightbackground = BG_MAIN)
-        self.devco_daylight_brightness_value.grid(column = 3, row = 6)
+        self.devco_daylight_brightness_value.grid(column = 4, row = 6)
 
     #   DEVCO NOTBOOK _ HYDROLICS
         self.devco_hydro_frame = Frame( self.devco_notebook, 
@@ -1183,6 +1239,7 @@ class App( Frame ):
 
         else:
             self.daylight_status.set("DAYLIGHT DISABLED")
+
 
 ##   A N I M A T I O N
 def animate(i):
@@ -1672,6 +1729,7 @@ def program():
 
     # CALL DAYLIGHT SCHEDULER
     app.daylight_sequence()
+    app.update_serial()
 
 #   UPDATE ARDUINO STATUS
     if app.arduino.getStatus():
