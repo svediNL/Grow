@@ -6,9 +6,10 @@ class TimeKeeper{
     void interrupt();
     void set_time();
     String get_time();
-    
-    int hour = 21; 
-    int minute= 44; 
+
+    void print_parameters();
+    int hour = 23; 
+    int minute= 9; 
     int second = 0;
 
   private:
@@ -16,24 +17,25 @@ class TimeKeeper{
     
     int PAR_PRESCALER = 1024;
     int PAR_CS2 = 7;  // CS2=7 -> 1024 prescaler
-    float PAR_CLK_T2 = float( PAR_CLK_IO ) / float(PAR_PRESCALER);
+    double PAR_CLK_T2 = double( PAR_CLK_IO ) / double(PAR_PRESCALER);
     
     int PAR_OCR2A = 243;
-    float PAR_CLK_T2I = PAR_CLK_T2 / float(PAR_OCR2A);  // INTERRUPT TIMER FREQUENCY
+    double PAR_CLK_T2I = PAR_CLK_T2 / double(PAR_OCR2A);  // INTERRUPT TIMER FREQUENCY
     
     int freq_aprox = 64;  // PRESCALER & OCR FREQUENCY APPROXIMATIOn
-    float sec_loss = 0.000073;
+    double sec_loss = 0.000073;
     
     unsigned long int long_second = 0;
     int cnt_trig2 = 0;
-    float sum_loss = 0;
+    double sum_loss = 0;
   
 } myTimeKeeper;
 
 void TimeKeeper::init(){
 
       freq_aprox = floor(PAR_CLK_T2I);
-      sec_loss = freq_aprox - (1/PAR_CLK_T2I);
+      sec_loss = (1/double(freq_aprox)) - (1/double(PAR_CLK_T2I));
+      
       cli();//stop interrupts
       
       // INITIALIZE REGISTERS
@@ -105,11 +107,18 @@ void TimeKeeper::interrupt(){
   }
 };
 
+void TimeKeeper::print_parameters(){
+  Serial.println(PAR_CLK_T2 );
+  Serial.println(PAR_CLK_T2I);
+  Serial.println(freq_aprox);
+  Serial.println(String(sec_loss, 10)) ;
+}
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(9600);
 
   myTimeKeeper.init();
+  myTimeKeeper.print_parameters();
 }
 
 
