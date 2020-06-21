@@ -4,12 +4,18 @@ class TimeKeeper{
   public:
     void init();
     void interrupt();
+    
     void set_time();
     String get_time();
 
+    void set_par_clkio(long int var);
+    void set_par_prescaler();
+    void set_par_out_comp();
+    
     void print_parameters();
-    int hour = 23; 
-    int minute= 9; 
+    
+    int hour = 18; 
+    int minute= 31; 
     int second = 0;
 
   private:
@@ -20,10 +26,10 @@ class TimeKeeper{
     double PAR_CLK_T2 = double( PAR_CLK_IO ) / double(PAR_PRESCALER);
     
     int PAR_OCR2A = 243;
-    double PAR_CLK_T2I = PAR_CLK_T2 / double(PAR_OCR2A);  // INTERRUPT TIMER FREQUENCY
+    double PAR_CLK_T2I = PAR_CLK_T2 / double(PAR_OCR2A+1);  // INTERRUPT TIMER FREQUENCY
     
     int freq_aprox = 64;  // PRESCALER & OCR FREQUENCY APPROXIMATIOn
-    double sec_loss = 0.000073;
+    double sec_loss = 0;
     
     unsigned long int long_second = 0;
     int cnt_trig2 = 0;
@@ -63,12 +69,18 @@ void TimeKeeper::init(){
 void TimeKeeper::interrupt(){
   cnt_trig2 += 1;
   sum_loss += sec_loss;
-  if (sum_loss >=1){
+  if (abs(sum_loss) >=1){
     // leap second
-    long_second -= 1;
-    second -= 1;
-    sum_loss -= 1;
-    Serial.println(long_second);
+    if(sum_loss >0){
+      long_second += 1;
+      second += 1;
+      sum_loss -= 1;
+    }
+    else{
+      long_second -= 1;
+      second -= 1;
+      sum_loss += 1;
+    }
   }
   
   if (cnt_trig2 >= freq_aprox){
@@ -79,7 +91,11 @@ void TimeKeeper::interrupt(){
     Serial.println(long_second);
     Serial.println(sum_loss);
   }
-
+  if ((long_second%6379) == 0 && long_second>0){
+  // 64 Hz aproximation cycle
+  long_second -= 1;
+  second -= 1;
+  }
   // DO HHMMSS
   if(second >= 60){
     second  -= 60;
