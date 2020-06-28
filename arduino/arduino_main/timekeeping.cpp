@@ -1,68 +1,85 @@
 #ifndef TIMEKEEPING_H
 #include "timekeeping.h"
 
-void TimeKeeper::set_base_time(long int var){
-  PAR_CLK_IO = var; 
+void TimeKeeper::set_base_time(long int var)
+{
+  PAR_CLK_IO = var;   // SET BASE TIME
+  // CALCULATE FRQUENCY STUFF
   PAR_CLK_T2 = double( PAR_CLK_IO ) / double(PAR_PRESCALER);
   PAR_CLK_T2I = PAR_CLK_T2 / double(PAR_OCR2A+1);
   freq_aprox = floor(PAR_CLK_T2I);
   sec_loss = (1/double(freq_aprox)) - (1/double(PAR_CLK_T2I));
 };
 
-void TimeKeeper::set_base_prescaler(int var){
-  PAR_PRESCALER = var;
-  PAR_CLK_T2 = double( PAR_CLK_IO ) / double(PAR_PRESCALER);
-  PAR_CLK_T2I = PAR_CLK_T2 / double(PAR_OCR2A+1);
-  freq_aprox = floor(PAR_CLK_T2I);
-  sec_loss = (1/double(freq_aprox)) - (1/double(PAR_CLK_T2I));
-};
-void TimeKeeper::set_output_compare(int var){
-  PAR_OCR2A = var;
+void TimeKeeper::set_base_prescaler(int var)
+{
+  PAR_PRESCALER = var;  // SET PRESCALER
+  // CALCULATE FREQUENCY STUFF
   PAR_CLK_T2 = double( PAR_CLK_IO ) / double(PAR_PRESCALER);
   PAR_CLK_T2I = PAR_CLK_T2 / double(PAR_OCR2A+1);
   freq_aprox = floor(PAR_CLK_T2I);
   sec_loss = (1/double(freq_aprox)) - (1/double(PAR_CLK_T2I));
 };
 
-void TimeKeeper::set_time(String var){
-  String tmp = "";
-  int cnt = 0;
+void TimeKeeper::set_output_compare(int var)
+{
+  PAR_OCR2A = var;  // SET OUTPUT COMPATE VALUE
+  // CALCULATE FREQUENCY STUFF
+  PAR_CLK_T2 = double( PAR_CLK_IO ) / double(PAR_PRESCALER);
+  PAR_CLK_T2I = PAR_CLK_T2 / double(PAR_OCR2A+1);
+  freq_aprox = floor(PAR_CLK_T2I);
+  sec_loss = (1/double(freq_aprox)) - (1/double(PAR_CLK_T2I));
+};
+
+void TimeKeeper::set_time(String var)
+{
+  String tmp = "";  // TMP STRING
+  int cnt = 0;      // COUNTER FOR HH:MM:SS
+
   for(int i=0; i<=var.length(); i++)
+  // CYCLE THROUGH CHARS IN STRING
   {
-    if (var[i]=':' && cnt<3)
+    if (cnt<3)
+    // NOT YET ALL TIME DIVISION HAD
     {
-      switch(cnt){
-        case 0:
-          second = tmp.toInt();
-          break;
-        case 1:
-          minute = tmp.toInt();
-          break;
-        case 2:
-          hour = tmp.toInt();
-          break;
-        default:
-          break;
+      if(var[i]!=':' && var[i]!='.' && var[i]!=' ')
+      {
+      // FILTER SEPERATORS
+        tmp += var[i];  // ADD CHAR TO STRING
+      };
+          
+      if( var[i]==':' || i==var.length()-1 )
+      // SEPERATOR OR END OF TIME REACHED
+      {
+        switch(cnt)
+        // ADD HH MM SS ONE BY ONE
+        {
+          case 0:
+            hour = tmp.toInt();
+            break;
+          case 1:
+            minute = tmp.toInt();
+            break;
+          case 2:
+            second = tmp.toInt();
+            break;
+        };
+        tmp = "";
+        cnt++;
       }
-      tmp = "";
-      cnt++;
-    }
-    else if (cnt >= 3)
-    {
-      break;
     }
     else
+    // HH:MM:SS HAS BEEN FILLED
     {
-      tmp += var[i];
+      break;
     };
   };
 };
 
-void TimeKeeper::set_magic_comp(unsigned long int var){
-  magic_time_comp = var;
-};
+void TimeKeeper::set_magic_comp(unsigned long int var){ magic_time_comp = var; };
 
-void TimeKeeper::init(){
+void TimeKeeper::init()
+{
       PAR_CLK_T2 = double( PAR_CLK_IO ) / double(PAR_PRESCALER);
       PAR_CLK_T2I = PAR_CLK_T2 / double(PAR_OCR2A+1);
       freq_aprox = floor(PAR_CLK_T2I);
@@ -92,7 +109,8 @@ void TimeKeeper::init(){
       sei();//allow interrupts
 };
 
-void TimeKeeper::interrupt(){
+void TimeKeeper::interrupt()
+{
   cnt_trig2 += 1;
   sum_loss += sec_loss;
   
@@ -160,14 +178,14 @@ void TimeKeeper::interrupt(){
   {
   // maximum amount of minutes to fit in long int 
     long_second = 0;
+    epoch_toggle = !epoch_toggle;
   }
 };
 
-unsigned long int TimeKeeper::get_epoch(){
-  return long_second;
-};
+unsigned long int TimeKeeper::get_epoch(){ return long_second; };
 
-String TimeKeeper::get_time(){
+String TimeKeeper::get_time()
+{
   String tmp;
   if(hour<10){
     tmp += '0';
@@ -188,13 +206,12 @@ String TimeKeeper::get_time(){
   return tmp;
 };
 
-void TimeKeeper::print_parameters(){
+void TimeKeeper::print_parameters()
+{
   Serial.println(PAR_CLK_T2 );
   Serial.println(PAR_CLK_T2I);
   Serial.println(freq_aprox);
   Serial.println(String(sec_loss, 10)) ;
 };
-
-
 
 #endif

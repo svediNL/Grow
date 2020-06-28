@@ -19,6 +19,7 @@ class TimeKeeper{
     String get_time();
     
     void print_parameters();
+    bool epoch_toggle;
     
 
 
@@ -42,9 +43,9 @@ class TimeKeeper{
     double sum_loss = 0;                      // TRACK TIME DIFFERENCE DUE TO APPROXIMATIONS
     unsigned long int long_second = 0;        // EPOCH SECOND TIMER
 
-    int hour = 12; 
-    int minute= 0; 
-    int second = 0;
+    int hour = 1; 
+    int minute= 2; 
+    int second = 3;
 };
 
 #endif

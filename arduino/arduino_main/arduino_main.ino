@@ -315,9 +315,44 @@ void doCommand(){
       Serial.print('@');
       break;
 
+ // SET HH:MM:SS TIME
+    case SET_TIME:
+      delay(2); // DELAY FOR SERIAL COMM
+      // ACTION
+      myClock.set_time(serialMsg.message.sParameter[0]);
+      
+      // COMMAND DONE
+      serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
+      Serial.print('@');                            // PRINT EOL
+      break;
+
+   // PRINT HH:MM:SS TIME
+    case GET_TIME:
+      delay(2); // DELAY FOR SERIAL COMM
+      // ACTION
+      Serial.print(myClock.get_time());
+      
+      // COMMAND DONE
+      serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
+      Serial.print('@');                            // PRINT EOL
+      break;
+
+   // PRINT EPOCH SECONDS
+    case GET_EPOCH:
+      delay(2); // DELAY FOR SERIAL COMM
+      // ACTION
+      Serial.print(myClock.get_epoch());
+      
+      // COMMAND DONE
+      serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
+      Serial.print('@');                            // PRINT EOL
+      break;
+
+
  // DEFAULT
     case NO_COMMAND:
-      delay(2);
+      delay(2); // DELAY FOR SERIAL COMM
+      // ACTION
       Serial.println("SLAVE_CMD_ERR");
       
       // COMMAND DONE
