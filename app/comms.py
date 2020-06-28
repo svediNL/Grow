@@ -56,7 +56,7 @@ class SlaveComm:
 
     def writeString(self, output_string):
         tmp = output_string + "\n"
-        print "> " + tmp
+        print("> " + tmp)
 
         if not self.assumed_connection_status:
             self.openConnection()
@@ -101,7 +101,7 @@ class SlaveComm:
                 print("timeout")
                 return "-1"
             else:
-                print "< " + str(tmp) 
+                print("< " + str(tmp) )
                 return str(tmp)
         else:
             return "-1"
@@ -114,7 +114,7 @@ class SlaveComm:
         self.devices = []
         for n in range(len(self.portscan)):
             self.devices.append(self.portscan[n].device)
-        print self.devices
+        print(self.devices)
 
     def get_ports(self):
         self.scan_ports();

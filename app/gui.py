@@ -9,12 +9,14 @@ from matplotlib.ticker import AutoMinorLocator, MultipleLocator
 
 import numpy as np
 
-from ttk import *
+
 try:
     from Tkinter import *
+    from ttk import *
 except:
     print("using tkinter")
     from tkinter import *
+    from tkinter import ttk
 else:
     print("using Tkinter")
 
@@ -94,7 +96,7 @@ class App( Frame ):
     def __init__(self, master=None):
         Frame.__init__(self, master)
 
-        self.style = Style()
+        self.style = ttk.Style()
         # https://www.tcl.tk/man/tcl/TkCmd/ttk_notebook.htm#M10
         self.style.theme_create( "myStyle", 
                                  parent="default", 
@@ -160,7 +162,7 @@ class App( Frame ):
                     self.flow_control_relays.append(VALVES_FLOW[n][m])
         # SORT LIST
         self.flow_control_relays.sort()
-        print self.flow_control_relays
+        print(self.flow_control_relays)
 
 
         # LAMP
@@ -170,7 +172,7 @@ class App( Frame ):
         self.lamp_output_prev =[] 
         self.lamp_state = []
         for n in range(NR_LAMP):
-            print n
+            print(n)
             self.lamp_enable.append(False)
             self.lamp_enable_prev.append(False)
             self.lamp_state.append(StringVar())
@@ -185,7 +187,7 @@ class App( Frame ):
             self.lamp_output_prev.append(tmp1)
 
         
-        print self.lamp_output
+        print(self.lamp_output)
 
         self.moisture_var = []
         for n in range(NR_MOISTURE):
@@ -345,9 +347,9 @@ class App( Frame ):
         try:
             if float(self.daylight_tv_ramp_min.get())>0 or float(self.daylight_tv_ramp_hour.get())>0:
                 self.daylight_stepsize = float(self.daylight_brightness.get()) / ( ( float(self.daylight_tv_ramp_hour.get())*3600 + float(self.daylight_tv_ramp_min.get())*60 ) / float(PROGRAM_CYLCETIME/1000) )
-                print self.daylight_stepsize
+                print(self.daylight_stepsize)
         except ValueError:
-            print "Value Error"
+            print("Value Error")
 
         if self.enable_daylight.get() ==0:
             self.enable_relay[0].set(0)     # ENABLE 12V (FOR FAN & PWM LEVEL BOOSTER)
@@ -400,11 +402,11 @@ class App( Frame ):
         # OPEN VALVES BASED ON SELECTED FLOW CIRCUIT
         if self.flow_state.get() == NR_FLOW:
         # DEFAULT = DO NOTHING
-            print "DISABLED"
+            print("DISABLED")
         else:
         # OPEN VALVES
             for m in range(len( VALVES_FLOW[self.flow_state.get()] )):
-                print VALVES_FLOW[self.flow_state.get()][m]
+                print(VALVES_FLOW[self.flow_state.get()][m])
                 tmp = VALVES_FLOW[self.flow_state.get()][m]
                 self.enable_relay[tmp].set(1)
 
@@ -437,7 +439,7 @@ class App( Frame ):
 
         # CREATE MAIN FRAME
         self.mainframe = Frame( self, 
-                                bg = BG_MAIN, 
+                                bg= BG_MAIN, 
                                 bd = 4, 
                                 relief = SUNKEN )
         self.mainframe.grid(column = 0, row=0, sticky=N+S+E+W)
@@ -509,7 +511,7 @@ class App( Frame ):
         self.plotFrame.grid_columnconfigure(0, weight =1)
 
         # ADD NOTEBOOK TO SERIAL FRAME
-        self.plot_notebook = Notebook(self.plotFrame)
+        self.plot_notebook = ttk.Notebook(self.plotFrame)
         self.plot_notebook.pack(fill = BOTH, side = LEFT, expand = True)
         #self.plot_notebook.grid(column = 0, row=0, sticky=N+S+E+W)  
 
@@ -530,17 +532,17 @@ class App( Frame ):
 
         # ADD CANVAS TO FRAME
         self.plot_canvas = FigureCanvasTkAgg(f, self.plot_overviewFrame)
-        self.plot_canvas.show()
+        #self.plot_canvas.show()
         self.plot_canvas.get_tk_widget().pack(side= RIGHT, fill = BOTH, expand = True)
 
         # ADD CANVAS TO FRAME
         self.plot_canvas1 = FigureCanvasTkAgg(f1, self.plot_hydroFrame)
-        self.plot_canvas1.show()
+        #self.plot_canvas1.show()
         self.plot_canvas1.get_tk_widget().pack(side= RIGHT, fill = BOTH, expand = True)
 
         # ADD CANVAS TO FRAME
         self.plot_canvas2 = FigureCanvasTkAgg(f2, self.plot_lightFrame)
-        self.plot_canvas2.show()
+        #self.plot_canvas2.show()
         self.plot_canvas2.get_tk_widget().pack(side= RIGHT, fill = BOTH, expand = True)
 
 
@@ -592,7 +594,7 @@ class App( Frame ):
         self.serial_notebook_frame.grid_columnconfigure(0,weight=1)
         self.serial_notebook_frame.grid_rowconfigure(0,weight=1)
 
-        self.serial_notebook = Notebook(self.serial_notebook_frame) #, width = 300)
+        self.serial_notebook = ttk.Notebook(self.serial_notebook_frame) #, width = 300)
         self.serial_notebook.grid(column = 0, row=0, sticky=N+S+E+W)
 
         # CREATE CONNECTION FRAME IN NOTEBOOK
@@ -609,7 +611,7 @@ class App( Frame ):
         self.serial_notebook.add(self.serial_connectionFrame, text = 'connect')
         
         # ADD COMBOBOX
-        self.serial_combo_port = Combobox( self.serial_connectionFrame,
+        self.serial_combo_port = ttk.Combobox( self.serial_connectionFrame,
                                           values = self.serial_combo_list,
                                           postcommand = self.postcom_port_list)
         self.serial_combo_port.grid(column = 0, row=1, columnspan = 2, sticky=N+S+E+W)
@@ -826,7 +828,7 @@ class App( Frame ):
         self.devco_label.grid(column = 0, row=0, sticky=N+S+W)
 
         # DEVICE CONTROL NOTEBOOL
-        self.devco_notebook = Notebook(self.devco_frame) #, width = 300
+        self.devco_notebook = ttk.Notebook(self.devco_frame) #, width = 300
         self.devco_notebook.grid(column = 0, row=1, sticky=N+S+E+W)
 
     #   DEVCO NOTBOOK _ LAMP CONTROL
@@ -837,7 +839,7 @@ class App( Frame ):
         self.devco_lamp_frame.grid_rowconfigure(0, weight =1)
         self.devco_lamp_frame.grid_rowconfigure(1, weight =1)
         self.devco_notebook.add(self.devco_lamp_frame, text = 'LIGHT', sticky=N+S+E+W)
-        self.devco_lamp_notebook = Notebook(self.devco_lamp_frame)
+        self.devco_lamp_notebook = ttk.Notebook(self.devco_lamp_frame)
         self.devco_lamp_notebook.pack(side=TOP , fill = BOTH)
 
         self.devco_label_lampName = []
@@ -1257,10 +1259,10 @@ def animate(i):
     if not FIRST_SCAN and BUFF_FILL>0:
     # UPDATE PLOTS
         if DEBUG_MODE:
-            print " "
-            print "= = = = = = = = = = = ="
-            print "   A N I M A T E   0   "
-            print app.plot_notebook.index(app.plot_notebook.select())
+            print(" ")
+            print("= = = = = = = = = = = =")
+            print("   A N I M A T E   0   ")
+            print(app.plot_notebook.index(app.plot_notebook.select()))
             start_plot = time.time()
             start = time.time()
 
@@ -1324,15 +1326,15 @@ def animate(i):
         # PRINT PLOTTING TIME
         if DEBUG_MODE:
             end = time.time()
-            print "plot time: " + str(end-start)
-            print "BUFF_FILL: " + str(BUFF_FILL)
+            print("plot time: " + str(end-start))
+            print("BUFF_FILL: " + str(BUFF_FILL))
                 
         if DEBUG_MODE:
             end_plot = time.time()
-            print " "
-            print "ANIMATE time: " + str(end_plot-start_plot)
-            print "= = = = = = = = = = = ="
-            print " "
+            print(" ")
+            print("ANIMATE time: " + str(end_plot-start_plot))
+            print("= = = = = = = = = = = =")
+            print(" ")
 
     if FIRST_SCAN:
         FIRST_SCAN = False
@@ -1351,10 +1353,10 @@ def animate1(i):
     if not FIRST_SCAN and BUFF_FILL>0:
     # UPDATE PLOTS
         if DEBUG_MODE:
-            print " "
-            print "= = = = = = = = = = = ="
-            print "   A N I M A T E   1   "
-            print app.plot_notebook.index(app.plot_notebook.select())
+            print(" ")
+            print("= = = = = = = = = = = =")
+            print("   A N I M A T E   1   ")
+            print(app.plot_notebook.index(app.plot_notebook.select()) )
             start_plot = time.time()
             start = time.time()
 
@@ -1390,15 +1392,15 @@ def animate1(i):
         # PRINT PLOTTING TIME
         if DEBUG_MODE:
             end = time.time()
-            print "plot time: " + str(end-start)
-            print "BUFF_FILL: " + str(BUFF_FILL)
+            print("plot time: " + str(end-start) )
+            print("BUFF_FILL: " + str(BUFF_FILL) )
             
         if DEBUG_MODE:
             end_plot = time.time()
-            print " "
-            print "ANIMATE time: " + str(end_plot-start_plot)
-            print "= = = = = = = = = = = ="
-            print " "
+            print(" ")
+            print("ANIMATE time: " + str(end_plot-start_plot))
+            print("= = = = = = = = = = = =")
+            print(" ")
 
     if FIRST_SCAN:
         FIRST_SCAN = False
@@ -1416,10 +1418,10 @@ def animate2(i):
     if not FIRST_SCAN and BUFF_FILL>0:
     # UPDATE PLOTS
         if DEBUG_MODE:
-            print " "
-            print "= = = = = = = = = = = ="
-            print "   A N I M A T E   2   "
-            print app.plot_notebook.index(app.plot_notebook.select())
+            print(" ")
+            print("= = = = = = = = = = = =")
+            print("   A N I M A T E   2   ")
+            print(app.plot_notebook.index(app.plot_notebook.select()))
             start_plot = time.time()
             start = time.time()
 
@@ -1453,15 +1455,15 @@ def animate2(i):
         # PRINT PLOTTING TIME
         if DEBUG_MODE:
             end = time.time()
-            print "plot time: " + str(end-start)
-            print "BUFF_FILL: " + str(BUFF_FILL)
+            print("plot time: " + str(end-start) )
+            print("BUFF_FILL: " + str(BUFF_FILL) )
                 
         if DEBUG_MODE:
             end_plot = time.time()
-            print " "
-            print "ANIMATE time: " + str(end_plot-start_plot)
-            print "= = = = = = = = = = = ="
-            print " "
+            print(" ")
+            print("ANIMATE time: " + str(end_plot-start_plot))
+            print("= = = = = = = = = = = =")
+            print(" ")
 
     if FIRST_SCAN:
         FIRST_SCAN = False
@@ -1474,7 +1476,7 @@ def update_plot(index):
 
     if index == 0:
         if not FIRST_SCAN and BUFF_FILL>0:
-            print "index 0"
+            print("index 0")
         #   F - UPDATE TEMOERATURE PLOT
             heatPlot.clear()
             hy_min = min(min(valHneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]), min(valH1neat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN])) - 1
@@ -1532,7 +1534,7 @@ def update_plot(index):
 
     elif index == 1:
         if not FIRST_SCAN and BUFF_FILL>0:
-            print "index 1"
+            print("index 1")
         #   F1 - UPDATE MOUSTURE PLOT
             moistPlot1.clear()
             moistPlot1.set_ylim([ min(valMneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1, 
@@ -1563,7 +1565,7 @@ def update_plot(index):
 
     elif index == 2:
         if not FIRST_SCAN and BUFF_FILL>0:
-            print "index 2"
+            print("index 2")
         #   F2 - UPDATE TEMOERATURE PLOT
             heatPlot2.clear()
             hy2_min = min(min(valHneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]), min(valH1neat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN])) - 1
@@ -1722,9 +1724,9 @@ def program():
     my_time_list = get_time_list()
 
     if DEBUG_MODE:
-        print " "
-        print "= = = = = = = = = = = ="
-        print "   P R O G R A M   "
+        print(" ")
+        print("= = = = = = = = = = = =")
+        print("   P R O G R A M   ")
         start_prog = time.time()
 
     # CALL DAYLIGHT SCHEDULER
@@ -1763,7 +1765,7 @@ def program():
 
         if  DEBUG_MODE:
             end = time.time()
-            print "- Shift buffers: " + str(end-start)
+            print("- Shift buffers: " + str(end-start) )
             start = time.time()
 
 #   ADD VALUES TO BUFFERS
@@ -1834,7 +1836,7 @@ def program():
 
         if DEBUG_MODE:
             end = time.time()
-            print "- Get values: " + str(end-start)
+            print("- Get values: " + str(end-start) )
 
         if BUFF_FILL < BUFF_LEN:
             BUFF_FILL = BUFF_FILL + 1
@@ -1882,7 +1884,7 @@ def program():
 #   UPDATE PLOT ON TAB CHANGE
     plot_index = app.plot_notebook.index(app.plot_notebook.select())
     if plot_index != plot_index_prev:
-        print " - TAB CHANGED - "
+        print(" - TAB CHANGED - ")
         update_plot(plot_index)
     plot_index_prev = plot_index
 
@@ -1890,10 +1892,10 @@ def program():
 
     if DEBUG_MODE:
         end_prog = time.time()
-        print " "
-        print "PROGRAM() time: " + str(end_prog-start_prog)
-        print "= = = = = = = = = = = ="
-        print " "
+        print(" ")
+        print("PROGRAM() time: " + str(end_prog-start_prog))
+        print("= = = = = = = = = = = =")
+        print(" ")
 
 #   UPDATE CYCLE COUNTER AND SCHEDULE NEW PROGRAM CYCLE
     cycle_counter = cycle_counter + 1
