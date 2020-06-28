@@ -48,3 +48,11 @@ Dependencies: `pySerial`
 
 ### /Grow/arduino/grow.h
 Devices are defined here.
+
+## Installing python modules
+### matplotlib
+`pip install matpotlib`
+
+### pySerial
+`pip install pyserial`
+``
