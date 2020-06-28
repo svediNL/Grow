@@ -4,7 +4,6 @@ class TimeKeeper{
   public:
     void init();
     void interrupt();
-    
     void set_time();
     String get_time();
 
@@ -14,8 +13,8 @@ class TimeKeeper{
     
     void print_parameters();
     
-    int hour = 18; 
-    int minute= 31; 
+    int hour = 22; 
+    int minute= 42; 
     int second = 0;
 
   private:
@@ -32,6 +31,7 @@ class TimeKeeper{
     double sec_loss = 0;
     
     unsigned long int long_second = 0;
+    unsigned long int long_second_prev = 0;
     int cnt_trig2 = 0;
     double sum_loss = 0;
   
@@ -69,8 +69,25 @@ void TimeKeeper::init(){
 void TimeKeeper::interrupt(){
   cnt_trig2 += 1;
   sum_loss += sec_loss;
+  
+  if (cnt_trig2 >= freq_aprox){
+    // 64 Hz aproximation cycle
+    long_second += 1;
+    second += 1;
+    cnt_trig2 = 0;
+
+    if ((long_second%6379) == 0 && long_second>0){
+      Serial.println("magic leap second");
+      second -= 1;
+    }
+    
+    Serial.println(long_second);
+    Serial.println(sum_loss);
+  }
+
   if (abs(sum_loss) >=1){
     // leap second
+    Serial.println("leap second");
     if(sum_loss >0){
       long_second += 1;
       second += 1;
@@ -82,20 +99,7 @@ void TimeKeeper::interrupt(){
       sum_loss += 1;
     }
   }
-  
-  if (cnt_trig2 >= freq_aprox){
-    // 64 Hz aproximation cycle
-    long_second += 1;
-    second += 1;
-    cnt_trig2 = 0;
-    Serial.println(long_second);
-    Serial.println(sum_loss);
-  }
-  if ((long_second%6379) == 0 && long_second>0){
-  // 64 Hz aproximation cycle
-  long_second -= 1;
-  second -= 1;
-  }
+
   // DO HHMMSS
   if(second >= 60){
     second  -= 60;
