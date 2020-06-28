@@ -5,12 +5,13 @@
 #include "sensors.h" 
 #include "actuators.h"
 #include "devices.h"
+#include "timekeeping.h"
 
 // ENABLE/DISABLE DEVICES
 
 // ON/OFF LEVEL SENSOR (FLOAT SWITCH)
 const int   NR_FLOAT_SWITCH               = 1;     // NUMBER OF MOISTURE SENSORS TO BE CONFIGURED
-const int   FLOAT_SWITCH_PIN              = {23}; 
+const int   FLOAT_SWITCH_PIN[NR_FLOAT_SWITCH]              = {23}; 
 const bool  ENABLE_PUMP_INTERLOCK_SWITCH  = true;   // float switch to prevent overflow
 const int   FLOAT_PUMP_INTERLOCK_LINKING  = {0};    // 
 
@@ -63,9 +64,8 @@ RGBWLed lamp[NR_LAMP];                                // INSTANCE OF RGBW PWM LI
 // CONFIGURE DOOR SWITCH TO DIM LIGHT WHEN DOOR OPENS
 const bool  ENABLE_FRIDGE_DOOR  = true;   // light dims when door opens
 const int   DOOR_SWITCH_PIN    = 25;     // DIGITAL OUTPUT PIN          
-
 DigitalInput doorSensor;                              // INSTANCE OF DOOR SENSOR FOR DIMMING OF LIGHT
 
-
+TimeKeeper myClock;
 
 #endif

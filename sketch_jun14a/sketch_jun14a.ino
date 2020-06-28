@@ -64,19 +64,21 @@ void TimeKeeper::init(){
       
       TCNT2  = 0;//initialize counter value aigain  to be sure
       sei();//allow interrupts
-    };
+};
 
 void TimeKeeper::interrupt(){
   cnt_trig2 += 1;
   sum_loss += sec_loss;
   
-  if (cnt_trig2 >= freq_aprox){
+  if (cnt_trig2 >= freq_aprox)
+  {
     // 64 Hz aproximation cycle
     long_second += 1;
     second += 1;
     cnt_trig2 = 0;
 
-    if ((long_second%6379) == 0 && long_second>0){
+    if ((long_second%6379) == 0 && long_second>0)
+    {
       Serial.println("magic leap second");
       second -= 1;
     }
@@ -85,15 +87,18 @@ void TimeKeeper::interrupt(){
     Serial.println(sum_loss);
   }
 
-  if (abs(sum_loss) >=1){
+  if (abs(sum_loss) >=1)
+  {
     // leap second
     Serial.println("leap second");
-    if(sum_loss >0){
+    if (sum_loss >0)
+    {
       long_second += 1;
       second += 1;
       sum_loss -= 1;
     }
-    else{
+    else
+    {
       long_second -= 1;
       second -= 1;
       sum_loss += 1;
@@ -101,18 +106,22 @@ void TimeKeeper::interrupt(){
   }
 
   // DO HHMMSS
-  if(second >= 60){
+  if(second >= 60)
+  {
     second  -= 60;
     minute  += 1;
   }
-  if(minute >= 60){
+  if(minute >= 60)
+  {
     minute  -= 60;
     hour    += 1;
   }
-  if(hour >= 24){
+  if(hour >= 24)
+  {
     hour  -= 24;
   }
-  if (cnt_trig2 == 0) {
+  if (cnt_trig2 == 0) 
+  {
     Serial.print("Time:   ");
     Serial.print(hour);
     Serial.print(":");
@@ -121,7 +130,8 @@ void TimeKeeper::interrupt(){
     Serial.print(second);
     Serial.print("\n\r");
   }
-  if (long_second == 4294967280){
+  if (long_second == 4294967280)
+  {
   // maximum amount of minutes to fit in long int 
     long_second = 0;
   }
@@ -133,7 +143,8 @@ void TimeKeeper::print_parameters(){
   Serial.println(freq_aprox);
   Serial.println(String(sec_loss, 10)) ;
 }
-void setup() {
+
+void setup(){
   // put your setup code here, to run once:
   Serial.begin(9600);
 
@@ -144,6 +155,7 @@ void setup() {
 
 
 ISR(TIMER2_COMPA_vect){
+// ON COUNTER OUTPUT COMPARE TRIGGER
   myTimeKeeper.interrupt();
 }
 

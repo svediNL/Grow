@@ -18,6 +18,17 @@ float Tn, Rn, coeffB, temp;
 bool x;
 
 void setup(){
+  // INIT SERIAL
+  Serial.begin(115200);
+
+  // SETUP CLOCK
+  myClock.set_base_time(16000000);
+  myClock.set_base_prescaler(1024);
+  myClock.set_output_compare(243);
+  myClock.set_time("12:00:00");
+  myClock.set_magic_comp(6379);
+  myClock.init();
+  
   // SETUP   P U M P
   for(int n=0; n<NR_PUMP; n++){ 
     overrule_pump_interlock[n] = false; 
@@ -59,9 +70,11 @@ void setup(){
   for(int n=0;n<NR_RELAY; n++){ 
     relayboard[n].init(RELAY_PIN[n], RELAY_NAME[n]);    // SETUP RELAYBOARD INPUT INx
   }
-  
-  // INIT SERIAL
-  Serial.begin(115200);
+}
+
+ISR(TIMER2_COMPA_vect){
+// ON COUNTER OUTPUT COMPARE TRIGGER
+  myClock.interrupt();
 }
 
 void loop(){
@@ -71,7 +84,7 @@ void loop(){
   }
   
   // DIM LAMP WHEN DOOR OPENS
-  if (lamp[0].getStatus()>0 && DOOR_SWITTCH_PIN){
+  if (lamp[0].getStatus()>0 && ENABLE_FRIDGE_DOOR){
     if(doorSensor.state() == true ){
     // DOOR IS OPEN
       for(int n=0; n<4; n++){
