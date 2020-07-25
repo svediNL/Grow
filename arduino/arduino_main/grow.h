@@ -10,12 +10,13 @@
 // ENABLE/DISABLE DEVICES
 
 // ON/OFF LEVEL SENSOR (FLOAT SWITCH)
-const int   NR_FLOAT_SWITCH               = 1;     // NUMBER OF MOISTURE SENSORS TO BE CONFIGURED
-const int   FLOAT_SWITCH_PIN[NR_FLOAT_SWITCH]              = {23}; 
-const bool  ENABLE_PUMP_INTERLOCK_SWITCH  = true;   // float switch to prevent overflow
-const int   FLOAT_PUMP_INTERLOCK_LINKING  = {0};    // 
+const bool  ENABLE_PUMP_INTERLOCK_SWITCH  		= true;   	// SETUP HAS FLOAT SWITCH
+const int   NR_FLOAT_SWITCH               		= 1;		// NUMBER OF FLOAT SWITCHES TO BE CONFIGURED
+const int   FLOAT_SWITCH_PIN[NR_FLOAT_SWITCH]	= {23};		// PIN NR OF FLOAT SWITCH(es)
+const int   FLOAT_PUMP_INTERLOCK_LINKING[NR_FLOAT_SWITCH]  		= {0};    	// LINK FLOAT SWITCH TO PUMP(s)
+//const int   FLOAT_VALVE_INTERLOCK_LINKING  		= {0};    	// LINK FLOAT SWITCH TO VALVE(s)
 
-DigitalInput vlotter[NR_FLOAT_SWITCH];         // INSTANCE OFFLOAT SWITCH FOR PUMP INTERLOCKING
+DigitalInput vlotter[NR_FLOAT_SWITCH];         // INSTANCE OF LOAT SWITCH FOR PUMP INTERLOCKING
 
 
 // THERMOCOUPLE CONFIGURATION
@@ -66,6 +67,8 @@ const bool  ENABLE_FRIDGE_DOOR  = true;   // light dims when door opens
 const int   DOOR_SWITCH_PIN    = 25;     // DIGITAL OUTPUT PIN          
 DigitalInput doorSensor;                              // INSTANCE OF DOOR SENSOR FOR DIMMING OF LIGHT
 
-TimeKeeper myClock;
+TimeKeeper masterClock;
+const int 	NR_TIMERS	= 10;
+SubTimer subTimers[NR_TIMERS];
 
 #endif

@@ -214,4 +214,43 @@ void TimeKeeper::print_parameters()
   Serial.println(String(sec_loss, 10)) ;
 };
 
+
+// SubTimer::
+bool SubTimer::output(TimeKeeper myClock)
+// 
+{
+  return is_claimed * is_running * ((myClock.get_epoch() - start_time) >= trig_time);
+};
+
+void SubTimer::start(TimeKeeper myClock, unsigned long int time_par)
+{
+  start_time = myClock.get_epoch();
+  trig_time = time_par;
+  is_running = true;
+};
+
+void SubTimer::reset(TimeKeeper myClock)
+{
+  start_time = myClock.get_epoch();
+};
+
+void SubTimer::stop(){
+  is_running = false;
+};
+
+bool SubTimer::claim(){
+  if(!is_claimed){
+    is_claimed = true;
+    return true;
+  }
+  else{ return false;};
+};
+
+bool SubTimer::release(){
+  if(!is_running){
+    is_claimed = false;
+    return true;  
+  }
+  else{ return false;};
+};
 #endif

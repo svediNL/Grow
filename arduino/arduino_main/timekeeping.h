@@ -20,8 +20,6 @@ class TimeKeeper{
     
     void print_parameters();
     bool epoch_toggle;
-    
-
 
   private:
     long int PAR_CLK_IO = 16000000;   // BASE TIMER CLOCK FREQUENCY -> 16 MHz
@@ -46,6 +44,26 @@ class TimeKeeper{
     int hour = 1; 
     int minute= 2; 
     int second = 3;
+};
+
+class SubTimer{
+    public:
+        void stop();
+        void start(TimeKeeper myClock, unsigned long int time_par);
+        void reset(TimeKeeper myClock);
+        bool output(TimeKeeper myClock);
+
+        bool claim();
+        bool release();
+
+        bool is_claimed = false;
+        bool is_running = false;
+
+
+    private:
+        unsigned long int start_time;
+        unsigned long int current_time;
+        unsigned long int trig_time;
 };
 
 #endif

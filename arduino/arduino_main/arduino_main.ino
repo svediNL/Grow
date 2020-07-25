@@ -22,12 +22,12 @@ void setup(){
   Serial.begin(115200);
 
   // SETUP CLOCK
-  myClock.set_base_time(16000000);
-  myClock.set_base_prescaler(1024);
-  myClock.set_output_compare(243);
-  myClock.set_time("12:00:00");
-  myClock.set_magic_comp(6379);
-  myClock.init();
+  masterClock.set_base_time(16000000);
+  masterClock.set_base_prescaler(1024);
+  masterClock.set_output_compare(243);
+  masterClock.set_time("12:00:00");
+  masterClock.set_magic_comp(6379);
+  masterClock.init();
   
   // SETUP   P U M P
   for(int n=0; n<NR_PUMP; n++){ 
@@ -74,13 +74,25 @@ void setup(){
 
 ISR(TIMER2_COMPA_vect){
 // ON COUNTER OUTPUT COMPARE TRIGGER
-  myClock.interrupt();
+  masterClock.interrupt();
 }
 
-void loop(){
-  if(ENABLE_PUMP_INTERLOCK_SWITCH){
-    if(vlotter[0].state() && !overrule_pump_interlock[0]) { pump[0].interlock(true);}
-    else { pump[0].interlock(false); };
+void loop()
+// MAIN LOOP
+{
+  if(ENABLE_PUMP_INTERLOCK_SWITCH)
+  // CHECK FLOAT SWITCH FOR INTERLOCK
+  {
+    for(int n=0; n<NR_FLOAT_SWITCH; n++)
+    // CYCLE FLOAT SWITCHES
+    {
+      if( vlotter[n].state() && !overrule_pump_interlock[ FLOAT_PUMP_INTERLOCK_LINKING[n] ] ) 
+      // FLOAT SWITCH CLOSED  &  PUMP LINKED TO SWITCH HAS NO OVERRULE INTERLOCK
+      { pump[n].interlock(true); }
+      else
+      // RELEASE INTERLOCK
+      { pump[n].interlock(false); };
+    };
   }
   
   // DIM LAMP WHEN DOOR OPENS
@@ -297,14 +309,13 @@ void doCommand(){
       tmpBool[0] = bool(serialMsg.message.sParameter[1].toInt());  // GET CMD BOOL
 
       // SET OVERRULE FLAG
-      overrule_pump_interlock[tmpInt[0]] = tmpBool[0];
+      overrule_pump_interlock[ tmpInt[0] ] = tmpBool[0];
       
       // COMMAND DONE
       serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
       Serial.print('@');            
       break;
       
-
 // PRINT HELP SEQUENCE
     case HELP:
       delay(2);
@@ -316,10 +327,10 @@ void doCommand(){
       break;
 
  // SET HH:MM:SS TIME
-    case SET_TIME:
+    case SET_CLOCK:
       delay(2); // DELAY FOR SERIAL COMM
       // ACTION
-      myClock.set_time(serialMsg.message.sParameter[0]);
+      masterClock.set_time(serialMsg.message.sParameter[0]);
       
       // COMMAND DONE
       serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
@@ -327,10 +338,10 @@ void doCommand(){
       break;
 
    // PRINT HH:MM:SS TIME
-    case GET_TIME:
+    case GET_CLOCK:
       delay(2); // DELAY FOR SERIAL COMM
       // ACTION
-      Serial.print(myClock.get_time());
+      Serial.print(masterClock.get_time());
       
       // COMMAND DONE
       serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
@@ -341,13 +352,95 @@ void doCommand(){
     case GET_EPOCH:
       delay(2); // DELAY FOR SERIAL COMM
       // ACTION
-      Serial.print(myClock.get_epoch());
+      Serial.print(masterClock.get_epoch());
+
+      // COMMAND DONE
+      serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
+      Serial.print('@');                            // PRINT EOL
+      break;
+
+   // CHECK IF CLOCK IS CLAIMED
+    case TIMER_CLAIMED:
+      delay(2); // DELAY FOR SERIAL COMM
+      tmpInt[0] = serialMsg.message.sParameter[0].toInt();         // GET CMD INDEX
+      Serial.print(int(subTimers[tmpInt[0]].is_claimed));
       
       // COMMAND DONE
       serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
       Serial.print('@');                            // PRINT EOL
       break;
 
+   // CHECK IF CLOCK HAS FINISHED
+    case TIMER_OUTPUT:
+      delay(2); // DELAY FOR SERIAL COMM
+      tmpInt[0] = serialMsg.message.sParameter[0].toInt();         // GET CMD INDEX
+      Serial.print(int(subTimers[tmpInt[0]].output(masterClock)));
+
+      // COMMAND DONE
+      serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
+      Serial.print('@');                            // PRINT EOL
+      break;
+
+    // CLAIM A CLOCK
+    case CLAIM_TIMER:
+      delay(2); // DELAY FOR SERIAL COMM
+      tmpInt[0] = serialMsg.message.sParameter[0].toInt();         // GET CMD INDEX   
+
+      Serial.print(int(subTimers[tmpInt[0]].claim()));
+
+      // COMMAND DONE
+      serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
+      Serial.print('@');                            // PRINT EOL
+      break;
+
+    // CLAIM A CLOCK
+    case RELEASE_TIMER:
+      delay(2); // DELAY FOR SERIAL COMM
+      tmpInt[0] = serialMsg.message.sParameter[0].toInt();         // GET CMD INDEX   
+
+      Serial.print(int(subTimers[tmpInt[0]].release())));
+
+      // COMMAND DONE
+      serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
+      Serial.print('@');                            // PRINT EOL
+      break;
+
+    // CLAIM A CLOCK
+    case RESET_TIMER:
+      delay(2); // DELAY FOR SERIAL COMM
+      tmpInt[0] = serialMsg.message.sParameter[0].toInt();         // GET CMD INDEX   
+
+      subTimers[tmpInt[0]].reset(masterClock);
+
+      // COMMAND DONE
+      serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
+      Serial.print('@');                            // PRINT EOL
+      break;
+
+    // CLAIM A CLOCK
+    case STOP_TIMER:
+      delay(2); // DELAY FOR SERIAL COMM
+      tmpInt[0] = serialMsg.message.sParameter[0].toInt();         // GET CMD INDEX   
+
+      subTimers[tmpInt[0]].stop();
+
+      // COMMAND DONE
+      serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
+      Serial.print('@');                            // PRINT EOL
+      break;
+
+
+    // SET A CLOCK TO GO OFF AFTER x SECONDS {AKA TIMER}
+    case SET_TIMER:
+      delay(2); // DELAY FOR SERIAL COMM
+      tmpInt[0] = serialMsg.message.sParameter[0].toInt();         // GET CMD INDEX
+      tmpInt[1] = serialMsg.message.sParameter[1].toInt();         // GET CMD INDEX
+
+      subTimers[tmpInt[0]].start(masterClock, tmpInt[1]);
+      // COMMAND DONE
+      serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
+      Serial.print('@');                            // PRINT EOL
+      break;
 
  // DEFAULT
     case NO_COMMAND:
@@ -370,20 +463,46 @@ void printHelp(){
   Serial.println("");
   Serial.println(" - - - - - - - - - - - - - - - - - - ");
   Serial.println("- Commands use the following syntax: ");
+  Serial.println("");
   Serial.println("  COMMAND(PAR1, PAR2, PAR3, ETC)\n");
+  Serial.println("  example:   SET_LAMP(0, RB, 128), will set the Red and Blue channels to 128 for lamp 0");
+  Serial.println(" - - - - - - - - - - - - - - - - - - ");
+  Serial.println("");
+  Serial.print("NR_LAMP:  ");Serial.print(NR_LAMP);Serial.print("\n");
+  Serial.print("NR_PUMP:  ");Serial.print(NR_PUMP);Serial.print("\n");
+  Serial.print("NR_RELAY:  ");Serial.print(NR_RELAY);Serial.print("\n");
+  Serial.print("NR_TC:  ");Serial.print(NR_TC);Serial.print("\n");
+  Serial.print("NR_MOISTURE:  ");Serial.print(NR_MOISTURE);Serial.print("\n");
+  Serial.print("NR_TIMERS:  ");Serial.print(NR_TIMERS);Serial.print("\n");
   Serial.println("");
   Serial.println("List of commands:");
-  Serial.println("   ENABLE_LAMP  ( index[0-x], enable[0/1] )");
-  Serial.println("   SET_LAMP     ( index[0-x], colour[R,B,G,W],  value[0-255], enable[0/1] )");
-  Serial.println("   GET_LAMP     ( index[0-x] )");
-  Serial.println("   ENABLE_PUMP  ( index[0-x], enable[0/1] )"); 
-  Serial.println("   SET_PUMP     ( index[0-x], value[0-255],   enable[0/1] )"); 
-  Serial.println("   GET_PUMP     ( index[0-x] )"); 
-  Serial.println("   SET_RELAY    ( index[0-x],   value[0/1] )");
-  Serial.println("   GET_TEMP     ( index[0-x] )");
-  Serial.println("   SET_TEMP_RC  ( index[0-x],   biasResitance[...] )");
-  Serial.println("   GET_MOISTURE ( index[0-x] )");
-  Serial.println("   IGNORE_PUMP_INTERLOCK ( index[0-x], enable[0/1] )");
+
+  Serial.println("   ENABLE_LAMP  ( index[0..NR_LAMP-1], enable[0/1] )");
+  Serial.println("   SET_LAMP     ( index[0..NR_LAMP-1], colour[R,B,G,W],  value[0-255], enable[0/1] )");
+  Serial.println("   GET_LAMP     ( index[0..NR_LAMP-1] )");
+
+  Serial.println("   ENABLE_PUMP  ( index[0..NR_PUMP-1], enable[0/1] )"); 
+  Serial.println("   SET_PUMP     ( index[0..NR_PUMP-1], value[0-255],   enable[0/1] )"); 
+  Serial.println("   GET_PUMP     ( index[0..NR_PUMP-1] )"); 
+
+  Serial.println("   IGNORE_PUMP_INTERLOCK ( index[0..NR_PUMP-1], enable[0/1] )");
+
+  Serial.println("   SET_RELAY    ( index[0..NR_RELAY-1],   value[0/1] )");
+
+  Serial.println("   GET_TEMP     ( index[0..NR_TC-1] )");
+  Serial.println("   SET_TEMP_RC  ( index[0..NR_TC-1],   biasResistance[...ohm] )");
+
+  Serial.println("   GET_MOISTURE ( index[0..NR_MOISTURE-1] )");
+
+  Serial.println("   SET_CLOCK   ( time[HH:MM:SS] )");
+  Serial.println("   GET_CLOCK   ( )");
+  Serial.println("   GET_EPOCH  ( )");
+
+  Serial.println("   TIMER_OUTPUT   ( index[0..NR_TIMER] )");
+  Serial.println("   TIMER_CLAIMED  ( index[0..NR_TIMER] )");
+  Serial.println("   CLAIM_TIMER       ( index[0..NR_TIMER] )");
+  Serial.println("   SET_TIMER         ( index[0..NR_TIMER], time[...s] )");
+  Serial.println("");
   Serial.println("");
   Serial.println(" - - - - - - - - - - - - - - - - - - ");
   Serial.println("D E V I C E    C O N N E C T I O N S");
