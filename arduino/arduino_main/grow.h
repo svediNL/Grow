@@ -4,7 +4,7 @@
 #include <Arduino.h>
 #include "sensors.h" 
 #include "actuators.h"
-#include "devices.h"
+#include "comms.h"
 #include "timekeeping.h"
 
 // ENABLE/DISABLE DEVICES
@@ -31,9 +31,6 @@ const int NR_RELAY                = 8;                                  // NUMBE
 const int RELAY_PIN[NR_RELAY]     = {24, 26, 28, 30, 32, 34, 36, 38};   // ARRAY OF DIGITAL OUTPUT PINS
 const String RELAY_NAME[NR_RELAY] = {"12V Enable", "Valve 0", "Valve 2", "Valve 3", "Valve 4", "Valve 5", "Fans Lamp", "NC"};
 
-
-
-
 // MOISTURE SENSOR CONFIGURATION
 const int     NR_MOISTURE                       = 1;     // number of MOISTURE SENSORs to be configured
 const int     MOISTURE_INPUT_PIN [NR_MOISTURE]  = {A0};  // array of ANALOG INPUT PINs
@@ -49,8 +46,6 @@ const int     PUMP_DIR_PIN [NR_PUMP]  = {7};  // ARRAY OF PWM PINS
 const int     PUMP_PWM_PIN [NR_PUMP]  = {6};  // ARRAY OF PWM PINS
 const String  PUMP_NAME[NR_PUMP]      = {"pump on H-Bridge board"};
 
-
-
 // ON/OFF LEVEL SENSOR (FLOAT SWITCH)
 const bool  ENABLE_PUMP_INTERLOCK_SWITCH  		= true;   	// SETUP HAS FLOAT SWITCH
 const int   NR_FLOAT_SWITCH               		= 1;		// NUMBER OF FLOAT SWITCHES TO BE CONFIGURED
@@ -62,7 +57,8 @@ const int   FLOAT_PUMP_INTERLOCK_LINKING[NR_FLOAT_SWITCH]  		= {0};    	// LINK 
 class Grow
 {
   public:
-    
+    Comms serialMsg;
+
     RGBWLed lamp[NR_LAMP];                                // INSTANCE OF RGBW PWM LIGHT OUTPUT
     
     DigitalInput doorSensor;                              // INSTANCE OF DOOR SENSOR FOR DIMMING OF LIGHT
@@ -77,18 +73,26 @@ class Grow
     DigitalInput vlotter[NR_FLOAT_SWITCH];         // INSTANCE OF LOAT SWITCH FOR PUMP INTERLOCKING
     TimeKeeper masterClock;
 
-    void doStuff();
     void init();
+    void doStuff();		// DO OPERATIONS/CHECKS/WHATEREVER IN LOOP()
+    void doCommand();	// DO COMMAND FROM SERIAL COMMS
+    
 
     float rntc, vin, vm;
     float rc[NR_TC];
     float Tn, Rn, coeffB, temp;
     bool overrule_pump_interlock[NR_PUMP];
-    
+
+    //int counter = 0;
+    bool bNewMessage = false;
+    String serialString;
+
   private:
     void fridge_door();
     void check_pump_interlock();
 
+    void printHelp();
+    bool x;
 };
 
 
