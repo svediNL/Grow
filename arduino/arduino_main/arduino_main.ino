@@ -359,11 +359,12 @@ void doCommand(){
       Serial.print('@');                            // PRINT EOL
       break;
 
-   // CHECK IF CLOCK IS CLAIMED
+   // RETURN FIRST TIMER AVAILABLE
     case TIMER_CLAIMED:
       delay(2); // DELAY FOR SERIAL COMM
       tmpInt[0] = serialMsg.message.sParameter[0].toInt();         // GET CMD INDEX
-      Serial.print(int(subTimers[tmpInt[0]].is_claimed));
+      
+      Serial.print( masterClock.request_timer());
       
       // COMMAND DONE
       serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
@@ -374,55 +375,56 @@ void doCommand(){
     case TIMER_OUTPUT:
       delay(2); // DELAY FOR SERIAL COMM
       tmpInt[0] = serialMsg.message.sParameter[0].toInt();         // GET CMD INDEX
-      Serial.print(int(subTimers[tmpInt[0]].output(masterClock)));
+      
+      Serial.print(int(masterClock.timer_done(tmpInt[0])));
 
       // COMMAND DONE
       serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
       Serial.print('@');                            // PRINT EOL
       break;
 
-    // CLAIM A CLOCK
+    // CLAIM A TIMER
     case CLAIM_TIMER:
       delay(2); // DELAY FOR SERIAL COMM
       tmpInt[0] = serialMsg.message.sParameter[0].toInt();         // GET CMD INDEX   
 
-      Serial.print(int(subTimers[tmpInt[0]].claim()));
+      Serial.print(int( masterClock.claim_timer(tmpInt[0]) ));
 
       // COMMAND DONE
       serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
       Serial.print('@');                            // PRINT EOL
       break;
 
-    // CLAIM A CLOCK
+    // RELEASE TIMER
     case RELEASE_TIMER:
       delay(2); // DELAY FOR SERIAL COMM
       tmpInt[0] = serialMsg.message.sParameter[0].toInt();         // GET CMD INDEX   
 
-      Serial.print(int(subTimers[tmpInt[0]].release()));
+      masterClock.release_timer(tmpInt[0]);
 
       // COMMAND DONE
       serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
       Serial.print('@');                            // PRINT EOL
       break;
 
-    // CLAIM A CLOCK
+    // RESET TIMER
     case RESET_TIMER:
       delay(2); // DELAY FOR SERIAL COMM
       tmpInt[0] = serialMsg.message.sParameter[0].toInt();         // GET CMD INDEX   
 
-      subTimers[tmpInt[0]].reset(masterClock);
+      masterClock.reset_timer(tmpInt[0]);
 
       // COMMAND DONE
       serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
       Serial.print('@');                            // PRINT EOL
       break;
 
-    // CLAIM A CLOCK
+    // STOP TIMER
     case STOP_TIMER:
       delay(2); // DELAY FOR SERIAL COMM
       tmpInt[0] = serialMsg.message.sParameter[0].toInt();         // GET CMD INDEX   
 
-      subTimers[tmpInt[0]].stop();
+      masterClock.stop_timer(tmpInt[0]);
 
       // COMMAND DONE
       serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
@@ -436,7 +438,7 @@ void doCommand(){
       tmpInt[0] = serialMsg.message.sParameter[0].toInt();         // GET CMD INDEX
       tmpInt[1] = serialMsg.message.sParameter[1].toInt();         // GET CMD INDEX
 
-      subTimers[tmpInt[0]].start(masterClock, tmpInt[1]);
+      masterClock.start_timer(byte(tmpInt[0]), tmpInt[1]);
       // COMMAND DONE
       serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
       Serial.print('@');                            // PRINT EOL
@@ -473,7 +475,6 @@ void printHelp(){
   Serial.print("NR_RELAY:  ");Serial.print(NR_RELAY);Serial.print("\n");
   Serial.print("NR_TC:  ");Serial.print(NR_TC);Serial.print("\n");
   Serial.print("NR_MOISTURE:  ");Serial.print(NR_MOISTURE);Serial.print("\n");
-  Serial.print("NR_TIMERS:  ");Serial.print(NR_TIMERS);Serial.print("\n");
   Serial.println("");
   Serial.println("List of commands:");
 

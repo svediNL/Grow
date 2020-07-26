@@ -214,24 +214,65 @@ void TimeKeeper::print_parameters()
   Serial.println(String(sec_loss, 10)) ;
 };
 
-
-// SubTimer::
-bool SubTimer::output(TimeKeeper myClock)
-// 
+int   TimeKeeper::request_timer()
 {
-  return is_claimed * is_running * ((myClock.get_epoch() - start_time) >= trig_time);
+  for(int n=0; n<10;n++){
+    if(!subTimers[n].is_claimed){
+      return n;
+      break;
+    }
+  }
 };
 
-void SubTimer::start(TimeKeeper myClock, unsigned long int time_par)
+bool TimeKeeper::claim_timer(byte index)
 {
-  start_time = myClock.get_epoch();
+  return subTimers[index].claim();
+};
+
+void TimeKeeper::release_timer(byte index)
+{
+  subTimers[index].stop();
+  subTimers[index].release();  
+};
+
+void TimeKeeper::start_timer(byte index, int time_par)
+{
+  subTimers[index].start(long_second, time_par);
+};
+
+void TimeKeeper::reset_timer(byte index)
+{
+  subTimers[index].reset(long_second);
+};
+
+void TimeKeeper::stop_timer(byte index)
+{
+  subTimers[index].stop();
+};
+
+bool TimeKeeper::timer_done(byte index)
+{
+  return subTimers[index].output(long_second);
+};
+
+
+// SubTimer::
+bool SubTimer::output(unsigned long int current_ep)
+// 
+{
+  return is_claimed * is_running * ((current_ep - start_time) >= trig_time);
+};
+
+void SubTimer::start(unsigned long int current_ep, unsigned long int time_par)
+{
+  start_time = current_ep;
   trig_time = time_par;
   is_running = true;
 };
 
-void SubTimer::reset(TimeKeeper myClock)
+void SubTimer::reset(unsigned long int current_ep)
 {
-  start_time = myClock.get_epoch();
+  start_time = current_ep;
 };
 
 void SubTimer::stop(){

@@ -68,7 +68,5 @@ const int   DOOR_SWITCH_PIN    = 25;     // DIGITAL OUTPUT PIN
 DigitalInput doorSensor;                              // INSTANCE OF DOOR SENSOR FOR DIMMING OF LIGHT
 
 TimeKeeper masterClock;
-const int 	NR_TIMERS	= 10;
-SubTimer subTimers[NR_TIMERS];
 
 #endif
