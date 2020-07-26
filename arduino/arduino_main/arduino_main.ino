@@ -398,7 +398,7 @@ void doCommand(){
       delay(2); // DELAY FOR SERIAL COMM
       tmpInt[0] = serialMsg.message.sParameter[0].toInt();         // GET CMD INDEX   
 
-      Serial.print(int(subTimers[tmpInt[0]].release())));
+      Serial.print(int(subTimers[tmpInt[0]].release()));
 
       // COMMAND DONE
       serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
