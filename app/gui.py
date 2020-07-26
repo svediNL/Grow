@@ -558,16 +558,154 @@ class App( Frame ):
         # GRID DIRECTO CONTROL FRAME
         self.dicoFrame.grid_columnconfigure(0,weight=1)
         self.dicoFrame.grid_rowconfigure(0,weight=1)
-        self.dicoFrame.grid_rowconfigure(1,weight=1)
-        self.dicoFrame.grid_rowconfigure(2,weight=2)
+        self.dicoFrame.grid_rowconfigure(1,weight=3)
 
-    #   S E R I A L  F R A M E
+#   L I V E   S T A T U S   F R A M E
+        # ADD LIVE STATUS FRAME TO DICO FRAME
+        self.live_frame = Frame( self.dicoFrame, 
+                                 bd=1, 
+                                 relief= SUNKEN, 
+                                 bg = BG_MAIN)
+        self.live_frame.grid_columnconfigure(0, weight =1)
+        # self.live_frame.grid_columnconfigure(1, weight =1)
+        self.live_frame.grid_rowconfigure(0, weight =1)
+        self.live_frame.grid_rowconfigure(1, weight =1)
+        self.live_frame.grid_rowconfigure(2, weight =2)
+
+        #self.live_frame.pack(fill = BOTH, side = TOP, expand = True)
+        self.live_frame.grid(column = 0, row=0, sticky=N+S+E+W)
+
+        self.live_header_frame = Frame( self.live_frame, 
+                                        bg = BG_MAIN)
+        self.live_header_frame.grid(column = 0, row=0, sticky=N+S+E+W)
+        self.live_header_frame.grid_rowconfigure(0, weight =1)
+
+        self.live_content_frame = Frame( self.live_frame, 
+                                         bg = BG_MAIN)
+        self.live_content_frame.grid(column = 0, row=1, sticky=N+S+E+W)
+        self.live_content_frame.grid_columnconfigure(0, weight =1)
+
+
+        self.live_label = Label( self.live_header_frame, 
+                                 text = "~ L I V E   M O N I T O R", 
+                                 bg = BG_MAIN, 
+                                 fg = FG_TEXT)
+        self.live_label.grid(column = 0, row = 0, sticky = N+S+W)
+
+        self.live_content_frame.grid_rowconfigure(0, weight =2)
+        self.live_top_padding = Label(  self.live_content_frame, 
+                                        text = "", 
+                                        bg = BG_MAIN, 
+                                        fg = FG_TEXT)
+        self.live_top_padding.grid(column = 0, row = 0, columnspan = 2, sticky = N+S+W)
+
+        self.color_index = 0
+        self.color_toggle = [BG_TOG_A,BG_TOG_B]
+        self.live_heat_frame = []
+        self.live_heat_label = []
+        self.live_heat_pad =[]
+        self.live_heat_value = []
+        self.live_heat_unit = []
+        for n in range(NR_THERMO):
+            tmp = NAMES_THERMO[n] + " :   "
+            row_nr = (self.color_index+1)
+            self.live_content_frame.grid_rowconfigure(row_nr, weight =3)
+
+            self.live_heat_frame.append( Frame( self.live_content_frame, 
+                                                bg = self.color_toggle[self.color_index % 2]) )
+            self.live_heat_frame[n].grid(column = 0, row= row_nr, sticky=N+S+W+E)
+            self.live_heat_frame[n].grid_rowconfigure(0, weight =1)
+            self.live_heat_frame[n].grid_columnconfigure(0, weight =1)
+            self.live_heat_frame[n].grid_columnconfigure(1, weight =2)
+            self.live_heat_frame[n].grid_columnconfigure(2, weight =1)
+            self.live_heat_frame[n].grid_columnconfigure(3, weight =0)
+
+            self.live_heat_label.append( Label( self.live_heat_frame[n], 
+                                                text = tmp, 
+                                                bg = self.color_toggle[self.color_index % 2], 
+                                                fg = FG_TEXT ))
+            self.live_heat_label[n].grid(column = 0, row= 0, sticky=N+S+W)
+            #self.live_heat_pad.append(Label(self.live_heat_frame[n], text = "", bg = self.color_toggle[self.color_index % 2], fg = FG_TEXT ))
+            #self.live_heat_pad[n].grid(column = 1, row= 0, sticky=N+S+W+E)
+
+            self.live_heat_value.append( Label( self.live_heat_frame[n], 
+                                                textvariab = self.temperature_var[n], 
+                                                bg = self.color_toggle[self.color_index % 2], 
+                                                fg = FG_TEXT) )
+            self.live_heat_value[n].grid(column = 2, row= 0, sticky=N+S+E)
+
+            self.live_heat_unit.append( Label(  self.live_heat_frame[n], 
+                                                text = UNIT_THERMO, 
+                                                bg = self.color_toggle[self.color_index % 2], 
+                                                fg = FG_TEXT ) )
+            self.live_heat_unit[n].grid(column = 3, row= 0, sticky=N+S+E)
+            self.color_index = self.color_index + 1
+            
+        self.live_moist_frame = []
+        self.live_moist_label = []
+        self.live_moist_value = []
+        self.live_moist_pad =[]
+        self.live_moist_unit = []
+        for n in range(NR_MOISTURE):
+            tmp = NAMES_MOISTURE[n] + "  :   "
+            row_nr = (self.color_index+1)
+            self.live_content_frame.grid_rowconfigure(row_nr, weight =3)
+
+            self.live_moist_frame.append( Frame( self.live_content_frame, 
+                                                 bg = self.color_toggle[self.color_index % 2] ) )
+            self.live_moist_frame[n].grid(column = 0, row= row_nr, sticky=N+S+W+E)
+            self.live_moist_frame[n].grid_rowconfigure(0, weight =1)
+            self.live_moist_frame[n].grid_columnconfigure(0, weight =1)
+            self.live_moist_frame[n].grid_columnconfigure(1, weight =2)
+            self.live_moist_frame[n].grid_columnconfigure(2, weight =1)
+            self.live_moist_frame[n].grid_columnconfigure(3, weight =0)
+
+            self.live_moist_label.append( Label( self.live_moist_frame[n], 
+                                                 text = tmp, 
+                                                 bg = self.color_toggle[self.color_index % 2], 
+                                                 fg = FG_TEXT ) )
+            self.live_moist_label[n].grid(column = 0, row= 0, sticky=N+S+W)
+            #self.live_moist_pad.append(Label(self.live_moist_frame[n], text = "", bg = self.color_toggle[self.color_index % 2], fg = FG_TEXT ))
+            #self.live_moist_pad[n].grid(column = 1, row= 0, sticky=N+S+W+E)
+            self.live_moist_value.append( Label( self.live_moist_frame[n], 
+                                                 textvariab = self.moisture_var[n], 
+                                                 bg = self.color_toggle[self.color_index % 2], 
+                                                 fg = FG_TEXT ) )
+            self.live_moist_value[n].grid(column = 2, row= 0, sticky=N+S+E)
+            self.live_moist_unit.append( Label( self.live_moist_frame[n], 
+                                                text = UNIT_MOISTURE, 
+                                                bg = self.color_toggle[self.color_index % 2], 
+                                                fg = FG_TEXT ) )
+            self.live_moist_unit[n].grid(column = 3, row= 0, sticky=N+S+E)
+            self.color_index = self.color_index + 1
+            
+        row_nr = (self.color_index+1)
+        self.live_content_frame.grid_rowconfigure(0, weight =2)
+        self.live_bottom_padding = Label(   self.live_content_frame, 
+                                            text = "", bg = BG_MAIN, 
+                                            fg = FG_TEXT )
+        self.live_bottom_padding.grid(column = 0, row = row_nr, columnspan = 2, sticky = N+S+W)
+
+
+    # D I C O   N O T E B O O K
+        self.dicoFrame_notebook_frame = Frame( self.dicoFrame, 
+                                            bg = BG_MAIN)
+        self.dicoFrame_notebook_frame.grid(column = 0, row=1, sticky=N+S+E+W)
+
+        self.dicoFrame_notebook_frame.grid_columnconfigure(0,weight=1)
+        self.dicoFrame_notebook_frame.grid_rowconfigure(0,weight=1)
+
+        self.dicoFrame_notebook = ttk.Notebook(self.dicoFrame_notebook_frame) #, width = 300)
+        self.dicoFrame_notebook.grid(column = 0, row=0, sticky=N+S+E+W)
+
+    #   S E R I A L  F R A M E   DICONB
         # CREATE SERIAL FRAME IN DICO FRAME
-        self.serial_frame = Frame(  self.dicoFrame, 
+        self.serial_frame = Frame(  self.dicoFrame_notebook, 
                                     bd      = 1, 
                                     bg      = BG_MAIN, 
                                     relief  = SUNKEN)
-        self.serial_frame.grid(column = 0, row=0, sticky=N+S+E+W)
+        self.dicoFrame_notebook.add(self.serial_frame, text = 'SERIAL')
+        #self.serial_frame.grid(column = 0, row=0, sticky=N+S+E+W)
         #self.serial_frame.pack(side = TOP, fill = Y, expand = True)
 
         # GRID SERIAL FRAME
@@ -683,139 +821,16 @@ class App( Frame ):
         self.serial_button_write.grid(column = 1, row=3, sticky=N+S+E+W)
 
 
-    #   L I V E   S T A T U S   F R A M E
-        # ADD LIVE STATUS FRAME TO DICO FRAME
-        self.live_frame = Frame( self.dicoFrame, 
-                                 bd=1, 
-                                 relief= SUNKEN, 
-                                 bg = BG_MAIN)
-        self.live_frame.grid_columnconfigure(0, weight =1)
-        # self.live_frame.grid_columnconfigure(1, weight =1)
-        self.live_frame.grid_rowconfigure(0, weight =1)
-        self.live_frame.grid_rowconfigure(1, weight =2)
-
-        #self.live_frame.pack(fill = BOTH, side = TOP, expand = True)
-        self.live_frame.grid(column = 0, row=1, sticky=N+S+E+W)
-
-        self.live_header_frame = Frame( self.live_frame, 
-                                        bg = BG_MAIN)
-        self.live_header_frame.grid(column = 0, row=0, sticky=N+S+E+W)
-        self.live_header_frame.grid_rowconfigure(0, weight =1)
-
-        self.live_content_frame = Frame( self.live_frame, 
-                                         bg = BG_MAIN)
-        self.live_content_frame.grid(column = 0, row=1, sticky=N+S+E+W)
-        self.live_content_frame.grid_columnconfigure(0, weight =1)
-
-
-        self.live_label = Label( self.live_header_frame, 
-                                 text = "~ L I V E   M O N I T O R", 
-                                 bg = BG_MAIN, 
-                                 fg = FG_TEXT)
-        self.live_label.grid(column = 0, row = 0, sticky = N+S+W)
-
-        self.live_content_frame.grid_rowconfigure(0, weight =2)
-        self.live_top_padding = Label(  self.live_content_frame, 
-                                        text = "", 
-                                        bg = BG_MAIN, 
-                                        fg = FG_TEXT)
-        self.live_top_padding.grid(column = 0, row = 0, columnspan = 2, sticky = N+S+W)
-
-        self.color_index = 0
-        self.color_toggle = [BG_TOG_A,BG_TOG_B]
-        self.live_heat_frame = []
-        self.live_heat_label = []
-        self.live_heat_pad =[]
-        self.live_heat_value = []
-        self.live_heat_unit = []
-        for n in range(NR_THERMO):
-            tmp = NAMES_THERMO[n] + " :   "
-            row_nr = (self.color_index+1)
-            self.live_content_frame.grid_rowconfigure(row_nr, weight =3)
-
-            self.live_heat_frame.append( Frame( self.live_content_frame, 
-                                                bg = self.color_toggle[self.color_index % 2]) )
-            self.live_heat_frame[n].grid(column = 0, row= row_nr, sticky=N+S+W+E)
-            self.live_heat_frame[n].grid_rowconfigure(0, weight =1)
-            self.live_heat_frame[n].grid_columnconfigure(0, weight =1)
-            self.live_heat_frame[n].grid_columnconfigure(1, weight =2)
-            self.live_heat_frame[n].grid_columnconfigure(2, weight =1)
-            self.live_heat_frame[n].grid_columnconfigure(3, weight =0)
-
-            self.live_heat_label.append( Label( self.live_heat_frame[n], 
-                                                text = tmp, 
-                                                bg = self.color_toggle[self.color_index % 2], 
-                                                fg = FG_TEXT ))
-            self.live_heat_label[n].grid(column = 0, row= 0, sticky=N+S+W)
-            #self.live_heat_pad.append(Label(self.live_heat_frame[n], text = "", bg = self.color_toggle[self.color_index % 2], fg = FG_TEXT ))
-            #self.live_heat_pad[n].grid(column = 1, row= 0, sticky=N+S+W+E)
-
-            self.live_heat_value.append( Label( self.live_heat_frame[n], 
-                                                textvariab = self.temperature_var[n], 
-                                                bg = self.color_toggle[self.color_index % 2], 
-                                                fg = FG_TEXT) )
-            self.live_heat_value[n].grid(column = 2, row= 0, sticky=N+S+E)
-
-            self.live_heat_unit.append( Label(  self.live_heat_frame[n], 
-                                                text = UNIT_THERMO, 
-                                                bg = self.color_toggle[self.color_index % 2], 
-                                                fg = FG_TEXT ) )
-            self.live_heat_unit[n].grid(column = 3, row= 0, sticky=N+S+E)
-            self.color_index = self.color_index + 1
-            
-        self.live_moist_frame = []
-        self.live_moist_label = []
-        self.live_moist_value = []
-        self.live_moist_pad =[]
-        self.live_moist_unit = []
-        for n in range(NR_MOISTURE):
-            tmp = NAMES_MOISTURE[n] + "  :   "
-            row_nr = (self.color_index+1)
-            self.live_content_frame.grid_rowconfigure(row_nr, weight =3)
-
-            self.live_moist_frame.append( Frame( self.live_content_frame, 
-                                                 bg = self.color_toggle[self.color_index % 2] ) )
-            self.live_moist_frame[n].grid(column = 0, row= row_nr, sticky=N+S+W+E)
-            self.live_moist_frame[n].grid_rowconfigure(0, weight =1)
-            self.live_moist_frame[n].grid_columnconfigure(0, weight =1)
-            self.live_moist_frame[n].grid_columnconfigure(1, weight =2)
-            self.live_moist_frame[n].grid_columnconfigure(2, weight =1)
-            self.live_moist_frame[n].grid_columnconfigure(3, weight =0)
-
-            self.live_moist_label.append( Label( self.live_moist_frame[n], 
-                                                 text = tmp, 
-                                                 bg = self.color_toggle[self.color_index % 2], 
-                                                 fg = FG_TEXT ) )
-            self.live_moist_label[n].grid(column = 0, row= 0, sticky=N+S+W)
-            #self.live_moist_pad.append(Label(self.live_moist_frame[n], text = "", bg = self.color_toggle[self.color_index % 2], fg = FG_TEXT ))
-            #self.live_moist_pad[n].grid(column = 1, row= 0, sticky=N+S+W+E)
-            self.live_moist_value.append( Label( self.live_moist_frame[n], 
-                                                 textvariab = self.moisture_var[n], 
-                                                 bg = self.color_toggle[self.color_index % 2], 
-                                                 fg = FG_TEXT ) )
-            self.live_moist_value[n].grid(column = 2, row= 0, sticky=N+S+E)
-            self.live_moist_unit.append( Label( self.live_moist_frame[n], 
-                                                text = UNIT_MOISTURE, 
-                                                bg = self.color_toggle[self.color_index % 2], 
-                                                fg = FG_TEXT ) )
-            self.live_moist_unit[n].grid(column = 3, row= 0, sticky=N+S+E)
-            self.color_index = self.color_index + 1
-            
-        row_nr = (self.color_index+1)
-        self.live_content_frame.grid_rowconfigure(0, weight =2)
-        self.live_bottom_padding = Label(   self.live_content_frame, 
-                                            text = "", bg = BG_MAIN, 
-                                            fg = FG_TEXT )
-        self.live_bottom_padding.grid(column = 0, row = row_nr, columnspan = 2, sticky = N+S+W)
-
-    #   D E V I C E  C O N T R O L  F R A M E
+    
+    #   D E V I C E  C O N T R O L  F R A M E    DICONB
         # ADD DEVICE CONTROL TO DICOFRAME
-        self.devco_frame = Frame( self.dicoFrame, 
+        self.devco_frame = Frame( self.dicoFrame_notebook, 
                                   bd=1, 
                                   relief = SUNKEN, 
                                   bg = BG_MAIN)
         #self.devco_frame.pack(fill = Y, side = TOP, expand = True)
-        self.devco_frame.grid(column = 0, row=2, sticky=N+S+E+W)
+        #self.devco_frame.grid(column = 0, row=2, sticky=N+S+E+W)
+        self.dicoFrame_notebook.add(self.devco_frame, text = 'DEVICES')
         self.devco_frame.grid_columnconfigure(0,weight=1)
         self.devco_frame.grid_rowconfigure(0,weight=0)
         self.devco_frame.grid_rowconfigure(1,weight=1)
@@ -1149,6 +1164,22 @@ class App( Frame ):
             self.contentFrame.configure(bg='yellow')
             self.plotFrame.configure(bg='orange')
             self.dicoFrame.configure(bg='magenta')
+
+    #   S C H E D U L E    F R A M E   DICONB 
+        self.schedule_frame = Frame(  self.dicoFrame_notebook, 
+                                    bd      = 1, 
+                                    bg      = BG_MAIN, 
+                                    relief  = SUNKEN)
+        self.dicoFrame_notebook.add(self.schedule_frame, text = 'SCHEDULER')
+        #self.schedule_frame.grid(column = 0, row=0, sticky=N+S+E+W)
+        #self.schedule_frame.pack(side = TOP, fill = Y, expand = True)
+
+        # GRID SERIAL FRAME
+        self.schedule_frame.grid_columnconfigure(0,weight=1)
+        self.schedule_frame.grid_rowconfigure(0,weight=0)
+        self.schedule_frame.grid_rowconfigure(1,weight=1)
+
+
 
     #   PACK SELF
         self.grid_columnconfigure(0, weight =1)
