@@ -160,5 +160,6 @@ int MotorDriver::getStatus()
 
   return tmp;
 }
+void MotorDriver::refresh(TimeKeeper myClock);
 
 #endif

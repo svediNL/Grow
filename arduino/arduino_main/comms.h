@@ -2,6 +2,8 @@
 #define COMMS_H
 
 #include <Arduino.h>
+#include "sensors.h" 
+#include "actuators.h"
 
 /*
  * 

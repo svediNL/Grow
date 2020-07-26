@@ -1,7 +1,6 @@
 #ifndef COMMS_H
 #include "comms.h"
-#include "sensors.h" 
-#include "actuators.h"
+
 
 void Comms::message_handler(String inputString){
   

@@ -1,9 +1,9 @@
-#include "comms.h"
-#include "sensors.h" 
-#include "actuators.h"
+//#include "comms.h"
+//#include "sensors.h" 
+//#include "actuators.h"
 #include "grow.h" 
 
-bool overrule_pump_interlock[NR_PUMP];
+
 
 Comms serialMsg;
 int counter = 0;
@@ -11,70 +11,20 @@ bool bNewMessage = false;
 
 String serialString;
 
-float rntc, vin, vm;
-float rc[NR_TC];
-float Tn, Rn, coeffB, temp;
+Grow grow;
 
 bool x;
 
 void setup(){
   // INIT SERIAL
   Serial.begin(115200);
-
-  // SETUP CLOCK
-  masterClock.set_base_time(16000000);
-  masterClock.set_base_prescaler(1024);
-  masterClock.set_output_compare(243);
-  masterClock.set_time("12:00:00");
-  masterClock.set_magic_comp(6379);
-  masterClock.init();
+  grow.init();
   
-  // SETUP   P U M P
-  for(int n=0; n<NR_PUMP; n++){ 
-    overrule_pump_interlock[n] = false; 
-    pump[n].init(PUMP_DIR_PIN[n], PUMP_PWM_PIN[n], PUMP_NAME[n]); // SETUP PUMP
-  }
-
-  if(ENABLE_PUMP_INTERLOCK_SWITCH && NR_FLOAT_SWITCH>0){
-    for(int n=0;n<NR_LAMP; n++){ 
-      vlotter[n].init(FLOAT_SWITCH_PIN[n], "float switch");   // SETUP FLOAT SWITCH - DigitalInput on pin=23
-    }
-  }
-  
-  // SETUP   T H E R M O C O U P L E
-  // SET THERMOCOUPLE CALCULATION PARAMETERS
-  vin = 5.0;        // INPUT VOLTAGE                  [V]
-  Rn = 10000;       // THERMOCOUPLE RESITANCE AT Tn   [ohm]
-  Tn = 25;          // THERMOCOUPLE TEMPERATURE AT Rn [C]
-  coeffB=3435;      // THERMOCOUPLE COEFFICIENT       [K] -> B= ln(Rt1/Rt2)/(T1^-1 - T2^-1)
-  
-  for(int n=0;n<NR_TC; n++){ 
-    rc[n] = 14700;    // BIAS RESISTOR                  [ohm]
-    thermocouple[n].init(TC_PIN[n], TC_NAME[n], 1023, 5, "V");               // SETUP THERMOCOUPLE VOLTAGE - AnalogSensor maxRawInput=1023, maxUserVal= 5V
-  };
-
-  // SETUP   L A M P
-  for(int n=0;n<NR_LAMP; n++){ 
-    lamp[n].init(LAMP_NAME[n],LAMP_RGBW_PIN[n][0],LAMP_RGBW_PIN[n][1],LAMP_RGBW_PIN[n][2],LAMP_RGBW_PIN[n][3]);  // SETUP LAMP - RGBWLed ON PINS 11,10,9,8
-  }
-  if(ENABLE_FRIDGE_DOOR){
-    doorSensor.init(DOOR_SWITCH_PIN, "Door switch");
-  }
-  // SETUP   M O I S T U R E 
-  for(int n=0;n<NR_MOISTURE; n++){ 
-    moisture[n].init(MOISTURE_INPUT_PIN[n], MOISTURE_NAME[n] , 1023, 100, "%");    // SETUP MOISTURE              - AnalogSensor on pin=A0, maxRawInput=1023, maxUserVal= 100%
-    moisturePower[n].init(MOISTURE_POWER_PIN[n], MOISTURE_POWER_NAME[n] );               // SETUP MOISTURE POWER ENABLE - DigitalOutput on pin=22
-  }
-
-  // SETUP   R E L A Y
-  for(int n=0;n<NR_RELAY; n++){ 
-    relayboard[n].init(RELAY_PIN[n], RELAY_NAME[n]);    // SETUP RELAYBOARD INPUT INx
-  }
 }
 
 ISR(TIMER2_COMPA_vect){
 // ON COUNTER OUTPUT COMPARE TRIGGER
-  masterClock.interrupt();
+  grow.masterClock.interrupt();
 }
 
 void loop()
@@ -86,27 +36,29 @@ void loop()
     for(int n=0; n<NR_FLOAT_SWITCH; n++)
     // CYCLE FLOAT SWITCHES
     {
-      if( vlotter[n].state() && !overrule_pump_interlock[ FLOAT_PUMP_INTERLOCK_LINKING[n] ] ) 
+      if( grow.vlotter[n].state() && !grow.overrule_pump_interlock[ FLOAT_PUMP_INTERLOCK_LINKING[n] ] ) 
       // FLOAT SWITCH CLOSED  &  PUMP LINKED TO SWITCH HAS NO OVERRULE INTERLOCK
-      { pump[n].interlock(true); }
+      { grow.pump[n].interlock(true); }
       else
       // RELEASE INTERLOCK
-      { pump[n].interlock(false); };
+      { grow.pump[n].interlock(false); };
     };
   }
   
   // DIM LAMP WHEN DOOR OPENS
-  if (lamp[0].getStatus()>0 && ENABLE_FRIDGE_DOOR){
-    if(doorSensor.state() == true ){
+  if (grow.lamp[0].getStatus()>0 && ENABLE_FRIDGE_DOOR){
+  // LAMP IS ON 
+    if(grow.doorSensor.state() == true ){
     // DOOR IS OPEN
       for(int n=0; n<4; n++){
-         analogWrite(lamp[0].pinRGBW[n], 30); // SET INTESTITY TO 30
+         analogWrite(grow.lamp[0].pinRGBW[n], 30); // MANUALLY SET INTESTITY TO 30
       }
       x = true;
     }
     else if(x){
+    // DOOR IS CLOSED BUT INTENSITY IS STILL REDUCED
       for(int n=0; n<4; n++){
-         analogWrite(lamp[0].pinRGBW[n], lamp[0].valRGBW[n]); // RESET INTESTITY
+         analogWrite(grow.lamp[0].pinRGBW[n], grow.lamp[0].valRGBW[n]); // RESET INTESTITY
       }
       x=false;
     }
@@ -136,13 +88,13 @@ void doCommand(){
       tmpInt[0] = serialMsg.message.sParameter[0].toInt();  // GET CMD INDEX
       
       // GET VALUE
-      moisturePower[tmpInt[0]].set(true);    // enable power
+      grow.moisturePower[tmpInt[0]].set(true);    // enable power
       delay(10);                  // let the power settle
-      moisture[tmpInt[0]].refresh();         // get value
-      moisturePower[tmpInt[0]].set( false);  // disable power
+      grow.moisture[tmpInt[0]].refresh();         // get value
+      grow.moisturePower[tmpInt[0]].set( false);  // disable power
 
       // PRINT VALUE
-      Serial.print(moisture[tmpInt[0]].getMetricValue()); //print raw value
+      Serial.print(grow.moisture[tmpInt[0]].getMetricValue()); //print raw value
       
       // COMMAND DONE
       serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
@@ -155,22 +107,22 @@ void doCommand(){
       delay(2); // DELAY SERIAL COMM
       tmpInt[0] = serialMsg.message.sParameter[0].toInt();  // GET CMD INDEX
       
-      thermocouple[tmpInt[0]].refresh();                    // UPDATE TC VALUE
-      vm = thermocouple[tmpInt[0]].getMetricValue();        // TRANSLATE TO MEASURED VOLTAGE
+      grow.thermocouple[tmpInt[0]].refresh();                    // UPDATE TC VALUE
+      grow.vm = grow.thermocouple[tmpInt[0]].getMetricValue();        // TRANSLATE TO MEASURED VOLTAGE
       
-      if (vin-vm != 0) { // PREVENT DIVIDE BY ZERO
-        rntc = (vm*rc[tmpInt[0]])/(vin-vm);                 //GET RESISTANCE OF THERMOCOUPLE 
+      if (grow.vin-grow.vm != 0) { // PREVENT DIVIDE BY ZERO
+        grow.rntc = (grow.vm*grow.rc[tmpInt[0]])/(grow.vin-grow.vm);                 //GET RESISTANCE OF THERMOCOUPLE 
 
         // TRANSFORM RESISTANCE TO TEMPERATURE
-        temp = rntc / Rn;                                   // A   =   Rntc/Rn    [-]
-        temp = log(temp);                                   // tmp =   ln(Rntc/Rn)    [-]
-        temp /= coeffB;                                     // tmp =   ln(Rntc/Rn) / coeff   = Tntc^-1 - Tn^-1   [K]
-        temp += 1 / (Tn +273.15);                           // tmp = Tntc^-1  [K]
-        temp = 1/ temp;                                     // tmp = Tntc   [K]
-        temp -= 273.15;                                     // tmp = Tntc   [C] 
+        grow.temp = grow.rntc / grow.Rn;                                   // A   =   Rntc/Rn    [-]
+        grow.temp = log(grow.temp);                                   // tmp =   ln(Rntc/Rn)    [-]
+        grow.temp /= grow.coeffB;                                     // tmp =   ln(Rntc/Rn) / coeff   = Tntc^-1 - Tn^-1   [K]
+        grow.temp += 1 / (grow.Tn +273.15);                           // tmp = Tntc^-1  [K]
+        grow.temp = 1/ grow.temp;                                     // tmp = Tntc   [K]
+        grow.temp -= 273.15;                                     // tmp = Tntc   [C] 
         
         // PRINT TEMPERATURE VALUE
-        Serial.print(temp); }
+        Serial.print(grow.temp); }
       else { Serial.print(420); };
         
       // COMMAND DONE
@@ -185,8 +137,8 @@ void doCommand(){
       tmpInt[1] = serialMsg.message.sParameter[1].toInt(); // GET CMD RELAY OUTPUT
       
       // SET RELAY OUTPUT
-      if(tmpInt[1] == 0){ relayboard[tmpInt[0]].set(false);}
-      else if (tmpInt[1] == 1){ relayboard[tmpInt[0]].set(true);};
+      if(tmpInt[1] == 0){ grow.relayboard[tmpInt[0]].set(false);}
+      else if (tmpInt[1] == 1){ grow.relayboard[tmpInt[0]].set(true);};
       
       // COMMAND DONE
       serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
@@ -200,7 +152,7 @@ void doCommand(){
       tmpBool[0] = bool(serialMsg.message.sParameter[1].toInt());   // GET CMD ENABLE BIT
 
       // ENABLE LAMP
-      lamp[tmpInt[0]].enableOutput(tmpBool[0]);     // ENABLE OUTPUT TO LAMP
+      grow.lamp[tmpInt[0]].enableOutput(tmpBool[0]);     // ENABLE OUTPUT TO LAMP
       
       // COMMAND DONE
       serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
@@ -218,10 +170,10 @@ void doCommand(){
       for(int i=0; i<=tmpString.length()-1; i++){
         tmpChar[0] = tmpString[i]; // NEW CHAR
         // SET PWM FOR CHANNEL
-        if(tmpChar[0] == 'R'){ lamp[tmpInt[0]].set(R, tmpInt[1]);}
-        else if(tmpChar[0] == 'G'){ lamp[tmpInt[0]].set(G, tmpInt[1]);}
-        else if(tmpChar[0] == 'B'){ lamp[tmpInt[0]].set(B, tmpInt[1]);}
-        else if(tmpChar[0] == 'W'){ lamp[tmpInt[0]].set(W, tmpInt[1]);}
+        if(tmpChar[0] == 'R'){ grow.lamp[tmpInt[0]].set(R, tmpInt[1]);}
+        else if(tmpChar[0] == 'G'){ grow.lamp[tmpInt[0]].set(G, tmpInt[1]);}
+        else if(tmpChar[0] == 'B'){ grow.lamp[tmpInt[0]].set(B, tmpInt[1]);}
+        else if(tmpChar[0] == 'W'){ grow.lamp[tmpInt[0]].set(W, tmpInt[1]);}
       }
       
       // COMMAND DONE
@@ -235,10 +187,10 @@ void doCommand(){
       tmpInt[0] = serialMsg.message.sParameter[0].toInt();  // GET CMD INDEX
 
       // PRINT CURRENT LAMP OUTPUT
-      if(doorSensor.state() == true ){
+      if(grow.doorSensor.state() == true ){
         Serial.print("30");
       }
-      else{ Serial.print(lamp[tmpInt[0]].getStatus()); }
+      else{ Serial.print(grow.lamp[tmpInt[0]].getStatus()); }
       
       // COMMAND DONE
       serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
@@ -252,7 +204,7 @@ void doCommand(){
       tmpBool[0] = bool(serialMsg.message.sParameter[1].toInt());  // GET CMD ENABLE BIT
 
       // SET PUMP OUTPUT
-      pump[tmpInt[0]].enableOutput(tmpBool[0]);
+      grow.pump[tmpInt[0]].enableOutput(tmpBool[0]);
       
       // COMMAND DONE
       serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
@@ -267,8 +219,8 @@ void doCommand(){
       tmpBool[0] = bool(serialMsg.message.sParameter[2].toInt());  // GET CMD ENABLE BIT
 
       // SET OUTPUT
-      pump[tmpInt[0]].setPWM(byte(tmpInt[1]));
-      pump[tmpInt[0]].enableOutput(tmpBool[0]);
+      grow.pump[tmpInt[0]].setPWM(byte(tmpInt[1]));
+      grow.pump[tmpInt[0]].enableOutput(tmpBool[0]);
       
       // COMMAND DONE
       serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
@@ -279,7 +231,7 @@ void doCommand(){
     case GET_PUMP:
       delay(2);   // DELAY FOR SERIAL COMMS
       tmpInt[0] = serialMsg.message.sParameter[0].toInt();  // GET CMD INDEX
-      tmpInt[1] = pump[tmpInt[0]].getStatus();              // GET CMD CURRENT PUMP OUTPUT
+      tmpInt[1] = grow.pump[tmpInt[0]].getStatus();              // GET CMD CURRENT PUMP OUTPUT
 
       // PRINT CURRENT PUMP OUTPUT
       Serial.print(tmpInt[1]);       
@@ -296,7 +248,7 @@ void doCommand(){
       tmpInt[1] = serialMsg.message.sParameter[1].toInt();  // GET CMD RC-VALUE
       
       // SET BIAS RESISTANCE VALUE
-      rc[tmpInt[0]] = tmpInt[1];
+      grow.rc[tmpInt[0]] = tmpInt[1];
       
       // COMMAND DONE
       serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
@@ -309,7 +261,7 @@ void doCommand(){
       tmpBool[0] = bool(serialMsg.message.sParameter[1].toInt());  // GET CMD BOOL
 
       // SET OVERRULE FLAG
-      overrule_pump_interlock[ tmpInt[0] ] = tmpBool[0];
+      grow.overrule_pump_interlock[ tmpInt[0] ] = tmpBool[0];
       
       // COMMAND DONE
       serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
@@ -330,7 +282,7 @@ void doCommand(){
     case SET_CLOCK:
       delay(2); // DELAY FOR SERIAL COMM
       // ACTION
-      masterClock.set_time(serialMsg.message.sParameter[0]);
+      grow.masterClock.set_time(serialMsg.message.sParameter[0]);
       
       // COMMAND DONE
       serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
@@ -341,7 +293,7 @@ void doCommand(){
     case GET_CLOCK:
       delay(2); // DELAY FOR SERIAL COMM
       // ACTION
-      Serial.print(masterClock.get_time());
+      Serial.print(grow.masterClock.get_time());
       
       // COMMAND DONE
       serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
@@ -352,7 +304,7 @@ void doCommand(){
     case GET_EPOCH:
       delay(2); // DELAY FOR SERIAL COMM
       // ACTION
-      Serial.print(masterClock.get_epoch());
+      Serial.print(grow.masterClock.get_epoch());
 
       // COMMAND DONE
       serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
@@ -364,7 +316,7 @@ void doCommand(){
       delay(2); // DELAY FOR SERIAL COMM
       tmpInt[0] = serialMsg.message.sParameter[0].toInt();         // GET CMD INDEX
       
-      Serial.print( masterClock.request_timer());
+      Serial.print( grow.masterClock.request_timer());
       
       // COMMAND DONE
       serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
@@ -376,7 +328,7 @@ void doCommand(){
       delay(2); // DELAY FOR SERIAL COMM
       tmpInt[0] = serialMsg.message.sParameter[0].toInt();         // GET CMD INDEX
       
-      Serial.print(int(masterClock.timer_done(tmpInt[0])));
+      Serial.print(int(grow.masterClock.timer_done(tmpInt[0])));
 
       // COMMAND DONE
       serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
@@ -388,7 +340,7 @@ void doCommand(){
       delay(2); // DELAY FOR SERIAL COMM
       tmpInt[0] = serialMsg.message.sParameter[0].toInt();         // GET CMD INDEX   
 
-      Serial.print(int( masterClock.claim_timer(tmpInt[0]) ));
+      Serial.print(int( grow.masterClock.claim_timer(tmpInt[0]) ));
 
       // COMMAND DONE
       serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
@@ -400,7 +352,7 @@ void doCommand(){
       delay(2); // DELAY FOR SERIAL COMM
       tmpInt[0] = serialMsg.message.sParameter[0].toInt();         // GET CMD INDEX   
 
-      masterClock.release_timer(tmpInt[0]);
+      grow.masterClock.release_timer(tmpInt[0]);
 
       // COMMAND DONE
       serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
@@ -412,7 +364,7 @@ void doCommand(){
       delay(2); // DELAY FOR SERIAL COMM
       tmpInt[0] = serialMsg.message.sParameter[0].toInt();         // GET CMD INDEX   
 
-      masterClock.reset_timer(tmpInt[0]);
+      grow.masterClock.reset_timer(tmpInt[0]);
 
       // COMMAND DONE
       serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
@@ -424,7 +376,7 @@ void doCommand(){
       delay(2); // DELAY FOR SERIAL COMM
       tmpInt[0] = serialMsg.message.sParameter[0].toInt();         // GET CMD INDEX   
 
-      masterClock.stop_timer(tmpInt[0]);
+      grow.masterClock.stop_timer(tmpInt[0]);
 
       // COMMAND DONE
       serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
@@ -438,7 +390,7 @@ void doCommand(){
       tmpInt[0] = serialMsg.message.sParameter[0].toInt();         // GET CMD INDEX
       tmpInt[1] = serialMsg.message.sParameter[1].toInt();         // GET CMD INDEX
 
-      masterClock.start_timer(byte(tmpInt[0]), tmpInt[1]);
+      grow.masterClock.start_timer(byte(tmpInt[0]), tmpInt[1]);
       // COMMAND DONE
       serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
       Serial.print('@');                            // PRINT EOL
@@ -511,33 +463,33 @@ void printHelp(){
 
   Serial.println("- MOISTURE SENSORS");
   for(int n=0;n<NR_MOISTURE; n++){
-    moisture[n].help();
-    moisturePower[n].help();
+    grow.moisture[n].help();
+    grow.moisturePower[n].help();
     }
   Serial.println("");
 
   Serial.println("- PUMPS");
   for(int n=0;n<NR_PUMP; n++){
-    pump[n].help();
-    vlotter[n].help();
+    grow.pump[n].help();
+    grow.vlotter[n].help();
     }
   Serial.println("");
 
   Serial.println("- RELAYS");
   for(int n=0;n<NR_RELAY; n++){
-    relayboard[n].help(); 
+    grow.relayboard[n].help(); 
     }
   Serial.println("");
 
   Serial.println("- LAMPS");
   for(int n=0;n<NR_LAMP; n++){
-    lamp[n].help();
+    grow.lamp[n].help();
     }
   Serial.println("");
 
   Serial.println("- TEMPERATURE SENSORS");
   for(int n=0;n<NR_TC; n++){ 
-    thermocouple[n].help();
+    grow.thermocouple[n].help();
     }
   Serial.println("");
   

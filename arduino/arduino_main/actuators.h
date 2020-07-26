@@ -2,6 +2,7 @@
 #define ACTUATORS_H
 
 #include <Arduino.h>
+#include "timekeeping.h"
 
 enum RGBWenum {R, G, B , W};
 
@@ -49,30 +50,36 @@ class HBridge {
     byte pinDir;
     
     byte outputPWM = 0;
-    byte pinPWM; 
+    byte pinPWM;
+     
+    
+    private:
+      
 };
 
 class MotorDriver{
   public:
     String deviceName;
     
-    float angle, radian;
-    float rps;
-    
     void init(byte dir, byte power, String devName= "");
-    void help();
-    void refresh();
+    
+    void refresh(TimeKeeper myClock);
+    
     void enableOutput(bool output);
+    
     void setPWM(int setpoint);
     void setDir(bool dir);
+    void set_schedule(int parTime, int setpoint); // setpoint can be positive or negative
+    
     void interlock(bool state);
     int getStatus();
+    
+    void help();
   
   private:
     bool outputEnabled;
     bool interlocked;
-     HBridge hBridge;
-  //  IncEncoder encoder;   
+    HBridge hBridge; 
     
 };
 
