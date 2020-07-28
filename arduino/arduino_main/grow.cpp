@@ -62,8 +62,90 @@ void Grow::doStuff()
 		bNewMessage = false; 
 	};
 
+	scheduler();
+
 	if (ENABLE_PUMP_INTERLOCK_SWITCH) { check_pump_interlock(); }; // CHECK FLOAT SWITCH FOR INTERLOCK
 	if (ENABLE_FRIDGE_DOOR) { fridge_door(); };
+};
+
+void Grow::scheduler()
+{
+	bool times_up;
+	for(int n=0;n<=schedule_index;n++)
+	{
+		times_up = masterClock.timer_done(scheduled_device_id[n]);
+
+		switch(scheduled_device[n])
+		{
+			case NONE:
+				break;
+
+			case PUMP:
+				// CHECK ON PUMP
+				if(times_up)
+				// TIMER HAS RAN OUT
+				{
+					pump[scheduled_device_id[n]].setPWM(0);
+					pump[scheduled_device_id[n]].enableOutput(false);
+					scheduled_device[n] = NONE;
+					scheduled_value[n] = 0;
+				}
+				else
+				{
+					if(pump[scheduled_device_id[n]].getStatus() != scheduled_value[n])
+					// CHECK IF VALUE HAS TO BE SET
+					{
+						pump[scheduled_device_id[n]].setPWM(scheduled_value[n]);
+						pump[scheduled_device_id[n]].enableOutput(true);
+					}
+				}
+				break;
+
+			case LAMP:
+				// CHECK ON LAMP
+				break;
+		}
+	};
+
+	
+	if(times_up)
+	// Clear holes in schedule		
+	{	
+		byte k=0;
+		for(byte n=0; n<=schedule_index; n++)
+		{
+			if(scheduled_device[n] == NONE)
+			{
+				scheduled_timer[n-k]	  = scheduled_timer[n];
+				scheduled_device[n-k]	  = scheduled_device[n];
+				scheduled_device_id[n-k]  = scheduled_device_id[n];
+				scheduled_value[n-k]	  = scheduled_value[n];
+				k += 1;
+			};
+		};
+		schedule_index -= k;
+	};
+};
+
+bool Grow::push_to_schedule(Device myDevice, byte deviceID, int timePar, int value)
+{
+	byte timerid = byte(masterClock.request_timer());
+	if(timerid>=0)
+	{	
+		// CLAIM & START TIMER
+		masterClock.claim_timer( timerid );
+		masterClock.start_timer( timerid, timePar );
+
+		// ADD TO SCHEDULE
+		scheduled_timer[schedule_index] 	= timerid;
+		scheduled_device[schedule_index] 	= myDevice;
+		scheduled_device_id[schedule_index] = deviceID;
+		scheduled_value[schedule_index]		= value;
+		schedule_index +=1;	//INCREASE SCHEDULE COUNTER
+		
+		return true;
+	}
+	else{ return false; };
 };
 
 void Grow::fridge_door()
@@ -94,10 +176,10 @@ void Grow::check_pump_interlock()
 	for(int n=0; n<NR_FLOAT_SWITCH; n++)
 	// CYCLE FLOAT SWITCHES
 	{
-		if( vlotter[n].state() && !overrule_pump_interlock[ FLOAT_PUMP_INTERLOCK_LINKING[n] ] ) 
-		{ pump[n].interlock(true); }  // FLOAT SWITCH CLOSED  &  PUMP LINKED TO SWITCH HAS NO OVERRULE INTERLOCK
+		if( vlotter[n].state() && !overrule_pump_interlock[ PUMP_INTERLOCK_LINKING[n] ] ) 
+		{ pump[ PUMP_INTERLOCK_LINKING[n] ].interlock(true); }  // FLOAT SWITCH CLOSED  &  PUMP LINKED TO SWITCH HAS NO OVERRULE INTERLOCK
 
-		else { pump[n].interlock(false); }; // RELEASE INTERLOCK
+		else { pump[ PUMP_INTERLOCK_LINKING[n] ].interlock(false); }; // RELEASE INTERLOCK
 	};
 };
 
@@ -447,40 +529,42 @@ void Grow::printHelp()
   Serial.println("  example:   SET_LAMP(0, RB, 128), will set the Red and Blue channels to 128 for lamp 0");
   Serial.println(" - - - - - - - - - - - - - - - - - - ");
   Serial.println("");
+  Serial.println("");
   Serial.print("NR_LAMP:  ");Serial.print(NR_LAMP);Serial.print("\n");
   Serial.print("NR_PUMP:  ");Serial.print(NR_PUMP);Serial.print("\n");
   Serial.print("NR_RELAY:  ");Serial.print(NR_RELAY);Serial.print("\n");
   Serial.print("NR_TC:  ");Serial.print(NR_TC);Serial.print("\n");
   Serial.print("NR_MOISTURE:  ");Serial.print(NR_MOISTURE);Serial.print("\n");
   Serial.println("");
+  Serial.println("");
   Serial.println("List of commands:");
-
+  Serial.println("");
   Serial.println("   ENABLE_LAMP  ( index[0..NR_LAMP-1], enable[0/1] )");
-  Serial.println("   SET_LAMP     ( index[0..NR_LAMP-1], colour[R,B,G,W],  value[0-255], enable[0/1] )");
+  Serial.println("   SET_LAMP     ( index[0..NR_LAMP-1], colour[R,B,G,W],  value[0..255], enable[0/1] )");
   Serial.println("   GET_LAMP     ( index[0..NR_LAMP-1] )");
-
+  Serial.println("");
   Serial.println("   ENABLE_PUMP  ( index[0..NR_PUMP-1], enable[0/1] )"); 
-  Serial.println("   SET_PUMP     ( index[0..NR_PUMP-1], value[0-255],   enable[0/1] )"); 
+  Serial.println("   SET_PUMP     ( index[0..NR_PUMP-1], value[0..255],   enable[0/1] )"); 
   Serial.println("   GET_PUMP     ( index[0..NR_PUMP-1] )"); 
-
+  Serial.println("");
   Serial.println("   IGNORE_PUMP_INTERLOCK ( index[0..NR_PUMP-1], enable[0/1] )");
-
+  Serial.println("");
   Serial.println("   SET_RELAY    ( index[0..NR_RELAY-1],   value[0/1] )");
-
+  Serial.println("");
   Serial.println("   GET_TEMP     ( index[0..NR_TC-1] )");
   Serial.println("   SET_TEMP_RC  ( index[0..NR_TC-1],   biasResistance[...ohm] )");
-
+  Serial.println("");
   Serial.println("   GET_MOISTURE ( index[0..NR_MOISTURE-1] )");
-
+  Serial.println("");
   Serial.println("   SET_CLOCK   ( time[HH:MM:SS] )");
   Serial.println("   GET_CLOCK   ( )");
-  Serial.println("   GET_EPOCH  ( )");
-
-  Serial.println("   TIMER_OUTPUT   ( index[0..NR_TIMER] )");
-  Serial.println("   TIMER_CLAIMED  ( index[0..NR_TIMER] )");
+  Serial.println("   GET_EPOCH   ( )");
+  Serial.println("");
+  Serial.println("   TIMER_OUTPUT      ( index[0..NR_TIMER] )");
+  Serial.println("   TIMER_CLAIMED     ( index[0..NR_TIMER] )");
   Serial.println("   CLAIM_TIMER       ( index[0..NR_TIMER] )");
   Serial.println("   SET_TIMER         ( index[0..NR_TIMER], time[...s] )");
-  Serial.println("");
+  Serial.println("   DEVICE_TIMER      ( device[PUMP,LAMP], deviceID[0..x], value[0..255] )");
   Serial.println("");
   Serial.println(" - - - - - - - - - - - - - - - - - - ");
   Serial.println("D E V I C E    C O N N E C T I O N S");
@@ -522,7 +606,7 @@ void Grow::printHelp()
   Serial.println("");
   Serial.println("====================================================");
   Serial.print('@');
-}
+};
 
 
 #endif

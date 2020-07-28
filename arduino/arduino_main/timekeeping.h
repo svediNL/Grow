@@ -3,6 +3,8 @@
 
 #include <Arduino.h>
 
+const byte NR_SUBTIMER = 10;
+
 class SubTimer{
     public:
         void stop();
@@ -52,7 +54,6 @@ class TimeKeeper{
     bool epoch_toggle;
 
   private:
-    //const int   NR_TIMERS = 10;
     long int PAR_CLK_IO = 16000000;   // BASE TIMER CLOCK FREQUENCY -> 16 MHz
     
     int PAR_PRESCALER = 1024;         // BASE TIMER PRE-SCALER VALUE
@@ -75,6 +76,6 @@ class TimeKeeper{
     int hour = 1; 
     int minute= 2; 
     int second = 3;
-    SubTimer subTimers[10];
+    SubTimer subTimers[NR_SUBTIMER];
 };
 #endif

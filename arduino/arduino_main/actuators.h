@@ -63,13 +63,12 @@ class MotorDriver{
     
     void init(byte dir, byte power, String devName= "");
     
-    void refresh(TimeKeeper myClock);
+    void refresh();
     
     void enableOutput(bool output);
     
     void setPWM(int setpoint);
     void setDir(bool dir);
-    void set_schedule(int parTime, int setpoint); // setpoint can be positive or negative
     
     void interlock(bool state);
     int getStatus();
