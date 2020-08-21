@@ -75,7 +75,7 @@ void Grow::scheduler()
 	for(int n=0;n<=schedule_index;n++)
 	{
 
-    if( !times_up ){ times_up = masterClock.timer_done(scheduled_device_id[n]); };
+    if( !times_up ){ times_up = masterClock.timer_done(scheduled_timer[n]); };
 		switch(scheduled_device[n])
 		{
 			case NONE:
@@ -83,13 +83,16 @@ void Grow::scheduler()
 
 			case PUMP:
 				// CHECK ON PUMP
-				if(masterClock.timer_done(scheduled_device_id[n]))
+				if(masterClock.timer_done(scheduled_timer[n]))
 				// TIMER HAS RAN OUT
 				{
 					pump[scheduled_device_id[n]].setPWM(0);
 					pump[scheduled_device_id[n]].enableOutput(false);
 					scheduled_device[n] = NONE;
 					scheduled_value[n] = 0;
+
+          masterClock.stop_timer(scheduled_timer[n]);
+          masterClock.release_timer(scheduled_timer[n]);
 				}
 				else
 				{
@@ -104,13 +107,16 @@ void Grow::scheduler()
 
 			case LAMP:
 				// CHECK ON LAMP
-        if(masterClock.timer_done(scheduled_device_id[n]))
+        if(masterClock.timer_done(scheduled_timer[n]))
         // TIMER HAS RAN OUT
         {
           lamp[scheduled_device_id[n]].set(W, 0);
           lamp[scheduled_device_id[n]].enableOutput(false);
           scheduled_device[n] = NONE;
           scheduled_value[n] = 0;
+
+          masterClock.stop_timer(scheduled_timer[n]);
+          masterClock.release_timer(scheduled_timer[n]);
         }
         else
         {
