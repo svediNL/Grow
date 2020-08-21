@@ -214,14 +214,20 @@ void TimeKeeper::print_parameters()
   Serial.println(String(sec_loss, 10)) ;
 };
 
-int   TimeKeeper::request_timer()
+int TimeKeeper::request_timer()
 {
   for(int n=0; n<10;n++){
-    if(!subTimers[n].is_claimed){
+    if(!subTimers[n].is_claimed)
+    {
       return n;
       break;
-    }
-  }
+    };
+
+    if(n==9)
+    {
+      return -1;
+    };
+  };
 };
 
 bool TimeKeeper::claim_timer(byte index)

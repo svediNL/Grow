@@ -1179,7 +1179,7 @@ class App( Frame ):
         self.schedule_frame.grid_rowconfigure(0,weight=0)
         self.schedule_frame.grid_rowconfigure(1,weight=1)
 
-
+ 
 
     #   PACK SELF
         self.grid_columnconfigure(0, weight =1)

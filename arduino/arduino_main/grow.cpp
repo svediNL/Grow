@@ -70,11 +70,12 @@ void Grow::doStuff()
 
 void Grow::scheduler()
 {
-	bool times_up;
+  bool times_up;
+
 	for(int n=0;n<=schedule_index;n++)
 	{
-		times_up = masterClock.timer_done(scheduled_device_id[n]);
 
+    if( !times_up ){ times_up = masterClock.timer_done(scheduled_device_id[n]); };
 		switch(scheduled_device[n])
 		{
 			case NONE:
@@ -82,7 +83,7 @@ void Grow::scheduler()
 
 			case PUMP:
 				// CHECK ON PUMP
-				if(times_up)
+				if(masterClock.timer_done(scheduled_device_id[n]))
 				// TIMER HAS RAN OUT
 				{
 					pump[scheduled_device_id[n]].setPWM(0);
@@ -103,25 +104,54 @@ void Grow::scheduler()
 
 			case LAMP:
 				// CHECK ON LAMP
+        if(masterClock.timer_done(scheduled_device_id[n]))
+        // TIMER HAS RAN OUT
+        {
+          lamp[scheduled_device_id[n]].set(W, 0);
+          lamp[scheduled_device_id[n]].enableOutput(false);
+          scheduled_device[n] = NONE;
+          scheduled_value[n] = 0;
+        }
+        else
+        {
+          if(lamp[scheduled_device_id[n]].getStatus() != scheduled_value[n])
+          // CHECK IF VALUE HAS TO BE SET
+          {
+            lamp[scheduled_device_id[n]].set(W, scheduled_value[n]);
+            lamp[scheduled_device_id[n]].enableOutput(true);
+          }
+        }
 				break;
 		}
 	};
 
-	
-	if(times_up)
-	// Clear holes in schedule		
+	// Clear holes in schedule 
+  byte k=1;
+	if(times_up && schedule_index > 0)
+	// IF AT LEAST 1 TIMER RAN OUT && THERE ARE MORE THAN 1 DEVICES SCHEDULED
 	{	
-		byte k=0;
-		for(byte n=0; n<=schedule_index; n++)
+		for(byte n=1; n<=schedule_index; n++)
+    // CYCLE INDEX STARTING FROM 1 BECAUSE 0 DOESN'T MOVE
 		{
-			if(scheduled_device[n] == NONE)
+			if(scheduled_device[n-1] == NONE)
+      // IF TIMER ABOVE IS CLEAR (INDICATING A HOLE)
 			{
+        // SHIFT INDEX DATA UP
 				scheduled_timer[n-k]	  = scheduled_timer[n];
 				scheduled_device[n-k]	  = scheduled_device[n];
 				scheduled_device_id[n-k]  = scheduled_device_id[n];
 				scheduled_value[n-k]	  = scheduled_value[n];
-				k += 1;
+
+        // IF CURRENT DEVICE IS NONE ADD 1 TO SUBTRACTOR (HAS TO BE CHECKED BEFORE CLEARING OF INDEX)
+        if(scheduled_device[n] == NONE){ k+=1;};
+
+        // CLEAR INDEX DATA
+        scheduled_timer[n-k]    = 0;
+        scheduled_device[n-k]   = NONE;
+        scheduled_device_id[n-k]  =  0;
+        scheduled_value[n-k]    = 0;
 			};
+
 		};
 		schedule_index -= k;
 	};
@@ -129,15 +159,16 @@ void Grow::scheduler()
 
 bool Grow::push_to_schedule(Device myDevice, byte deviceID, int timePar, int value)
 {
-	byte timerid = byte(masterClock.request_timer());
-	if(timerid>=0)
+	int timerid = masterClock.request_timer(); // CHECK IF THERE IS A TIMER AVAILABLE
+	if(timerid >= 0)
+  // THERE IS A TIMER AVAILABLE
 	{	
 		// CLAIM & START TIMER
-		masterClock.claim_timer( timerid );
-		masterClock.start_timer( timerid, timePar );
+		masterClock.claim_timer( byte(timerid) );
+		masterClock.start_timer( byte(timerid), timePar );
 
 		// ADD TO SCHEDULE
-		scheduled_timer[schedule_index] 	= timerid;
+		scheduled_timer[schedule_index] 	= byte(timerid);
 		scheduled_device[schedule_index] 	= myDevice;
 		scheduled_device_id[schedule_index] = deviceID;
 		scheduled_value[schedule_index]		= value;
@@ -503,6 +534,28 @@ void Grow::doCommand()
       Serial.print('@');                            // PRINT EOL
       break;
 
+  // ADD DEVICE TIMER TO SCHEDULE
+    case DEVICE_TIMER:
+      delay(2);
+      // SET PARAMETERS
+      tmpString = serialMsg.message.sParameter[0];
+      tmpInt[0] = serialMsg.message.sParameter[1].toInt();
+      tmpInt[1] = serialMsg.message.sParameter[2].toInt();
+      tmpInt[2] = serialMsg.message.sParameter[3].toInt();
+      
+      // SET DEVICE TYPE
+      Device tmpDevice = NONE;
+      if(tmpString == "LAMP"){tmpDevice = LAMP;}
+      else if(tmpString == "PUMP"){tmpDevice = PUMP;}
+      else{Serial.print("UNKOWN DEVICE");}
+
+      if(tmpDevice != NONE){ push_to_schedule(tmpDevice, byte(tmpInt[0]), tmpInt[1], tmpInt[2]); };
+
+      // COMMAND DONE
+      serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
+      Serial.print('@');                            // PRINT EOL
+      break;
+
 	// DEFAULT
     case NO_COMMAND:
       delay(2); // DELAY FOR SERIAL COMM
@@ -564,7 +617,7 @@ void Grow::printHelp()
   Serial.println("   TIMER_CLAIMED     ( index[0..NR_TIMER] )");
   Serial.println("   CLAIM_TIMER       ( index[0..NR_TIMER] )");
   Serial.println("   SET_TIMER         ( index[0..NR_TIMER], time[...s] )");
-  Serial.println("   DEVICE_TIMER      ( device[PUMP,LAMP], deviceID[0..x], value[0..255] )");
+  Serial.println("   DEVICE_TIMER      ( device[PUMP,LAMP], deviceID[0..x], time[...s] , value[0..255] )");
   Serial.println("");
   Serial.println(" - - - - - - - - - - - - - - - - - - ");
   Serial.println("D E V I C E    C O N N E C T I O N S");

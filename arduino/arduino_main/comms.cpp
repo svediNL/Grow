@@ -31,6 +31,7 @@ void Comms::message_handler(String inputString){
     else if (message.sCommand == "SET_TIMER"){ message.inputCommand = SET_TIMER; }
     else if (message.sCommand == "RESET_TIMER"){ message.inputCommand = RESET_TIMER; }
     else if (message.sCommand == "STOP_TIMER"){ message.inputCommand = STOP_TIMER; }
+    else if (message.sCommand == "DEVICE_TIMER"){ message.inputCommand = DEVICE_TIMER; }
     else if (message.sCommand == "H" || message.sCommand == "HELP"){ message.inputCommand = HELP; }
     else {message.inputCommand = -1;};
     //else if (message.sCommand == ""){ message.inputCommand = ; }
