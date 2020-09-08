@@ -15,7 +15,7 @@ NR_THERMO 		= len(NAMES_THERMO)		# NR OF THERMOCOUPLES	(CALCULATED)
 
 # LED DRIVER (PWM)					
 NAMES_LAMP 		= [ "LED_A" ]		# DISPLAY NAME OF LAMP UNITS ->	example: NAMES_LAMP = ["my RGBW Lamp", "my Simple Lamp"]													
-CHANNELS_LAMP	= [ ['W'] ]			# RGBW CHANNELS FOR EACH LAMP MODULE ->	2D-array [lamp, channel] ->	example: CHANNELS_LAMP = [ ['R','G','B','W'] , ['W'] ]		
+CHANNELS_LAMP	= [ ['R','G','B','W'] ]			# RGBW CHANNELS FOR EACH LAMP MODULE ->	2D-array [lamp, channel] ->	example: CHANNELS_LAMP = [ ['R','G','B','W'] , ['W'] ]		
 UNIT_LAMP	= "[-]"								# MEASURED UNITS OF LAMP			
 NR_LAMP 		= len(NAMES_LAMP)	# NR OF CONTROLABLE LAMPS	(CALCULATED)
 
