@@ -27,7 +27,7 @@ void DigitalOutput::help(){
   Serial.print("\n\r");
 }
 
-void RGBWLed::init(String devName, int pinR = -1, int pinG= -1, int pinB= -1, int pinW= -1){
+void RGBWLed::init(String devName, int pinR, int pinG, int pinB, int pinW){
   pinRGBW[0] = pinR;
   pinRGBW[1] = pinG;
   pinRGBW[2] = pinB;
@@ -78,7 +78,7 @@ int RGBWLed::getStatus(){
   else { return 0; }
 }
 
-void MotorDriver::init(byte dir, byte power, String devName= ""){
+void MotorDriver::init(byte dir, byte power, String devName){
   
   deviceName = devName;
   hBridge.pinDir = dir;

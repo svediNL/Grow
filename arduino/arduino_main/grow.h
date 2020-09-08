@@ -7,11 +7,14 @@
 #include "comms.h"
 #include "timekeeping.h"
 
+// !!! WARNING - DO NOT USE PINS 9 & 10 FOR PWM, AS THIS WILL FUCK UP THE TIMER !!!
+
+
 // ENABLE/DISABLE DEVICES
 
 // PWM DIMMABLE LAMP CONFIGURATION
 const int     NR_LAMP                     = 1;                // NUMBER OF LAMPS TO BE CONFIGURED
-const int     LAMP_RGBW_PIN [NR_LAMP][4]  = { {11,10,9,8} };  // 2D ARRAY OF PWM PINS
+const int     LAMP_RGBW_PIN [NR_LAMP][4]  = { {-1,-1,-1,8} };  // 2D ARRAY OF PWM PINS
 const String  LAMP_NAME     [NR_LAMP]     = {"RGBW LED PWM output"};
 
 // CONFIGURE DOOR SWITCH TO DIM LIGHT WHEN DOOR OPENS
