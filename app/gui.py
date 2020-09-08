@@ -298,9 +298,8 @@ class App( Frame ):
         self.serial_entry_string.set( tmp_string )
         self.serial_var_string.set("")
         
-
     def read_serial_string(self):
-        tmp_string = "< "+self.arduino.readCommand(self.serial_var_string.get())
+        tmp_string = "< " #+self.arduino.readString(self.serial_var_string.get())
         self.serial_entry_string.set(tmp_string)
         self.serial_var_string.set("")
         
@@ -560,7 +559,7 @@ class App( Frame ):
         self.dicoFrame.grid_rowconfigure(0,weight=1)
         self.dicoFrame.grid_rowconfigure(1,weight=3)
 
-#   L I V E   S T A T U S   F R A M E
+    #   - L I V E   S T A T U S   F R A M E
         # ADD LIVE STATUS FRAME TO DICO FRAME
         self.live_frame = Frame( self.dicoFrame, 
                                  bd=1, 
@@ -686,8 +685,7 @@ class App( Frame ):
                                             fg = FG_TEXT )
         self.live_bottom_padding.grid(column = 0, row = row_nr, columnspan = 2, sticky = N+S+W)
 
-
-    # D I C O   N O T E B O O K
+    #   - M A I N    D I C O   N O T E B O O K   F R A M E
         self.dicoFrame_notebook_frame = Frame( self.dicoFrame, 
                                             bg = BG_MAIN)
         self.dicoFrame_notebook_frame.grid(column = 0, row=1, sticky=N+S+E+W)
@@ -698,7 +696,7 @@ class App( Frame ):
         self.dicoFrame_notebook = ttk.Notebook(self.dicoFrame_notebook_frame) #, width = 300)
         self.dicoFrame_notebook.grid(column = 0, row=0, sticky=N+S+E+W)
 
-    #   S E R I A L  F R A M E   DICONB
+    #   - S E R I A L  F R A M E     DICONB
         # CREATE SERIAL FRAME IN DICO FRAME
         self.serial_frame = Frame(  self.dicoFrame_notebook, 
                                     bd      = 1, 
@@ -820,9 +818,7 @@ class App( Frame ):
                                             command = self.write_serial_string)
         self.serial_button_write.grid(column = 1, row=3, sticky=N+S+E+W)
 
-
-    
-    #   D E V I C E  C O N T R O L  F R A M E    DICONB
+    #   - D E V I C E  C O N T R O L   F R A M E    DICONB
         # ADD DEVICE CONTROL TO DICOFRAME
         self.devco_frame = Frame( self.dicoFrame_notebook, 
                                   bd=1, 
@@ -842,11 +838,11 @@ class App( Frame ):
                                   fg = FG_TEXT )
         self.devco_label.grid(column = 0, row=0, sticky=N+S+W)
 
-        # DEVICE CONTROL NOTEBOOL
+    #   - D E V I C E  C O N T R O L   N O T E B O O K    DICONB
         self.devco_notebook = ttk.Notebook(self.devco_frame) #, width = 300
         self.devco_notebook.grid(column = 0, row=1, sticky=N+S+E+W)
 
-    #   DEVCO NOTBOOK _ LAMP CONTROL
+    #   -    L A M P   F R A M E    DEVCONB DICONB
         self.devco_lamp_frame = Frame(  self.devco_notebook, 
                                         bd=1, 
                                         relief = SUNKEN, 
@@ -1068,7 +1064,7 @@ class App( Frame ):
                                                       highlightbackground = BG_MAIN)
         self.devco_daylight_brightness_value.grid(column = 4, row = 6)
 
-    #   DEVCO NOTBOOK _ HYDROLICS
+    #   -    H Y D R O L I C S   F R A M E    DEVCONB DICONB
         self.devco_hydro_frame = Frame( self.devco_notebook, 
                                         bg = BG_SUB)
         self.devco_hydro_frame.grid_columnconfigure(0, weight =1)
@@ -1134,7 +1130,7 @@ class App( Frame ):
                                              bg = BG_SUB, fg=FG_TEXT, selectcolor = BG_CHECK) )
         self.devco_flow[NR_FLOW].grid(column = 0, row = (4+NR_FLOW), columnspan = 4, sticky=S+W+N)
 
-    #   DEVCO NOTBOOK _ RELAY CONTROL
+    #   -    R E L A Y  F R A M E    DEVCONB DICONB
         self.devco_relay_frame = Frame( self.devco_notebook, 
                                         bg = BG_SUB)
         self.devco_relay_frame.grid_columnconfigure(0, weight =1)
@@ -1165,7 +1161,7 @@ class App( Frame ):
             self.plotFrame.configure(bg='orange')
             self.dicoFrame.configure(bg='magenta')
 
-    #   S C H E D U L E    F R A M E   DICONB 
+    #   - S C H E D U L E    F R A M E   DICONB 
         self.schedule_frame = Frame(  self.dicoFrame_notebook, 
                                     bd      = 1, 
                                     bg      = BG_MAIN, 
@@ -1181,12 +1177,12 @@ class App( Frame ):
 
  
 
-    #   PACK SELF
+#   PACK SELF
         self.grid_columnconfigure(0, weight =1)
         self.grid_rowconfigure(0, weight =1)
         self.pack(fill = BOTH, expand = True)
 
-#   DAYLIGHT SEQUENCE
+# DAYLIGHT SEQUENCE
     def daylight_sequence(self):
         eptime = time.time()
         struct_time = time.localtime(eptime)
@@ -1751,7 +1747,8 @@ def program():
     global valM, valH, valH1, valP, valL
     global valMneat,valHneat, valH1neat, valPneat, valLneat
     global cycle_counter, plot_index, plot_index_prev
-
+    global app
+    
     my_time_list = get_time_list()
 
     if DEBUG_MODE:
