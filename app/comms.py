@@ -55,16 +55,15 @@ class SlaveComm:
 
 
     def writeString(self, output_string):
-        tmp = output_string + "\n"
-        print("> " + tmp)
-
+        tmp = output_string + b'\n'
         if not self.assumed_connection_status:
             self.openConnection()
         
         if self.assumed_connection_status:
+            print("> " + tmp)
             
             try:
-                self.sio.write(unicode(tmp))
+                self.sio.write(str(tmp))
                 self.sio.flush()
                 
             except serial.serialutil.SerialException:
