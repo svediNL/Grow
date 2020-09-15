@@ -61,7 +61,7 @@ class SlaveComm:
         
         if self.assumed_connection_status:
             print("> " + tmp)
-            
+
             try:
                 self.sio.write(str(tmp))
                 self.sio.flush()
@@ -113,7 +113,7 @@ class SlaveComm:
         self.devices = []
         for n in range(len(self.portscan)):
             self.devices.append(self.portscan[n].device)
-        print(self.devices)
+        print("> Available ports/devices:   ", self.devices)
 
     def get_ports(self):
         self.scan_ports();
@@ -126,6 +126,7 @@ class SlaveComm:
         self.sio = io.TextIOWrapper(    buffer = io.BufferedRWPair(self.ser, self.ser),newline = '\n')
         self.assumed_connection_status = False
         self.devices = []
+
         self.scan_ports()
         if serial_port != "":
             self.openConnection()
