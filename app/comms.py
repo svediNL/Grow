@@ -100,8 +100,10 @@ class SlaveComm:
                 print("timeout")
                 return "-1"
             else:
-                print("< " + str(tmp) )
-                return str(tmp)
+                tmp1 = str(tmp)
+                tmp1 = tmp1[2:-1]
+                print("< " + str(tmp1) )
+                return str(tmp1)
         else:
             return "-1"
 

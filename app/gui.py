@@ -138,18 +138,18 @@ class App( Frame ):
             self.pump_enable.append(False)
             self.pump_enable_prev.append(False)
             self.pump_pwm.append(0)
-            self.pump_state.append(StringVar())
+            self.pump_state.append(StringVar(master))
             self.pump_state[n].set("pump stopped...")
-            self.overrule_pump_interlock.append(IntVar())
+            self.overrule_pump_interlock.append(IntVar(master))
 
         # RELAY
         self.enable_relay=[]
         self.enable_relay_prev=[]
         for n in range(NR_RELAY):
-            self.enable_relay.append(IntVar())
+            self.enable_relay.append(IntVar(master))
             self.enable_relay_prev.append(self.enable_relay[n].get())
         
-        self.flow_state = IntVar()
+        self.flow_state = IntVar(master)
         self.flow_state.set(NR_FLOW)
 
         self.plot_select = IntVar(master) # add master because it is accessed externally
@@ -190,35 +190,35 @@ class App( Frame ):
         for n in range(NR_LAMP):
             self.lamp_enable.append(False)
             self.lamp_enable_prev.append(False)
-            self.lamp_state.append(StringVar())
+            self.lamp_state.append(StringVar(master))
             self.lamp_state[n].set("LAMP DISABLED")
 
             tmp0 = []
             tmp1 =[]
             for m in range(len(CHANNELS_LAMP[n])):
-                tmp0.append(IntVar())
+                tmp0.append(IntVar(master))
                 tmp1.append(0)
             self.lamp_output.append(tmp0)
             self.lamp_output_prev.append(tmp1)
 
         self.moisture_var = []
         for n in range(NR_MOISTURE):
-            self.moisture_var.append(StringVar())
+            self.moisture_var.append(StringVar(master))
 
         self.temperature_var = []
         for n in range(NR_THERMO):
-            self.temperature_var.append(StringVar())
+            self.temperature_var.append(StringVar(master))
 
         # DAYLIGHT SEQUENCE VARIABLES
-        self.enable_daylight = IntVar()
-        self.daylight_status = StringVar()
-        self.daylight_brightness = StringVar()
-        self.daylight_tv_start_hour = StringVar()
-        self.daylight_tv_start_min = StringVar()
-        self.daylight_tv_end_hour = StringVar()
-        self.daylight_tv_end_min = StringVar()
-        self.daylight_tv_ramp_hour = StringVar()
-        self.daylight_tv_ramp_min = StringVar()
+        self.enable_daylight = IntVar(maste)
+        self.daylight_status = StringVar(master)
+        self.daylight_brightness = StringVar(master)
+        self.daylight_tv_start_hour = StringVar(master)
+        self.daylight_tv_start_min = StringVar(master)
+        self.daylight_tv_end_hour = StringVar(master)
+        self.daylight_tv_end_min = StringVar(master)
+        self.daylight_tv_ramp_hour = StringVar(master)
+        self.daylight_tv_ramp_min = StringVar(master)
 
         # SET DAYLIGHT VARIABLES
         self.daylight_status.set("Daylight disabled")
@@ -235,14 +235,14 @@ class App( Frame ):
         self.daybool = False
         self.nightbool = False
 
-        self.str_time = StringVar()
+        self.str_time = StringVar(master)
         self.str_time.set(".....")
 
         # SERIAL VARIABLES
-        self.serial_var_string = StringVar()
-        self.serial_connection_string = StringVar()
-        self.serial_entry_string = StringVar()
-        self.serial_var_port = StringVar()
+        self.serial_var_string = StringVar(master)
+        self.serial_connection_string = StringVar(master)
+        self.serial_entry_string = StringVar(master)
+        self.serial_var_port = StringVar(master)
         self.serial_var_port.set(SERIAL_PORT)
 
         self.arduino = SlaveComm(SERIAL_PORT, BAUD_RATE)
@@ -351,10 +351,11 @@ class App( Frame ):
         # CYLCLE TRHOUGH OUTPUT CHANNELS
         for n in range(len(self.lamp_output)):
             for m in range(len(self.lamp_output[n])):
+                print(self.lamp_output[n][m].get())
                 if self.lamp_output[n][m].get() != self.lamp_output_prev[n][m]:
                     # OUTPUT CHANNEL HAS CHANGED
                     self.lamp_output_prev[n][m] = self.lamp_output[n][m].get()
-                    self.arduino.writeCommand("SET_LAMP", [str(n),str(CHANNELS_LAMP[n][m]), str(int(float(value)))])
+                    self.arduino.writeCommand("SET_LAMP", [str(n),str(CHANNELS_LAMP[n][m]), str(int(float(value))), str(int(self.lamp_enable[n]))])
 
     def update_daylight_params(self):
         try:
@@ -1817,6 +1818,7 @@ def program():
 #   UPDATE PLOT ON TAB CHANGE
 
     PLOT_WINDOW = app.get_plot()
+    print(PLOT_WINDOW)
     if PLOT_WINDOW != plot_index_prev:
         print(" - TAB CHANGED - ")
         update_plot()
