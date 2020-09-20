@@ -535,11 +535,7 @@ class App( Frame ):
 
 #   PLOT FUNCTIONS
     def get_plot(self):
-        print(self.plot_select.get()) 
         return self.plot_select.get()
-
-    def set_plot(self):     
-        print(self.plot_select.get()) 
 
 #   BUILD GUI
     def create_widgets(self):
@@ -639,7 +635,6 @@ class App( Frame ):
                                                  text= PLOT_NAMES[n], 
                                                  value = n, 
                                                  variable = self.plot_select, 
-                                                 command = self.set_plot,
                                                  bg = BG_SUB, 
                                                  fg=FG_TEXT,
                                                  selectcolor = BG_CHECK) )    
@@ -854,9 +849,9 @@ class App( Frame ):
         self.serial_connectionFrame.grid_rowconfigure(0,weight=1)
         self.serial_connectionFrame.grid_rowconfigure(1,weight=0)
         self.serial_connectionFrame.grid_rowconfigure(2,weight=0)
-        self.serial_connectionFrame.grid_rowconfigure(3,weight=1)
+        self.serial_connectionFrame.grid_rowconfigure(3,weight=0)
         self.serial_connectionFrame.grid_rowconfigure(4,weight=1)
-        self.serial_connectionFrame.grid_rowconfigure(5,weight=2)
+        self.serial_connectionFrame.grid_rowconfigure(5,weight=8)
         self.serial_notebook.add(self.serial_connectionFrame, text = 'connect')
         
         # ADD COMBOBOX
@@ -874,23 +869,26 @@ class App( Frame ):
                                         fg                  = FG_ENTRY )
         self.serial_entry_port.grid(column = 0, row=2, columnspan = 2, sticky=N+S+E+W)
 
+        # ADD OPEN CONNECTION BUTTON TO CONNECTION FRAME
+        self.serial_button_open= Button(    self.serial_connectionFrame, 
+                                            text    = "open", 
+                                            command = self.open_serial_connection)
+        self.serial_button_open.grid(column = 0, row =3, sticky=N+S+E+W)
+
+        self.serial_button_close = Button(  self.serial_connectionFrame,
+                                            text    = "close", 
+                                            command = self.close_serial_connection)
+        self.serial_button_close.grid(column = 1, row=3, sticky=N+S+E+W)
+
+
         # ADD LABEL FOR STATUS TO CONNECTION FRAME
         self.serial_label_status = Label(   self.serial_connectionFrame, 
                                             textvariable = self.serial_connection_string, 
                                             bg           = BG_SUB, 
                                             fg           = FG_TEXT)
-        self.serial_label_status.grid(column = 0, row=3, columnspan = 2, sticky=N+S+E+W)
+        self.serial_label_status.grid(column = 0, row=4, columnspan = 2, sticky=N+S+E+W)
 
-        # ADD OPEN CONNECTION BUTTON TO CONNECTION FRAME
-        self.serial_button_open= Button(    self.serial_connectionFrame, 
-                                            text    = "open", 
-                                            command = self.open_serial_connection)
-        self.serial_button_open.grid(column = 0, row =4, sticky=N+S+E+W)
 
-        self.serial_button_close = Button(  self.serial_connectionFrame,
-                                            text    = "close", 
-                                            command = self.close_serial_connection)
-        self.serial_button_close.grid(column = 1, row=4, sticky=N+S+E+W)
 
 
         self.postcom_port_list()    # call post command to have initial value in list
@@ -902,9 +900,9 @@ class App( Frame ):
         self.serial_interfaceFrame.grid_columnconfigure(1,weight=1)
         self.serial_interfaceFrame.grid_rowconfigure(0,weight=1)
         self.serial_interfaceFrame.grid_rowconfigure(1,weight=0)
-        self.serial_interfaceFrame.grid_rowconfigure(2,weight=1)
+        self.serial_interfaceFrame.grid_rowconfigure(2,weight=0)
         self.serial_interfaceFrame.grid_rowconfigure(3,weight=1)
-        self.serial_interfaceFrame.grid_rowconfigure(4,weight=2)
+        self.serial_interfaceFrame.grid_rowconfigure(4,weight=8)
 
         self.serial_entry_command = Entry(  self.serial_interfaceFrame, 
                                             textvariable        = self.serial_var_string,  
@@ -915,21 +913,23 @@ class App( Frame ):
         self.serial_entry_command.grid(column = 0, row=1, columnspan = 2, sticky=N+S+E+W)
 
         # ADD LABEL FOR STATUS TO CONNECTION FRAME
-        self.serial_entry_label = Label(    self.serial_interfaceFrame, 
-                                            textvariable = self.serial_entry_string, 
-                                            bg           = BG_SUB, 
-                                            fg           = FG_TEXT)
-        self.serial_entry_label.grid(column = 0, row=2, columnspan = 2, sticky=N+S+E+W)
-
         self.serial_button_read= Button(    self.serial_interfaceFrame, 
                                             text    = "read", 
                                             command = self.read_serial_string)
-        self.serial_button_read.grid(column = 0, row=3, sticky=N+S+E+W)
+        self.serial_button_read.grid(column = 0, row=2, sticky=N+S+E+W)
 
         self.serial_button_write= Button(   self.serial_interfaceFrame, 
                                             text    = "write", 
                                             command = self.write_serial_string)
-        self.serial_button_write.grid(column = 1, row=3, sticky=N+S+E+W)
+        self.serial_button_write.grid(column = 1, row=2, sticky=N+S+E+W)
+
+        self.serial_entry_label = Label(    self.serial_interfaceFrame, 
+                                            textvariable = self.serial_entry_string, 
+                                            bg           = BG_SUB, 
+                                            fg           = FG_TEXT)
+        self.serial_entry_label.grid(column = 0, row=3, columnspan = 2, sticky=N+S+E+W)
+
+
 
     #   - D E V I C E  C O N T R O L   F R A M E    DICONB
         # ADD DEVICE CONTROL TO DICOFRAME
@@ -1181,39 +1181,52 @@ class App( Frame ):
         self.devco_hydro_frame = Frame( self.devco_notebook, 
                                         bg = BG_SUB)
         self.devco_hydro_frame.grid_columnconfigure(0, weight =1)
-        self.devco_hydro_frame.grid_columnconfigure(1, weight =1)
-        self.devco_hydro_frame.grid_columnconfigure(2, weight =1)
-        self.devco_hydro_frame.grid_columnconfigure(3, weight =1)
+        self.devco_hydro_frame.grid_rowconfigure(0, weight =0)
+        self.devco_hydro_frame.grid_rowconfigure(1, weight =1)
         self.devco_notebook.add(self.devco_hydro_frame, text = 'HYDROLICS', sticky=N+S+E+W)
 
+
+        # PUMP FRAME 
+        self.devco_hydro_pump_frame = Frame( self.devco_hydro_frame, 
+                                        bg = BG_SUB)
+        self.devco_hydro_pump_frame.grid(column = 0, row = 0, sticky=S+W+N+E)   
+
+        self.devco_hydro_pump_frame.grid_columnconfigure(0, weight =1)
+        self.devco_hydro_pump_frame.grid_columnconfigure(1, weight =1)
+        self.devco_hydro_pump_frame.grid_rowconfigure(0, weight =0)
+        self.devco_hydro_pump_frame.grid_rowconfigure(1, weight =0)
+        self.devco_hydro_pump_frame.grid_rowconfigure(2, weight =0)
+        self.devco_hydro_pump_frame.grid_rowconfigure(3, weight =0)
+
+
         # PUMP RUNNING FB
-        self.devco_label_pumpRunning = Label( self.devco_hydro_frame, 
+        self.devco_label_pumpRunning = Label( self.devco_hydro_pump_frame, 
                                               textvariable = self.pump_state[0], 
                                               bg = BG_SUB, 
                                               fg = FG_TEXT)
-        self.devco_label_pumpRunning.grid(column = 0, row = 0, columnspan = 4, sticky=S+W+N+E)
+        self.devco_label_pumpRunning.grid(column = 0, row = 0, columnspan = 2, sticky=S+W+N+E)
 
         # PUMP SLIDER
-        self.devco_slider_pumpValue = Scale( self.devco_hydro_frame, 
+        self.devco_slider_pumpValue = Scale( self.devco_hydro_pump_frame, 
                                              orient = HORIZONTAL, 
                                              command = self.update_pump, 
                                              to = 255, 
                                              bg = BG_SUB, 
                                              fg=FG_TEXT)
-        self.devco_slider_pumpValue.grid(column = 0, row = 1, columnspan = 4, sticky=S+W+N+E)
+        self.devco_slider_pumpValue.grid(column = 0, row = 1, columnspan = 2, sticky=S+W+N+E)
 
         # TOGGLE PUMP STATE
-        self.devco_button_pumpEnable = Button(  self.devco_hydro_frame, 
+        self.devco_button_pumpEnable = Button(  self.devco_hydro_pump_frame, 
                                                 command = self.set_pumpEnable, 
                                                 text = "Enable pump")
-        self.devco_button_pumpEnable.grid(column = 0, row = 2, columnspan = 2, sticky=S+W+N+E)
+        self.devco_button_pumpEnable.grid(column = 0, row = 2, sticky=S+W+N+E)
 
-        self.devco_button_pumpDisable = Button( self.devco_hydro_frame, 
+        self.devco_button_pumpDisable = Button( self.devco_hydro_pump_frame, 
                                                 command = self.set_pumpDisable, 
                                                 text = "Disable pump")
-        self.devco_button_pumpDisable.grid(column = 2, row = 2, columnspan = 2, sticky=S+W+N+E)
+        self.devco_button_pumpDisable.grid(column = 1, row = 2, sticky=S+W+N+E)
 
-        self.devco_check_overrule_pump = Checkbutton( self.devco_hydro_frame, 
+        self.devco_check_overrule_pump = Checkbutton( self.devco_hydro_pump_frame, 
                                                       variable = self.overrule_pump_interlock[0], 
                                                       onvalue= 1, 
                                                       offvalue=0, 
@@ -1222,11 +1235,20 @@ class App( Frame ):
                                                       bg = BG_SUB, 
                                                       fg=FG_TEXT,
                                                       selectcolor = BG_CHECK)
-        self.devco_check_overrule_pump.grid(column = 0, row = 3, columnspan = 4, sticky=S+W+N+E)
+        self.devco_check_overrule_pump.grid(column = 0, row = 3, columnspan = 2, sticky=S+W+N+E)
 
+
+        # FLOW FRAME 
+        self.devco_hydro_flow_frame = Frame( self.devco_hydro_frame, 
+                                        bg = BG_SUB)
+        self.devco_hydro_flow_frame.grid(column = 0, row = 1, sticky=S+W+N+E)
+
+        self.devco_hydro_flow_frame.grid_columnconfigure(0, weight =1)
         self.devco_flow=[]
         for n in range(NR_FLOW):
-            self.devco_flow.append( Radiobutton( self.devco_hydro_frame, 
+            self.devco_hydro_flow_frame.grid_rowconfigure(n, weight =1)
+
+            self.devco_flow.append( Radiobutton( self.devco_hydro_flow_frame, 
                                                  text= NAMES_FLOW[n], 
                                                  value = n, 
                                                  variable = self.flow_state, 
@@ -1234,26 +1256,27 @@ class App( Frame ):
                                                  bg = BG_SUB, 
                                                  fg=FG_TEXT,
                                                  selectcolor = BG_CHECK) )
-            self.devco_flow[n].grid(column = 0, row = (4+n), columnspan = 4, sticky=S+W+N)
-        self.devco_flow.append( Radiobutton( self.devco_hydro_frame, 
+            self.devco_flow[n].grid(column = 0, row = n, sticky=S+W+N+E)
+
+        self.devco_hydro_flow_frame.grid_rowconfigure(NR_FLOW, weight =1)
+        self.devco_flow.append( Radiobutton( self.devco_hydro_flow_frame, 
                                              text= "DISABLED", 
                                              value = NR_FLOW, 
                                              variable = self.flow_state, 
                                              command = self.set_flow_circuit, 
                                              bg = BG_SUB, fg=FG_TEXT, selectcolor = BG_CHECK) )
-        self.devco_flow[NR_FLOW].grid(column = 0, row = (4+NR_FLOW), columnspan = 4, sticky=S+W+N)
+        self.devco_flow[NR_FLOW].grid(column = 0, row = (NR_FLOW), sticky=S+W+N+E)
 
     #   -    R E L A Y  F R A M E    DEVCONB DICONB
         self.devco_relay_frame = Frame( self.devco_notebook, 
                                         bg = BG_SUB)
-        self.devco_relay_frame.grid_columnconfigure(0, weight =1)
-        self.devco_relay_frame.grid_columnconfigure(1, weight =1)
-        self.devco_relay_frame.grid_columnconfigure(2, weight =1)
-        self.devco_relay_frame.grid_columnconfigure(3, weight =1)
         self.devco_notebook.add(self.devco_relay_frame, text = 'RELAYS', sticky=N+S+E+W)
 
+        self.devco_relay_frame.grid_columnconfigure(0, weight =1)
         self.devco_relay = []
         for n in range(NR_RELAY):
+            self.devco_relay_frame.grid_rowconfigure(n, weight =1)
+
             self.devco_relay.append( Checkbutton( self.devco_relay_frame, 
                                                   text= NAMES_RELAY[n], 
                                                   variable = self.enable_relay[n], 
@@ -1263,7 +1286,7 @@ class App( Frame ):
                                                   bg = BG_SUB, 
                                                   fg=FG_TEXT,
                                                   selectcolor = BG_CHECK) )
-            self.devco_relay[n].grid(column = 0, row = n, columnspan = 4, sticky=S+W+N)
+            self.devco_relay[n].grid(column = 0, row = n, columnspan = 4, sticky=S+W+N+E)
 
         # SET BACKGROUND CLOUR
         if DEBUG_MODE:
@@ -1794,7 +1817,6 @@ def program():
 #   UPDATE PLOT ON TAB CHANGE
 
     PLOT_WINDOW = app.get_plot()
-    print(PLOT_WINDOW)
     if PLOT_WINDOW != plot_index_prev:
         print(" - TAB CHANGED - ")
         update_plot()

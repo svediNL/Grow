@@ -55,7 +55,7 @@ class SlaveComm:
 
 
     def writeString(self, output_string):
-        tmp = output_string + b'\n'
+        tmp = output_string + "\n"
         if not self.assumed_connection_status:
             self.openConnection()
         
