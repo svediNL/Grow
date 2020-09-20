@@ -39,6 +39,8 @@ import os.path
 print("> import time, maaan")
 import time
 
+import warnings
+
 FIRST_SCAN = True
 PLOT_WINDOW = 0
 
@@ -210,7 +212,7 @@ class App( Frame ):
             self.temperature_var.append(StringVar(master))
 
         # DAYLIGHT SEQUENCE VARIABLES
-        self.enable_daylight = IntVar(maste)
+        self.enable_daylight = IntVar(master)
         self.daylight_status = StringVar(master)
         self.daylight_brightness = StringVar(master)
         self.daylight_tv_start_hour = StringVar(master)
@@ -1321,6 +1323,14 @@ class App( Frame ):
 #  DEFINE MATPLOT FUIGURE
 f, ax = pp.subplots(nrows = 4, ncols = 1)
 f.set_tight_layout(True)
+pp.tight_layout()
+
+
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    f.tight_layout()
+warnings.filterwarnings("ignore",lineno=746, module="tkinter")
+warnings.filterwarnings("ignore", category= UserWarning)
 
 def update_plot():
     global BUFF_FILL, FIRST_SCAN, PLOT_WINDOW
@@ -1348,14 +1358,19 @@ def update_plot_all():
     ax[2].clear()
     ax[3].clear()
 
-    f.set_tight_layout(True)
+    ax[0].set_visible(True)
+    ax[1].set_visible(True)
+    ax[2].set_visible(True)
+    ax[3].set_visible(True)
+
+    ax[0].set_position([0.125, 0.81, 0.85, 0.17])
+    ax[1].set_position([0.125, 0.59, 0.85, 0.17])
+    ax[2].set_position([0.125, 0.37, 0.85, 0.17])
+    ax[3].set_position([0.125, 0.15, 0.85, 0.17])
 
     #   F - UPDATE TEMOERATURE PLOT
     hy_min = min(min(valHneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]), min(valH1neat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN])) - 1
     hy_max = max(max(valHneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]), max(valH1neat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN])) + 1
-
-    ax[0].plot( valHneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valHneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color='g' )
-    ax[0].plot( valH1neat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valH1neat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color='b' )
 
     # SET X TICK TIME LABEL
     if BUFF_FILL > 1:
@@ -1370,7 +1385,6 @@ def update_plot_all():
     hy_min = min(valLneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1
     hy_max = max(valLneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1
 
-    ax[1].plot( valLneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valLneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
 
     # ax[1].set_ylim([ hy_min, hy_max ])
     ax[1].set_ylim(DEFAULT_RANGE_LAMP)
@@ -1387,7 +1401,6 @@ def update_plot_all():
     hy_min = min(valMneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1
     hy_max = max(valMneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1
 
-    ax[2].plot( valMneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valMneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
 
     ax[2].set_ylim([ hy_min, hy_max ])
     ax[2].set_ylabel("Moisture [%]")
@@ -1403,7 +1416,6 @@ def update_plot_all():
     hy_min = min(valPneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1
     hy_max = max(valPneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1
     
-    ax[3].plot( valPneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valPneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
 
     ax[3].set_ylim([ hy_min, hy_max ])
     ax[3].set_ylabel("PUMP")
@@ -1415,7 +1427,17 @@ def update_plot_all():
         ax[3].set_xticks(my_tick_list)
         ax[3].set_xticklabels(my_label_list, rotation =45)
 
-    ax[3].set_xlabel("time [min]")
+    #ax[3].set_xlabel("time [min]")
+
+    f.set_tight_layout(True)    
+    pp.tight_layout()
+
+    ax[0].plot( valHneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valHneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color='g' )
+    ax[0].plot( valH1neat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valH1neat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color='b' )
+    ax[1].plot( valLneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valLneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
+    ax[2].plot( valMneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valMneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
+    ax[3].plot( valPneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valPneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
+
 
 def update_plot_light_temp():
     global BUFF_FILL, FIRST_SCAN    
@@ -1437,19 +1459,14 @@ def update_plot_light_temp():
     ax[2].set_visible(False)
     ax[3].set_visible(False)
 
-    f.set_tight_layout(True)
-
-    ax[0].set_position([0.125, 0.375, 0.85, 0.6])
-    ax[1].set_position([0.125, 0.15, 0.85, 0.2])
+    ax[0].set_position([0.15, 0.375, 0.8, 0.6])
+    ax[1].set_position([0.15, 0.15, 0.8, 0.2])
     #ax[2].set_position([0.05, 0.05, 0.9, 0.3])
     #ax[3].set_position([0.05, 0.05, 0.9, 0.3])
 
     #   F - UPDATE TEMOERATURE PLOT
     hy_min = min(min(valHneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]), min(valH1neat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN])) - 1
     hy_max = max(max(valHneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]), max(valH1neat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN])) + 1
-
-    ax[0].plot( valHneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valHneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color='g' )
-    ax[0].plot( valH1neat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valH1neat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color='b' )
 
     # SET X TICK TIME LABEL
     if BUFF_FILL > 1:
@@ -1464,8 +1481,6 @@ def update_plot_light_temp():
     hy_min = min(valLneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1
     hy_max = max(valLneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1
 
-    ax[1].plot( valLneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valLneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
-
     # ax[1].set_ylim([ hy_min, hy_max ])
     ax[1].set_ylim(DEFAULT_RANGE_LAMP)
     ax[1].set_ylabel("LIGHT")   
@@ -1476,7 +1491,14 @@ def update_plot_light_temp():
     if BUFF_FILL > 1:
         ax[1].set_xticks(my_tick_list)
         ax[1].set_xticklabels(my_label_list, rotation =45)
-    ax[1].set_xlabel("time [min]")
+    #ax[1].set_xlabel("time [min]")
+
+    f.set_tight_layout(True)
+    pp.tight_layout()
+
+    ax[0].plot( valHneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valHneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color='g' )
+    ax[0].plot( valH1neat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valH1neat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color='b' )
+    ax[1].plot( valLneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valLneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
 
 def update_plot_pumping_water():
     global BUFF_FILL, FIRST_SCAN    
@@ -1498,8 +1520,6 @@ def update_plot_pumping_water():
     ax[2].set_visible(True)
     ax[3].set_visible(True)
 
-    f.set_tight_layout(True)
-
     #ax[0].set_position([0.125, 0.575, 0.85, 0.4])
     #ax[1].set_position([0.125, 0.15, 0.85, 0.4])
     ax[2].set_position([0.125, 0.375, 0.85, 0.6])
@@ -1508,8 +1528,6 @@ def update_plot_pumping_water():
     #   F - UPDATE MOUSTURE PLOT
     hy_min = min(valMneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1
     hy_max = max(valMneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1
-
-    ax[2].plot( valMneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valMneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
 
     ax[2].set_ylim([ hy_min, hy_max ])
     ax[2].set_ylabel("Moisture [%]")
@@ -1525,8 +1543,6 @@ def update_plot_pumping_water():
     hy_min = min(valPneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1
     hy_max = max(valPneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1
     
-    ax[3].plot( valPneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valPneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
-
     ax[3].set_ylim([ hy_min, hy_max ])
     ax[3].set_ylabel("PUMP")
 
@@ -1537,7 +1553,11 @@ def update_plot_pumping_water():
         ax[3].set_xticks(my_tick_list)
         ax[3].set_xticklabels(my_label_list, rotation =45)
 
-    ax[3].set_xlabel("time [min]")
+    #ax[3].set_xlabel("time [min]")
+    f.set_tight_layout(True)
+
+    ax[2].plot( valMneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valMneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
+    ax[3].plot( valPneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valPneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
 
 def animate(i):
 # PLOT VALUES
@@ -1619,7 +1639,7 @@ ax[1].grid(True)
 ax[2].grid(True)
 ax[3].grid(True)
 
-ax[3].set_xlabel("time [min]")
+#ax[3].set_xlabel("time [min]")
 
 ax[0].plot([0,1], [10,40])
 ax[1].plot([0,1], [0,255])
