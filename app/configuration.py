@@ -71,15 +71,17 @@ LOG_NAME	= 'myLog.csv'
 BG_MAIN			= "gray30"	#"gray93"
 BG_SUB 			= "gray33"	#"gray96"
 BG_SUBSUB 		= "white"	#"white"
-BG_TOG_A		= "gray44"	#"gray96"
-BG_TOG_B 		= "gray30"	#"gray93"
+BG_TOG_A		= BG_SUB	#"gray96"
+BG_TOG_B 		= "gray44"	#"gray93"
 BG_TAB 			= "gray44"	#"gray85"
-BG_TAB_ACTIVE 	= "gray33"	#"gray96"
+BG_TAB_ACTIVE 	= BG_SUB	#"gray96"
 BG_ENTRY		= "gray60"	#"white"
 BG_BUTTON		= "black"
 BG_CHECK		= "gray40"
+BG_SEL   = "gray77"
 
 FG_TEXT			= "white"	#"black"
+FG_TEXT2			= "black"
 FG_ENTRY		= "white"
 
 

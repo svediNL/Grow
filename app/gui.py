@@ -116,7 +116,10 @@ class App( Frame ):
                                  parent="default", 
                                  settings=  {   "TNotebook": { "configure": 
                                                                  { "tabmargins": [7, 13, 4, 0],
-                                                                   "background": BG_MAIN }    # direction: <, ^, >, v
+                                                                   "background": BG_MAIN,
+                                                                   "foreground": BG_MAIN,
+                                                                   "lightcolor": BG_MAIN,
+                                                                   "darkcolor": BG_MAIN }    # direction: <, ^, >, v
                                                              },
                                                 "TNotebook.Tab": { "configure": 
                                                                         { "padding": [5, 1], 
@@ -153,9 +156,10 @@ class App( Frame ):
         
         self.flow_state = IntVar(master)
         self.flow_state.set(NR_FLOW)
-
+        self.flow_state_prev = NR_FLOW
         self.plot_select = IntVar(master) # add master because it is accessed externally
-        # self.plot_select.set(NR_PLOT-1)
+        self.plot_select.set(0)
+        self.plot_select_prev = 0
 
         # FIND & ADD ALL RELAYS RELATED TO VALVE CIRCUIT
         self.flow_control_relays = []
@@ -502,6 +506,16 @@ class App( Frame ):
     # SET VALVES BASED ON SELECTED FLOW CIRCUIT
         self.reset_flow_circuit()
 
+        # SET & RESET SELECTION COLOUR
+        self.devco_flow[ self.flow_state.get() ]["bg"] = BG_SEL
+        self.devco_flow[ self.flow_state.get() ]["fg"] = FG_TEXT2
+        if self.flow_state_prev % 2 == 0:
+            self.devco_flow[ self.flow_state_prev ]["bg"] = BG_TOG_A
+            self.devco_flow[ self.flow_state.get() ]["fg"] = FG_TEXT
+        else:
+            self.devco_flow[ self.flow_state_prev ]["bg"] = BG_TOG_B
+            self.devco_flow[ self.flow_state.get() ]["fg"] = FG_TEXT
+
         # OPEN VALVES BASED ON SELECTED FLOW CIRCUIT
         if self.flow_state.get() == NR_FLOW:
         # DEFAULT = DO NOTHING
@@ -516,6 +530,7 @@ class App( Frame ):
         # WRITE/SET ACTUAL OUTPUT
         self.toggle_relay()
         self.toggle_pump_interlock()
+        self.flow_state_prev = self.flow_state.get()
 
     def reset_flow_circuit(self):
     # DEFAULT ALL VALVES TO CLOSED
@@ -536,9 +551,31 @@ class App( Frame ):
                 self.enable_relay_prev[n] = self.enable_relay[n].get()
                 self.arduino.writeCommand("SET_RELAY", [str(n), str(self.enable_relay[n].get())])
 
+                # SET & RESET SELECTION COLOUR
+                if self.enable_relay_prev[n] == 1:
+                    self.devco_relay[n]["bg"] = BG_SEL
+                    self.devco_relay[n]["fg"] = FG_TEXT2
+                else:
+                    if n % 2 == 0:
+                        self.devco_relay[n]["bg"] = BG_TOG_A
+                        self.devco_relay[n]["fg"] = FG_TEXT
+                    else:
+                        self.devco_relay[n]["bg"] = BG_TOG_B
+                        self.devco_relay[n]["fg"] = FG_TEXT
+
 #   PLOT FUNCTIONS
     def get_plot(self):
         return self.plot_select.get()
+
+    def plot_change(self):
+        # SET & RESET SELECTION COLOUR
+        self.plotbutton[ self.plot_select.get() ]["bg"] = BG_SEL
+        self.plotbutton[ self.plot_select.get() ]["fg"] = FG_TEXT2
+
+        self.plotbutton[ self.plot_select_prev ]["bg"] = BG_SUB
+        self.plotbutton[ self.plot_select_prev ]["fg"] = FG_TEXT
+
+        self.plot_select_prev = self.plot_select.get()
 
 #   BUILD GUI
     def create_widgets(self):
@@ -633,14 +670,15 @@ class App( Frame ):
         self.plotbutton = []
         for n in range(NR_PLOT):
             self.plotFrame_button.grid_columnconfigure(n, weight =1)
-            print("raddio_button"+str(n))
             self.plotbutton.append( Radiobutton( self.plotFrame_button, 
                                                  text= PLOT_NAMES[n], 
                                                  value = n, 
                                                  variable = self.plot_select, 
+                                                 command = self.plot_change,
                                                  bg = BG_SUB, 
                                                  fg=FG_TEXT,
-                                                 selectcolor = BG_CHECK) )    
+                                                 selectcolor = BG_CHECK,
+                                                 highlightbackground = BG_SUB) )    
             self.plotbutton[n].grid(column = n, row = 0, sticky= N+S+E+W)
         #self.plot_select.set(0)
 
@@ -675,7 +713,7 @@ class App( Frame ):
         self.live_frame = Frame( self.dicoFrame, 
                                  bd=1, 
                                  relief= SUNKEN, 
-                                 bg = BG_MAIN)
+                                 bg = BG_SUB)
         self.live_frame.grid_columnconfigure(0, weight =1)
         # self.live_frame.grid_columnconfigure(1, weight =1)
         self.live_frame.grid_rowconfigure(0, weight =1)
@@ -691,21 +729,21 @@ class App( Frame ):
         self.live_header_frame.grid_rowconfigure(0, weight =1)
 
         self.live_content_frame = Frame( self.live_frame, 
-                                         bg = BG_MAIN)
+                                         bg = BG_SUB)
         self.live_content_frame.grid(column = 0, row=1, sticky=N+S+E+W)
         self.live_content_frame.grid_columnconfigure(0, weight =1)
 
 
         self.live_label = Label( self.live_header_frame, 
                                  text = "~ L I V E   M O N I T O R", 
-                                 bg = BG_MAIN, 
+                                 bg = BG_SUB, 
                                  fg = FG_TEXT)
         self.live_label.grid(column = 0, row = 0, sticky = N+S+W)
 
         self.live_content_frame.grid_rowconfigure(0, weight =2)
         self.live_top_padding = Label(  self.live_content_frame, 
                                         text = "", 
-                                        bg = BG_MAIN, 
+                                        bg = BG_SUB, 
                                         fg = FG_TEXT)
         self.live_top_padding.grid(column = 0, row = 0, columnspan = 2, sticky = N+S+W)
 
@@ -792,7 +830,7 @@ class App( Frame ):
         row_nr = (self.color_index+1)
         self.live_content_frame.grid_rowconfigure(0, weight =2)
         self.live_bottom_padding = Label(   self.live_content_frame, 
-                                            text = "", bg = BG_MAIN, 
+                                            text = "", bg = BG_SUB, 
                                             fg = FG_TEXT )
         self.live_bottom_padding.grid(column = 0, row = row_nr, columnspan = 2, sticky = N+S+W)
 
@@ -965,7 +1003,9 @@ class App( Frame ):
                                         bg = BG_MAIN)
         self.devco_lamp_frame.grid_rowconfigure(0, weight =1)
         self.devco_lamp_frame.grid_rowconfigure(1, weight =1)
+
         self.devco_notebook.add(self.devco_lamp_frame, text = 'LIGHT', sticky=N+S+E+W)
+        
         self.devco_lamp_notebook = ttk.Notebook(self.devco_lamp_frame)
         self.devco_lamp_notebook.pack(side=TOP , fill = BOTH)
 
@@ -1027,6 +1067,7 @@ class App( Frame ):
                                     command = self.update_lamp, 
                                     to = 255, 
                                     bg = BG_SUB, 
+                                    highlightbackground = BG_SUB,
                                     fg = FG_TEXT) )
 
             self.devco_label_slider.append(tmp0)
@@ -1071,6 +1112,7 @@ class App( Frame ):
                                                   command = self.update_daylight_params, 
                                                   bg = BG_MAIN, 
                                                   fg = FG_TEXT,
+                                                  highlightbackground = BG_SUB,
                                                   selectcolor = BG_CHECK)
         self.devco_daylight_toggle.grid(column = 0, row = 1, columnspan = 5, sticky=S+W+N+E)
 
@@ -1191,7 +1233,9 @@ class App( Frame ):
 
         # PUMP FRAME 
         self.devco_hydro_pump_frame = Frame( self.devco_hydro_frame, 
-                                        bg = BG_SUB)
+                                        bg = BG_SUB,
+                                        bd = 2,
+                                        relief = SUNKEN )
         self.devco_hydro_pump_frame.grid(column = 0, row = 0, sticky=S+W+N+E)   
 
         self.devco_hydro_pump_frame.grid_columnconfigure(0, weight =1)
@@ -1215,6 +1259,7 @@ class App( Frame ):
                                              command = self.update_pump, 
                                              to = 255, 
                                              bg = BG_SUB, 
+                                             highlightbackground = BG_SUB,
                                              fg=FG_TEXT)
         self.devco_slider_pumpValue.grid(column = 0, row = 1, columnspan = 2, sticky=S+W+N+E)
 
@@ -1235,15 +1280,18 @@ class App( Frame ):
                                                       offvalue=0, 
                                                       command = self.toggle_pump_interlock,
                                                       text = "Overrule Pump Interlock", 
-                                                      bg = BG_SUB, 
+                                                      bg = BG_SUB,
+                                                      highlightbackground = BG_SUB,
                                                       fg=FG_TEXT,
-                                                      selectcolor = BG_CHECK)
+                                                      selectcolor = BG_CHECK,)
         self.devco_check_overrule_pump.grid(column = 0, row = 3, columnspan = 2, sticky=S+W+N+E)
 
 
         # FLOW FRAME 
         self.devco_hydro_flow_frame = Frame( self.devco_hydro_frame, 
-                                        bg = BG_SUB)
+                                        bg = BG_SUB,
+                                        bd = 2,
+                                        relief = SUNKEN)
         self.devco_hydro_flow_frame.grid(column = 0, row = 1, sticky=S+W+N+E)
 
         self.devco_hydro_flow_frame.grid_columnconfigure(0, weight =1)
@@ -1251,23 +1299,64 @@ class App( Frame ):
         for n in range(NR_FLOW):
             self.devco_hydro_flow_frame.grid_rowconfigure(n, weight =1)
 
-            self.devco_flow.append( Radiobutton( self.devco_hydro_flow_frame, 
-                                                 text= NAMES_FLOW[n], 
-                                                 value = n, 
-                                                 variable = self.flow_state, 
-                                                 command = self.set_flow_circuit, 
-                                                 bg = BG_SUB, 
-                                                 fg=FG_TEXT,
-                                                 selectcolor = BG_CHECK) )
+            # TOGGLE COLOURS
+            if n%2 == 0:
+                self.devco_flow.append( Radiobutton( self.devco_hydro_flow_frame, 
+                                                     text= NAMES_FLOW[n], 
+                                                     value = n, 
+                                                     variable = self.flow_state, 
+                                                     command = self.set_flow_circuit, 
+                                                     bg = BG_TOG_A, 
+                                                     fg=FG_TEXT,
+                                                     anchor = W,
+                                                     activeforeground = FG_TEXT2,
+                                                     activebackground = BG_SEL,
+                                                     highlightbackground = BG_TOG_A,
+                                                     selectcolor = BG_TOG_A) )
+            else:
+                self.devco_flow.append( Radiobutton( self.devco_hydro_flow_frame, 
+                                         text= NAMES_FLOW[n], 
+                                         value = n, 
+                                         variable = self.flow_state, 
+                                         command = self.set_flow_circuit, 
+                                         bg = BG_TOG_B, 
+                                         fg=FG_TEXT,
+                                         anchor = W,
+                                         activeforeground = FG_TEXT2,
+                                         activebackground = BG_SEL,
+                                         highlightbackground = BG_TOG_B,
+                                         selectcolor = BG_TOG_B) )
             self.devco_flow[n].grid(column = 0, row = n, sticky=S+W+N+E)
 
+
+        # ADD LAST RADIO
         self.devco_hydro_flow_frame.grid_rowconfigure(NR_FLOW, weight =1)
-        self.devco_flow.append( Radiobutton( self.devco_hydro_flow_frame, 
-                                             text= "DISABLED", 
-                                             value = NR_FLOW, 
-                                             variable = self.flow_state, 
-                                             command = self.set_flow_circuit, 
-                                             bg = BG_SUB, fg=FG_TEXT, selectcolor = BG_CHECK) )
+        if NR_FLOW%2 == 0:
+            self.devco_flow.append( Radiobutton( self.devco_hydro_flow_frame, 
+                                                 text= "DISABLED", 
+                                                 value = NR_FLOW, 
+                                                 variable = self.flow_state, 
+                                                 command = self.set_flow_circuit, 
+                                                 bg = BG_TOG_A,
+                                                 fg=FG_TEXT,
+                                                 anchor = W,
+                                                 activeforeground = FG_TEXT2,
+                                                 activebackground = BG_SEL,
+                                                 highlightbackground = BG_TOG_A,
+                                                 selectcolor = BG_TOG_A) )
+        else:
+            self.devco_flow.append( Radiobutton( self.devco_hydro_flow_frame, 
+                                         text= "DISABLED", 
+                                         value = NR_FLOW, 
+                                         variable = self.flow_state, 
+                                         command = self.set_flow_circuit, 
+                                         bg = BG_TOG_B,
+                                         fg=FG_TEXT,
+                                         anchor = W,
+                                         activeforeground = FG_TEXT2,
+                                         activebackground = BG_SEL,
+                                         highlightbackground = BG_TOG_B,
+                                         selectcolor = BG_TOG_B) )
         self.devco_flow[NR_FLOW].grid(column = 0, row = (NR_FLOW), sticky=S+W+N+E)
 
     #   -    R E L A Y  F R A M E    DEVCONB DICONB
@@ -1279,16 +1368,35 @@ class App( Frame ):
         self.devco_relay = []
         for n in range(NR_RELAY):
             self.devco_relay_frame.grid_rowconfigure(n, weight =1)
+            if n%2 == 0:
+                self.devco_relay.append( Checkbutton( self.devco_relay_frame, 
+                                      text= NAMES_RELAY[n], 
+                                      variable = self.enable_relay[n], 
+                                      onvalue= 1, 
+                                      offvalue=0, 
+                                      command = self.toggle_relay, 
+                                      bg = BG_TOG_A,
+                                      fg=FG_TEXT,
+                                      anchor = W,
+                                      activeforeground = FG_TEXT2,
+                                      activebackground = BG_SEL,
+                                      highlightbackground = BG_TOG_A,
+                                      selectcolor = BG_TOG_B) )
+            else:
+                self.devco_relay.append( Checkbutton( self.devco_relay_frame, 
+                                      text= NAMES_RELAY[n], 
+                                      variable = self.enable_relay[n], 
+                                      onvalue= 1, 
+                                      offvalue=0, 
+                                      command = self.toggle_relay, 
+                                      bg = BG_TOG_B,
+                                      fg=FG_TEXT,
+                                      anchor = W,
+                                      activeforeground = FG_TEXT2,
+                                      activebackground = BG_SEL,
+                                      highlightbackground = BG_TOG_B,
+                                      selectcolor = BG_TOG_B) )
 
-            self.devco_relay.append( Checkbutton( self.devco_relay_frame, 
-                                                  text= NAMES_RELAY[n], 
-                                                  variable = self.enable_relay[n], 
-                                                  onvalue= 1, 
-                                                  offvalue=0, 
-                                                  command = self.toggle_relay, 
-                                                  bg = BG_SUB, 
-                                                  fg=FG_TEXT,
-                                                  selectcolor = BG_CHECK) )
             self.devco_relay[n].grid(column = 0, row = n, columnspan = 4, sticky=S+W+N+E)
 
         # SET BACKGROUND CLOUR
@@ -1323,6 +1431,7 @@ class App( Frame ):
 #  DEFINE MATPLOT FUIGURE
 f, ax = pp.subplots(nrows = 4, ncols = 1)
 f.set_tight_layout(True)
+f.set_facecolor('#c4c4c4')
 pp.tight_layout()
 
 
@@ -1838,7 +1947,6 @@ def program():
 #   UPDATE PLOT ON TAB CHANGE
 
     PLOT_WINDOW = app.get_plot()
-    print(PLOT_WINDOW)
     if PLOT_WINDOW != plot_index_prev:
         print(" - TAB CHANGED - ")
         update_plot()
