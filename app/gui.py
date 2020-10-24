@@ -108,7 +108,7 @@ class App( Frame ):
 
 #   INIT
     def __init__(self, master=None):
-        Frame.__init__(self, master)
+
         print("> app _init_")
         self.style = ttk.Style()
         # https://www.tcl.tk/man/tcl/TkCmd/ttk_notebook.htm#M10
@@ -257,9 +257,28 @@ class App( Frame ):
         self.serial_combo_list = []
         self.serial_combo_sel = 0
 
+        self.schedule_devices     = ["NONE", "PUMP", "LAMP"]    # DEVICES THAT CAN BE USED FOR SCHEDULING
+        self.schedule_sel         = [0,0,0,0,0,0,0,0,0,0]                       # LIST OF CURRENT SELECTED DEVICE FOR COMBOBOX
+        self.schedule_sel_prev    = [0,0,0,0,0,0,0,0,0,0]                       # PREVIOUSLY SELECTED DEVICE (FOR DETECTING CHANGE)
+        self.schedule_sel_id      = [0,0,0,0,0,0,0,0,0,0]                       # LIST OF CURRENT SELECTED DEVICE FOR COMBOBOX
+        self.schedule_var_start   = []
+        self.schedule_var_ontime  = []
+        self.schedule_var_value   = []
+        for n in range(len(self.schedule_sel)):
+            self.schedule_var_start.append(StringVar(master))
+            self.schedule_var_start[n].set("00:00:00")
 
+            self.schedule_var_ontime.append(StringVar(master))
+            self.schedule_var_ontime[n].set("0")
+
+            self.schedule_var_value.append(StringVar(master))
+            self.schedule_var_value[n].set("0")
+
+        print("> app _init_   Frame._init_(self)")
+        Frame.__init__(self, master)
 
         # CREATE WIDGETS
+        print("> app _init_   createWidgets()")
         self.create_widgets()
 
         # GET/SET STATUS ON ARDUINO
@@ -282,6 +301,8 @@ class App( Frame ):
                     self.arduino.writeCommand("SET_LAMP", [str(i),str(CHANNELS_LAMP[i][j]), str(int(float( self.lamp_output[i][j].get() )))])
         else:
             self.serial_connection_string.set("Disconnected")
+
+        print(">app _init_   finished")
 
 #   SERIAL FUNCTIONS
     def open_serial_connection(self):
@@ -577,6 +598,39 @@ class App( Frame ):
 
         self.plot_select_prev = self.plot_select.get()
 
+#   SCHEDULE FUNCTIONS
+    def update_schedule_combo(self):
+        # CYCLE SCHEDULE DEVICES
+        for n in range(len(self.schedule_sel)):
+            # UPDATE SELECTIONS
+            self.schedule_sel[n] = self.schedule_combo_dev[n].current() 
+            #self.schedule_sel_id[n] = self.schedule_combo_id[n].current()
+
+            # BUILD ID LIST
+            tmp = []
+            if self.schedule_sel[n] <= 0:
+                tmp = [-1]
+            elif self.schedule_sel[n] == 1:
+                for m in range(NR_PUMP):
+                    tmp.append(m)
+            elif self.schedule_sel[n] == 2:
+                for m in range(NR_LAMP):
+                    tmp.append(m)
+            
+            # SET VALUES IN COMBO BOX
+            self.schedule_combo_id[n]['values'] = tmp
+            self.schedule_sel_prev[n] = self.schedule_sel[n]
+
+    def update_sched_combo_dev(self):
+        self.update_schedule_combo()
+
+
+    def update_sched_combo_id(self):
+        self.update_schedule_combo()
+
+        
+
+
 #   BUILD GUI
     def create_widgets(self):
     # M A I N   F R A M E
@@ -706,7 +760,8 @@ class App( Frame ):
         # GRID DIRECTO CONTROL FRAME
         self.dicoFrame.grid_columnconfigure(0,weight=1)
         self.dicoFrame.grid_rowconfigure(0,weight=1)
-        self.dicoFrame.grid_rowconfigure(1,weight=3)
+        self.dicoFrame.grid_rowconfigure(1,weight=1)
+        self.dicoFrame.grid_rowconfigure(2,weight=1)
 
     #   - L I V E   S T A T U S   F R A M E
         # ADD LIVE STATUS FRAME TO DICO FRAME
@@ -1409,18 +1464,107 @@ class App( Frame ):
             self.dicoFrame.configure(bg='magenta')
 
     #   - S C H E D U L E    F R A M E   DICONB 
+        # shedule main frame
         self.schedule_frame = Frame(  self.dicoFrame_notebook, 
                                     bd      = 1, 
                                     bg      = BG_MAIN, 
                                     relief  = SUNKEN)
         self.dicoFrame_notebook.add(self.schedule_frame, text = 'SCHEDULER')
-        #self.schedule_frame.grid(column = 0, row=0, sticky=N+S+E+W)
-        #self.schedule_frame.pack(side = TOP, fill = Y, expand = True)
-
-        # GRID SERIAL FRAME
         self.schedule_frame.grid_columnconfigure(0,weight=1)
-        self.schedule_frame.grid_rowconfigure(0,weight=0)
-        self.schedule_frame.grid_rowconfigure(1,weight=1)
+        self.schedule_frame.grid_columnconfigure(1,weight=1)
+        self.schedule_frame.grid_columnconfigure(2,weight=1)
+        self.schedule_frame.grid_columnconfigure(3,weight=1)
+        self.schedule_frame.grid_columnconfigure(4,weight=1)
+        self.schedule_frame.grid_rowconfigure(0,weight=1)
+
+        # ADD SCHEDULER ROWS
+        self.schedule_row_frame = []    # A FRAME FOR EACH ROW
+        self.schedule_combo_dev = []    # DEVICE COMBO BOX
+        self.schedule_combo_id = []     # DEVICE ID COMBOBOX
+        self.schedule_entry_start = []
+        self.schedule_entry_ontime = []
+        self.schedule_entry_value = []
+
+        # HEADER ROW
+        self.schedule_lbl0 = Label(  self.schedule_frame, 
+                            text    = "DEVICE", 
+                            bg      = BG_MAIN, 
+                            fg      = FG_TEXT, 
+                            bd      = 0)
+        self.schedule_lbl0.grid(column = 0, row=0, sticky=N+S+W+E)
+
+        self.schedule_lbl1 = Label(  self.schedule_frame, 
+                            text    = "ID", 
+                            bg      = BG_MAIN, 
+                            fg      = FG_TEXT, 
+                            bd      = 0)
+        self.schedule_lbl1.grid(column = 1, row=0, sticky=N+S+W+E)
+
+        self.schedule_lbl2 = Label(  self.schedule_frame, 
+                    text    = "START @", 
+                    bg      = BG_MAIN, 
+                    fg      = FG_TEXT, 
+                    bd      = 0)
+        self.schedule_lbl2.grid(column = 2, row=0, sticky=N+S+W+E)
+        self.schedule_lbl3 = Label(  self.schedule_frame, 
+                    text    = "ON TIME", 
+                    bg      = BG_MAIN, 
+                    fg      = FG_TEXT, 
+                    bd      = 0)
+        self.schedule_lbl3.grid(column = 3, row=0, sticky=N+S+W+E)
+        self.schedule_lbl4 = Label(  self.schedule_frame, 
+                    text    = "SP", 
+                    bg      = BG_MAIN, 
+                    fg      = FG_TEXT, 
+                    bd      = 0)
+        self.schedule_lbl4.grid(column = 4, row=0, sticky=N+S+W+E)
+
+        # INFILL ROWS
+        for n in range(len(self.schedule_sel)):
+            self.schedule_frame.grid_rowconfigure(n+1 ,weight=0)   
+            self.schedule_combo_dev.append(ttk.Combobox( self.schedule_frame,
+                                          values = self.schedule_devices,
+                                          postcommand = self.update_sched_combo_dev,
+                                          width = 6) )
+            self.schedule_combo_dev[n].grid(column = 0, row=n+1, sticky=N+S+E+W)
+            self.schedule_combo_dev[n].current(0)
+
+            self.schedule_combo_id.append(ttk.Combobox( self.schedule_frame,
+                              values = ["-1"],
+                              postcommand = self.update_sched_combo_id,
+                              width = 3) )
+            self.schedule_combo_id[n].grid(column = 1, row=n+1, sticky=N+S+E+W)
+            self.schedule_combo_id[n].current(0)
+
+            self.schedule_entry_start.append(Entry(  self.schedule_frame, 
+                                                        textvariable        = self.schedule_var_start[n],  
+                                                        highlightbackground = BG_SUB, 
+                                                        selectforeground    = 'black',
+                                                        bg                  = BG_ENTRY, 
+                                                        fg                  = FG_ENTRY, 
+                                                        width               = 8 ))
+            self.schedule_entry_start[n].grid(column = 2, row=n+1, sticky=N+S+E+W)
+
+            self.schedule_entry_ontime.append(Entry(  self.schedule_frame, 
+                                                        textvariable        = self.schedule_var_ontime[n],  
+                                                        highlightbackground = BG_SUB, 
+                                                        selectforeground    = 'black',
+                                                        bg                  = BG_ENTRY, 
+                                                        fg                  = FG_ENTRY, 
+                                                        width               = 4 ))
+            self.schedule_entry_ontime[n].grid(column = 3, row=n+1, sticky=N+S+E+W)
+
+            self.schedule_entry_value.append(Entry(  self.schedule_frame, 
+                                                        textvariable        = self.schedule_var_value[n],  
+                                                        highlightbackground = BG_SUB, 
+                                                        selectforeground    = 'black',
+                                                        bg                  = BG_ENTRY, 
+                                                        fg                  = FG_ENTRY, 
+                                                        width               = 3 ))
+            self.schedule_entry_value[n].grid(column = 4, row=n+1, sticky=N+S+E+W)
+
+        # FOOTER ROW
+        self.schedule_frame.grid_rowconfigure(len(self.schedule_sel)+1 ,weight=8)   
 
 #   PACK SELF
         self.grid_columnconfigure(0, weight =1)
