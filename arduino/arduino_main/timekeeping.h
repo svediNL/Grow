@@ -3,6 +3,29 @@
 
 #include <Arduino.h>
 
+const byte NR_SUBTIMER = 10;
+
+class SubTimer{
+    public:
+        void stop();
+        void start(unsigned long int current_ep, unsigned long int time_par);
+        void reset(unsigned long int current_ep);
+        bool output(unsigned long int current_ep);
+
+        bool claim();
+        bool release();
+
+        bool is_claimed = false;
+        bool is_running = false;
+
+
+    private:
+        unsigned long int start_time;
+        unsigned long int current_time;
+        unsigned long int trig_time;
+};
+
+
 class TimeKeeper{
   public:
     void set_base_time(long int var);
@@ -17,10 +40,18 @@ class TimeKeeper{
     
     unsigned long int get_epoch();
     String get_time();
+
+    int request_timer(); // returns -1 when none available
+    bool claim_timer(byte index);
+    void release_timer(byte index);
+    void start_timer(byte index, int time_par);
+    void reset_timer(byte index);
+    void stop_timer(byte index);
+    bool timer_done(byte index);
+
     
     void print_parameters();
-    
-
+    bool epoch_toggle;
 
   private:
     long int PAR_CLK_IO = 16000000;   // BASE TIMER CLOCK FREQUENCY -> 16 MHz
@@ -42,9 +73,9 @@ class TimeKeeper{
     double sum_loss = 0;                      // TRACK TIME DIFFERENCE DUE TO APPROXIMATIONS
     unsigned long int long_second = 0;        // EPOCH SECOND TIMER
 
-    int hour = 12; 
-    int minute= 0; 
-    int second = 0;
+    int hour = 1; 
+    int minute= 2; 
+    int second = 3;
+    SubTimer subTimers[NR_SUBTIMER];
 };
-
 #endif

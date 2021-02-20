@@ -27,7 +27,7 @@ void DigitalOutput::help(){
   Serial.print("\n\r");
 }
 
-void RGBWLed::init(String devName, int pinR = -1, int pinG= -1, int pinB= -1, int pinW= -1){
+void RGBWLed::init(String devName, int pinR, int pinG, int pinB, int pinW){
   pinRGBW[0] = pinR;
   pinRGBW[1] = pinG;
   pinRGBW[2] = pinB;
@@ -78,7 +78,7 @@ int RGBWLed::getStatus(){
   else { return 0; }
 }
 
-void MotorDriver::init(byte dir, byte power, String devName= ""){
+void MotorDriver::init(byte dir, byte power, String devName){
   
   deviceName = devName;
   hBridge.pinDir = dir;
@@ -100,40 +100,57 @@ void MotorDriver::help(){
   Serial.print("   - Motor PWM on pin: ");
   Serial.print(hBridge.pinPWM);
   Serial.print("\n\r");
-
 }
-void MotorDriver::enableOutput(bool output){
-  if(output){
-    analogWrite(hBridge.pinPWM, hBridge.outputPWM);
-  }
-  else{
-    analogWrite(hBridge.pinPWM, 0);
-  }
 
+void MotorDriver::enableOutput(bool output)
+// ENABLE/DISABLE MOTOR PWM OUTPUT
+{
   outputEnabled = output;
+
+  if(output && !interlocked)
+  // OUTPUT = true  &  NOT INTERLOCKED
+  { analogWrite(hBridge.pinPWM, hBridge.outputPWM);}
+  else
+  // DISABLE BY DEFAULT
+  { analogWrite(hBridge.pinPWM, 0); }
 }
 
-void MotorDriver::setPWM(int setpoint){
+void MotorDriver::setPWM(int setpoint)
+// SET MOTOR PWM OUTPUT
+{
   hBridge.outputPWM = setpoint;
-  if(outputEnabled){ analogWrite(hBridge.pinPWM, hBridge.outputPWM); }
+
+  if(outputEnabled && !interlocked)
+  // OUTPUT = true  &  NOT INTERLOCKED
+  { analogWrite(hBridge.pinPWM, hBridge.outputPWM); }
 }
 
-void MotorDriver::setDir(bool bDir){
+void MotorDriver::setDir(bool bDir)
+// SET MOTOR H-BRIDGE DIRECTION PIN
+{
   hBridge.outputDir = bDir;
   digitalWrite(hBridge.pinDir, hBridge.outputDir);
 }
 
-void MotorDriver::interlock(bool state){
-  bool tmp;
-  tmp = !state && outputEnabled;
-  
-  if(!tmp){ analogWrite(hBridge.pinPWM, 0); }
-  else { enableOutput(true);};
-
+void MotorDriver::interlock(bool state)
+// SET INTERLOCK & ACT ON INTERLOCK
+{
   interlocked = state;
+
+  bool tmp;                       // INTERLOCKED OUTPUT STATE 
+  tmp = !state && outputEnabled;  // true WHEN NOT INTERLOCKED & ENABLED
+  
+  if(!tmp)
+  // NO OUTPUT TO SET OR OUTPUT INTERLOCKED
+  { analogWrite(hBridge.pinPWM, 0); }
+  else 
+  // ENABLED OUTPUT IS NOT INTERLOCKED
+  { enableOutput(true);};
 }
 
-int MotorDriver::getStatus(){
+int MotorDriver::getStatus()
+// GET DRIVE OUTPUT STATUS
+{
   int tmp; 
   if(outputEnabled && !interlocked){
     if(hBridge.outputDir){ tmp = -1* hBridge.outputPWM ;}
@@ -143,5 +160,6 @@ int MotorDriver::getStatus(){
 
   return tmp;
 }
+void MotorDriver::refresh();
 
 #endif

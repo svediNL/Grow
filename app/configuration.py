@@ -44,10 +44,9 @@ NR_FLOW 		= len(NAMES_FLOW)														# NR OF FLOW CIRCUITS (CALCULATED)
 
 
 ## T I M I N G   D E F I N I T I O N
-PROGRAM_CYLCETIME	= 500.0		#	CALL PROGRAM FUNCTION EVERY .. ms
-SAMPLE_RATE 		= 1				#	GET A SAMPLE EVERY .. PROGRAM CYCLES
+PROGRAM_CYLCETIME	= 1000.0		#	CALL PROGRAM FUNCTION EVERY .. ms
+SAMPLE_RATE 		= 5				#	GET A SAMPLE EVERY .. PROGRAM CYCLES
 BUFF_LEN 			= 4096			#	SAMPLE BUFFER LENGTH
-PLOT_REFRESH_RATE	= 1	
 ANI_CYCLETIME 		= 10000.0		#	UPDATE PLOT / CALL ANIMATION FUNCTION EVERY .. ms
 
 
@@ -62,6 +61,9 @@ DEFAULT_RANGE_LAMP		= [0, 255]
 DEFAULT_RANGE_MOISTURE 	= [0, 100]
 DEFAULT_RANGE_PUMP		= [0, 255]
 
+PLOT_NAMES = ["OVERVIEW", "LIGHT", "MOISTURE"]
+NR_PLOT = len(PLOT_NAMES)
+
 LOG_NAME	= 'myLog.csv'
 
 
@@ -69,15 +71,17 @@ LOG_NAME	= 'myLog.csv'
 BG_MAIN			= "gray30"	#"gray93"
 BG_SUB 			= "gray33"	#"gray96"
 BG_SUBSUB 		= "white"	#"white"
-BG_TOG_A		= "gray44"	#"gray96"
-BG_TOG_B 		= "gray30"	#"gray93"
+BG_TOG_A		= BG_SUB	#"gray96"
+BG_TOG_B 		= "gray44"	#"gray93"
 BG_TAB 			= "gray44"	#"gray85"
-BG_TAB_ACTIVE 	= "gray33"	#"gray96"
+BG_TAB_ACTIVE 	= BG_SUB	#"gray96"
 BG_ENTRY		= "gray60"	#"white"
 BG_BUTTON		= "black"
 BG_CHECK		= "gray40"
+BG_SEL   = "gray77"
 
 FG_TEXT			= "white"	#"black"
+FG_TEXT2			= "black"
 FG_ENTRY		= "white"
 
 

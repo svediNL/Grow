@@ -56,15 +56,14 @@ class SlaveComm:
 
     def writeString(self, output_string):
         tmp = output_string + "\n"
-        print "> " + tmp
-
         if not self.assumed_connection_status:
             self.openConnection()
         
         if self.assumed_connection_status:
-            
+            print("> " + tmp)
+
             try:
-                self.sio.write(unicode(tmp))
+                self.sio.write(str(tmp))
                 self.sio.flush()
                 
             except serial.serialutil.SerialException:
@@ -101,8 +100,10 @@ class SlaveComm:
                 print("timeout")
                 return "-1"
             else:
-                print "< " + str(tmp) 
-                return str(tmp)
+                tmp1 = str(tmp)
+                tmp1 = tmp1[2:-1]
+                print("< " + str(tmp1) )
+                return str(tmp1)
         else:
             return "-1"
 
@@ -114,7 +115,7 @@ class SlaveComm:
         self.devices = []
         for n in range(len(self.portscan)):
             self.devices.append(self.portscan[n].device)
-        print self.devices
+        print("> Available ports/devices:   ", self.devices)
 
     def get_ports(self):
         self.scan_ports();
@@ -127,6 +128,7 @@ class SlaveComm:
         self.sio = io.TextIOWrapper(    buffer = io.BufferedRWPair(self.ser, self.ser),newline = '\n')
         self.assumed_connection_status = False
         self.devices = []
+
         self.scan_ports()
         if serial_port != "":
             self.openConnection()

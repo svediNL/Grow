@@ -2,6 +2,8 @@
 #define COMMS_H
 
 #include <Arduino.h>
+#include "sensors.h" 
+#include "actuators.h"
 
 /*
  * 
@@ -26,6 +28,7 @@ enum Command {
   TIMER_OUTPUT, TIMER_CLAIMED, 
   CLAIM_TIMER, RELEASE_TIMER,
   SET_TIMER, RESET_TIMER, STOP_TIMER,
+  DEVICE_TIMER,
   HELP, NO_COMMAND
 };
 

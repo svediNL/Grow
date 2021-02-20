@@ -1,7 +1,6 @@
 #ifndef COMMS_H
 #include "comms.h"
-#include "sensors.h" 
-#include "actuators.h"
+
 
 void Comms::message_handler(String inputString){
   
@@ -22,6 +21,17 @@ void Comms::message_handler(String inputString){
     else if (message.sCommand == "GET_PUMP"){ message.inputCommand = GET_PUMP; }
     else if (message.sCommand == "SET_TEMP_RC"){ message.inputCommand = SET_TEMP_RC; }
     else if (message.sCommand == "IGNORE_PUMP_INTERLOCK"){ message.inputCommand = IGNORE_PUMP_INTERLOCK; }
+    else if (message.sCommand == "SET_CLOCK"){ message.inputCommand = SET_CLOCK; }
+    else if (message.sCommand == "GET_CLOCK"){ message.inputCommand = GET_CLOCK; }
+    else if (message.sCommand == "GET_EPOCH"){ message.inputCommand = GET_EPOCH; }
+    else if (message.sCommand == "TIMER_OUTPUT"){ message.inputCommand = TIMER_OUTPUT; }
+    else if (message.sCommand == "TIMER_CLAIMED"){ message.inputCommand = TIMER_CLAIMED; }
+    else if (message.sCommand == "CLAIM_TIMER"){ message.inputCommand = CLAIM_TIMER; }
+    else if (message.sCommand == "RELEASE_TIMER"){ message.inputCommand = RELEASE_TIMER; }
+    else if (message.sCommand == "SET_TIMER"){ message.inputCommand = SET_TIMER; }
+    else if (message.sCommand == "RESET_TIMER"){ message.inputCommand = RESET_TIMER; }
+    else if (message.sCommand == "STOP_TIMER"){ message.inputCommand = STOP_TIMER; }
+    else if (message.sCommand == "DEVICE_TIMER"){ message.inputCommand = DEVICE_TIMER; }
     else if (message.sCommand == "H" || message.sCommand == "HELP"){ message.inputCommand = HELP; }
     else {message.inputCommand = -1;};
     //else if (message.sCommand == ""){ message.inputCommand = ; }
