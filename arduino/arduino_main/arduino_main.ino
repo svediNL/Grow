@@ -5,7 +5,7 @@ Grow grow;
 void setup(){
   // INIT SERIAL
   Serial.begin(115200);
-  grow.init();
+  grow.init(); // do all grow stuff
 }
 
 ISR(TIMER2_COMPA_vect){
