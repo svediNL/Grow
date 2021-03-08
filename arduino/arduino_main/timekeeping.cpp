@@ -123,18 +123,18 @@ void TimeKeeper::interrupt()
 
     if ((long_second%magic_time_comp) == 0 && long_second>0 && magic_time_comp != 0)
     {
-      Serial.println("magic leap second");
+      //Serial.println("magic leap second");
       second -= 1;
     }
     
-    Serial.println(long_second);
-    Serial.println(sum_loss);
+    //Serial.println(long_second);
+    //Serial.println(sum_loss);
   }
 
   if (abs(sum_loss) >=1)
   {
     // leap second
-    Serial.println("leap second");
+    //Serial.println("leap second");
     if (sum_loss >0)
     {
       long_second += 1;
@@ -164,7 +164,7 @@ void TimeKeeper::interrupt()
   {
     hour  -= 24;
   }
-  if (cnt_trig2 == 0) 
+  /*if (cnt_trig2 == 0) 
   {
     Serial.print("Time:   ");
     Serial.print(hour);
@@ -173,7 +173,7 @@ void TimeKeeper::interrupt()
     Serial.print(":");
     Serial.print(second);
     Serial.print("\n\r");
-  }
+  }*/
   if (long_second == 4294967280)
   {
   // maximum amount of minutes to fit in long int 
