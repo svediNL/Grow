@@ -51,6 +51,7 @@ void Grow::init()
   for(int n=0;n<NR_RELAY; n++){ 
     relayboard[n].init(RELAY_PIN[n], RELAY_NAME[n]);    // SETUP RELAYBOARD INPUT INx
   }
+  am2315.begin();
 };
 
 void Grow::doStuff()
@@ -275,6 +276,30 @@ void Grow::doCommand()
       Serial.print('@');                            // PRINT EOL
       break;
 
+  // GET TEMPERATURE FROM AM2315 I2C SENSOR
+    case AM2315_TEMP:
+      delay(2); // DELAY FOR SERIAL COMM
+      
+      am2315.readTemperatureAndHumidity(&i2c_temp, &i2c_hum);
+      Serial.print(i2c_temp);
+      
+      // COMMAND DONE
+      serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
+      Serial.print('@');                            // PRINT EOL
+      break;
+    
+  // GET HUMIDITY FROM AM2315 I2C SENSOR
+    case AM2315_HUM:
+      delay(2); // DELAY FOR SERIAL COMM
+      
+      am2315.readTemperatureAndHumidity(&i2c_temp, &i2c_hum);
+      Serial.print(i2c_hum);
+      
+      // COMMAND DONE
+      serialMsg.message.inputCommand= NO_COMMAND;   // reset command variable
+      Serial.print('@');                            // PRINT EOL
+      break;
+    
 	// SET RELAY OUTPUT
     case SET_RELAY:
       delay(2); // DELAY FOR SERIAL COMM

@@ -7,6 +7,9 @@
 #include "comms.h"
 #include "timekeeping.h"
 
+#include <Wire.h>
+#include <Adafruit_AM2315.h>
+
 // !!! WARNING - DO NOT USE PINS 9 & 10 FOR PWM, AS THIS WILL FUCK UP THE TIMER !!!
 
 
@@ -72,6 +75,8 @@ class Grow
     DigitalInput vlotter[NR_FLOAT_SWITCH];         // INSTANCE OF LOAT SWITCH FOR PUMP INTERLOCKING
     TimeKeeper masterClock;
 
+    Adafruit_AM2315 am2315; // I2C HUMIDITY+TEMPERATURE SENSOR AM2315
+    
     void init();
     void doStuff();		// DO OPERATIONS/CHECKS/WHATEREVER IN LOOP()
 
@@ -84,11 +89,13 @@ class Grow
     float rc[NR_TC];
     float Tn, Rn, coeffB, temp;
 
+    float i2c_temp, i2c_hum;
+
     byte 	schedule_index=0;
-	byte 	scheduled_timer[NR_SUBTIMER];
-	Device 	scheduled_device[NR_SUBTIMER];
-	byte 	scheduled_device_id[NR_SUBTIMER];
-	int 	scheduled_value[NR_SUBTIMER];
+	  byte 	scheduled_timer[NR_SUBTIMER];
+	  Device 	scheduled_device[NR_SUBTIMER];
+	  byte 	scheduled_device_id[NR_SUBTIMER];
+	  int 	scheduled_value[NR_SUBTIMER];
 
   	bool x;
     void fridge_door();
@@ -97,7 +104,7 @@ class Grow
     void check_pump_interlock();
 
     bool push_to_schedule(Device myDevice, byte deviceID, int timePar, int value); //returns false when failed
-	void scheduler();
+	  void scheduler();
 
     void doCommand();	// DO COMMAND FROM SERIAL COMMS
     void printHelp();

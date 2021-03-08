@@ -9,9 +9,10 @@ void Comms::message_handler(String inputString){
     for(int n=0; n<6; n++){ message.sParameter[n].toUpperCase();};
 
     //printMessage();
-    
     if      (message.sCommand == "GET_MOISTURE"){ message.inputCommand = GET_MOISTURE; }
     else if (message.sCommand == "GET_TEMP"){ message.inputCommand = GET_TEMP; }
+    else if (message.sCommand == "AM2315_TEMP"){ message.inputCommand = AM2315_TEMP; }
+    else if (message.sCommand == "AM2315_HUM"){ message.inputCommand = AM2315_HUM; }
     else if (message.sCommand == "SET_RELAY"){ message.inputCommand = SET_RELAY; }
     else if (message.sCommand == "ENABLE_LAMP"){ message.inputCommand = ENABLE_LAMP; }
     else if (message.sCommand == "SET_LAMP"){ message.inputCommand = SET_LAMP; }
