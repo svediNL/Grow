@@ -45,15 +45,11 @@ FIRST_SCAN = True
 PLOT_WINDOW = 0
 
 # prepare animation buffer
-BUFF_FILL = 0
-valM = np.zeros( shape=(2,BUFF_LEN) )
-valH = np.zeros( shape=(2,BUFF_LEN) )
-valH1 = np.zeros( shape=(2,BUFF_LEN) )
-valP = np.zeros( shape=(2,BUFF_LEN) )
-valL = np.zeros( shape=(2,BUFF_LEN) )
-
-valAM_T = np.zeros( shape=(2,BUFF_LEN) )
-valAM_H = np.zeros( shape=(2,BUFF_LEN) )
+BUFF_FILL   = 0
+moist_buff  = np.zeros( shape=(NR_MOISTURE, 2, BUFF_LEN) )
+heat_buff   = np.zeros( shape=(NR_THERMO, 2, BUFF_LEN) )
+pump_buff   = np.zeros( shape=(NR_PUMP, 2, BUFF_LEN) )
+light_buff  = np.zeros( shape=(NR_LAMP, 2, BUFF_LEN) )
 
 time_list = []
 label_list = []
@@ -94,21 +90,19 @@ def set_clear_list(val):
 
 # FILL SAMPLE TIME
 for n in range(BUFF_LEN):
-    valM[0,n]  = -n # -1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
-    valH[0,n]  = -n #-1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
-    valH1[0,n] = -n #-1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
-    valP[0,n]  = -n #-1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
-    valL[0,n]  = -n #-1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
-    valAM_T[0,n] = -n
-    valAM_H[0,n] = -n
+    for m in range(NR_MOISTURE):
+        moist_buff[m,0,n]   = -n # -1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
+    for m in range(NR_THERMO):
+        heat_buff[m,0,n]    = -n #-1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
+    for m in range(NR_PUMP):
+        pump_buff[m,0,n]    = -n #-1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
+    for m in range(NR_LAMP):
+        light_buff[m,0,n]   = -n #-1*(n*(ANI_CYCLETIME/60000.0)) # cycle time defined in ms -> /60000 = min
 
-valMneat  = np.flip(valM, 1)
-valHneat  = np.flip(valH, 1)
-valH1neat = np.flip(valH1, 1)
-valPneat  = np.flip(valP, 1)
-valLneat  = np.flip(valL, 1)
-valAM_Tneat = np.flip(valAM_T, 1)
-valAM_Hneat = np.flip(valAM_H, 1)
+moist_buff_neat = np.flip(moist_buff, 2)
+heat_buff_neat  = np.flip(heat_buff, 2)
+pump_buff_neat  = np.flip(pump_buff, 2)
+light_buff_neat = np.flip(light_buff, 2)
 
 # DEFINE APP CLASS AS BASE FRAME
 class App( Frame ):
@@ -1605,8 +1599,7 @@ def update_plot():
 
 def update_plot_all():
     global BUFF_FILL, FIRST_SCAN    
-    global valM, valH, valH1, valP, valL, valAM_H, valAM_T
-    global valMneat,valHneat, valH1neat, valPneat, valLneat, valAM_Hneat, valAM_Tneat
+    global moist_buff_neat, heat_buff_neat, pump_buff_neat, light_buff_neat
 
     my_time_list = get_time_list()
     my_label_list = get_label_list()
@@ -1629,14 +1622,15 @@ def update_plot_all():
     ax[3].set_position([0.125, 0.15, 0.85, 0.17])
 
     #   F - UPDATE TEMOERATURE PLOT
+    hy_min = 100.0
+    for n in range(NR_THERMO):
+        hy_min = min( hy_min, heat_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
+    hy_min = hy_min - 1
 
-    hy_min = min(valH1neat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN])
-    hy_min = min(hy_min, min(valHneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) )
-    hy_min = min(hy_min, min(valAM_Tneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) ) - 1
-
-    hy_max = max(valH1neat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN])
-    hy_max = max(hy_max, max(valHneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) )
-    hy_max = max(hy_max, max(valAM_Tneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) ) + 1
+    hy_max = 0.0
+    for n in range(NR_THERMO):
+        hy_max = max( hy_max, heat_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
+    hy_max = hy_max + 1
 
     # SET X TICK TIME LABEL
     if BUFF_FILL > 1:
@@ -1648,9 +1642,15 @@ def update_plot_all():
     ax[0].grid(True)
 
     #   F - UPDATE LAMP
-    hy_min = min(valLneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1
-    hy_max = max(valLneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1
+    hy_min = 100.0
+    for n in range(NR_LAMP):
+        hy_min = min( hy_min, light_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
+    hy_min = hy_min - 1
 
+    hy_max = 0.0
+    for n in range(NR_LAMP):
+        hy_max = max( hy_max, light_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
+    hy_max = hy_max + 1
 
     # ax[1].set_ylim([ hy_min, hy_max ])
     ax[1].set_ylim(DEFAULT_RANGE_LAMP)
@@ -1658,21 +1658,24 @@ def update_plot_all():
 
     ax[1].grid(True)
 
-        # SET X TICK TIME LABEL
+    # SET X TICK TIME LABEL
     if BUFF_FILL > 1:
         ax[1].set_xticks(my_tick_list)
         ax[1].set_xticklabels(my_clear_list)
 
     #   F - UPDATE MOUSTURE PLOT
-    hy_min = min(valMneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN])
-    hy_min = min(hy_min, min(valAM_Hneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) ) - 1
+    hy_min = 100.0
+    for n in range(NR_MOISTURE):
+        hy_min = min( hy_min, moist_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
+    hy_min = hy_min - 1
 
-    hy_max = max(valMneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN])
-    hy_max = max(hy_max, max(valAM_Hneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) ) + 1
+    hy_max = 0.0
+    for n in range(NR_MOISTURE):
+        hy_max = max( hy_max, moist_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
+    hy_max = hy_max + 1
 
     ax[2].set_ylim([ hy_min, hy_max ])
     ax[2].set_ylabel("Moisture [%]")
-
     ax[2].grid(True)   
 
     # SET X TICK TIME LABEL
@@ -1681,8 +1684,15 @@ def update_plot_all():
         ax[2].set_xticklabels(my_clear_list)
 
     #   F - UPDATE PUMP
-    hy_min = min(valPneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1
-    hy_max = max(valPneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1
+    hy_min = 100.0
+    for n in range(NR_PUMP):
+        hy_min = min( hy_min, pump_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
+    hy_min = hy_min - 1
+
+    hy_max = 0.0
+    for n in range(NR_PUMP):
+        hy_max = max( hy_max, pump_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
+    hy_max = hy_max + 1
     
 
     ax[3].set_ylim([ hy_min, hy_max ])
@@ -1700,19 +1710,22 @@ def update_plot_all():
     f.set_tight_layout(True)    
     pp.tight_layout()
 
-    ax[0].plot( valHneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valHneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color='g' )
-    ax[0].plot( valH1neat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valH1neat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color='b' )
-    ax[0].plot( valAM_Tneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valAM_Tneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color='r' )
-    ax[1].plot( valLneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valLneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
-    ax[2].plot( valMneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valMneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color='g' )
-    ax[2].plot( valAM_Hneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valAM_Hneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color='b' )
-    ax[3].plot( valPneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valPneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
+    for n in range(NR_THERMO):
+        ax[0].plot( heat_buff_neat[n, 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , heat_buff_neat[n, 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color=THERMO_PLOT_CMAP[n] )
+
+    for n in range(NR_LAMP):
+        ax[1].plot( light_buff_neat[n, 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , light_buff_neat[n, 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color=LIGHT_PLOT_CMAP[n] )
+
+    for n in range(NR_MOISTURE):
+        ax[2].plot( moist_buff_neat[n, 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , moist_buff_neat[n, 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color=MOIST_PLOT_CMAP[n] )
+
+    for n in range(NR_PUMP):
+        ax[3].plot( pump_buff_neat[n, 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , pump_buff_neat[n, 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color=PUMP_PLOT_CMAP[n] )
 
 
 def update_plot_light_temp():
     global BUFF_FILL, FIRST_SCAN    
-    global valM, valH, valH1, valP, valL, valAM_T
-    global valMneat,valHneat, valH1neat, valPneat, valLneat, valAM_Tneat
+    global heat_buff_neat, light_buff_neat
 
     my_time_list = get_time_list()
     my_label_list = get_label_list()
@@ -1734,15 +1747,16 @@ def update_plot_light_temp():
     #ax[2].set_position([0.05, 0.05, 0.9, 0.3])
     #ax[3].set_position([0.05, 0.05, 0.9, 0.3])
 
-    #   F - UPDATE TEMOERATURE PLOT
+        #   F - UPDATE TEMOERATURE PLOT
+    hy_min = 100.0
+    for n in range(NR_THERMO):
+        hy_min = min( hy_min, heat_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
+    hy_min = hy_min - 1
 
-    hy_min = min(valH1neat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN])
-    hy_min = min(hy_min, min(valHneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) )
-    hy_min = min(hy_min, min(valAM_Tneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) ) - 1
-
-    hy_max = max(valH1neat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN])
-    hy_max = max(hy_max, max(valHneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) )
-    hy_max = max(hy_max, max(valAM_Tneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) ) + 1
+    hy_max = 0.0
+    for n in range(NR_THERMO):
+        hy_max = max( hy_max, heat_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
+    hy_max = hy_max + 1
 
     # SET X TICK TIME LABEL
     if BUFF_FILL > 1:
@@ -1753,17 +1767,25 @@ def update_plot_light_temp():
     ax[0].set_ylabel("TC Temp [*C]")
     ax[0].grid(True)
 
+
     #   F - UPDATE LAMP
-    hy_min = min(valLneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1
-    hy_max = max(valLneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1
+    hy_min = 100.0
+    for n in range(NR_LAMP):
+        hy_min = min( hy_min, light_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
+    hy_min = hy_min - 1
+
+    hy_max = 0.0
+    for n in range(NR_LAMP):
+        hy_max = max( hy_max, light_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
+    hy_max = hy_max + 1
 
     # ax[1].set_ylim([ hy_min, hy_max ])
     ax[1].set_ylim(DEFAULT_RANGE_LAMP)
     ax[1].set_ylabel("LIGHT")   
-
     ax[1].grid(True)
 
-        # SET X TICK TIME LABEL
+
+    # SET X TICK TIME LABEL
     if BUFF_FILL > 1:
         ax[1].set_xticks(my_tick_list)
         ax[1].set_xticklabels(my_label_list, rotation =45)
@@ -1772,15 +1794,15 @@ def update_plot_light_temp():
     f.set_tight_layout(True)
     pp.tight_layout()
 
-    ax[0].plot( valHneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valHneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color='g' )
-    ax[0].plot( valH1neat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valH1neat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color='b' )
-    ax[0].plot( valAM_Tneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valAM_Tneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color='r' )
-    ax[1].plot( valLneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valLneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
+    for n in range(NR_THERMO):
+        ax[0].plot( heat_buff_neat[n, 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , heat_buff_neat[n, 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color=THERMO_PLOT_CMAP[n] )
+
+    for n in range(NR_LAMP):
+        ax[1].plot( light_buff_neat[n, 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , light_buff_neat[n, 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color=LIGHT_PLOT_CMAP[n] )
 
 def update_plot_pumping_water():
     global BUFF_FILL, FIRST_SCAN    
-    global valM, valH, valH1, valP, valL
-    global valMneat,valHneat, valH1neat, valPneat, valLneat
+    global moist_buff_neat,pump_buff_neat
 
     my_time_list = get_time_list()
     my_label_list = get_label_list()
@@ -1803,12 +1825,18 @@ def update_plot_pumping_water():
     ax[3].set_position([0.125, 0.15, 0.85, 0.2])
 
     #   F - UPDATE MOUSTURE PLOT
-    hy_min = min(valMneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1
-    hy_max = max(valMneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1
+    hy_min = 100.0
+    for n in range(NR_MOISTURE):
+        hy_min = min( hy_min, moist_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
+    hy_min = hy_min - 1
+
+    hy_max = 0.0
+    for n in range(NR_MOISTURE):
+        hy_max = max( hy_max, moist_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
+    hy_max = hy_max + 1
 
     ax[2].set_ylim([ hy_min, hy_max ])
     ax[2].set_ylabel("Moisture [%]")
-
     ax[2].grid(True)   
 
     # SET X TICK TIME LABEL
@@ -1817,12 +1845,18 @@ def update_plot_pumping_water():
         ax[2].set_xticklabels(my_clear_list)
 
     #   F - UPDATE PUMP
-    hy_min = min(valPneat[1 , BUFF_LEN-BUFF_FILL:BUFF_LEN]) - 1
-    hy_max = max(valPneat[1, BUFF_LEN-BUFF_FILL : BUFF_LEN]) + 1
+    hy_min = 100.0
+    for n in range(NR_PUMP):
+        hy_min = min( hy_min, pump_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
+    hy_min = hy_min - 1
+
+    hy_max = 0.0
+    for n in range(NR_PUMP):
+        hy_max = max( hy_max, pump_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
+    hy_max = hy_max + 1
     
     ax[3].set_ylim([ hy_min, hy_max ])
     ax[3].set_ylabel("PUMP")
-
     ax[3].grid(True)
 
     # SET X TICK TIME LABEL
@@ -1833,8 +1867,12 @@ def update_plot_pumping_water():
     #ax[3].set_xlabel("time [min]")
     f.set_tight_layout(True)
 
-    ax[2].plot( valMneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valMneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
-    ax[3].plot( valPneat[ 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , valPneat[ 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] )
+    for n in range(NR_MOISTURE):
+        ax[2].plot( moist_buff_neat[n, 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , moist_buff_neat[n, 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color=MOIST_PLOT_CMAP[n] )
+
+    for n in range(NR_PUMP):
+        ax[3].plot( pump_buff_neat[n, 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , pump_buff_neat[n, 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color=PUMP_PLOT_CMAP[n] )
+
 
 def animate(i):
 # PLOT VALUES
@@ -1945,8 +1983,8 @@ exportData  = pd.DataFrame()
 # PROGRAM TO CALL EVERY .. 
 def program():
     global BUFF_FILL, FIRST_SCAN, PLOT_WINDOW
-    global valM, valH, valH1, valP, valL, valAM_T, valAM_H
-    global valMneat,valHneat, valH1neat, valPneat, valLneat, valAM_Tneat, valAM_Hneat
+    global moist_buff, heat_buff, light_buff, pump_buff
+    global moist_buff_neat, heat_buff_neat, light_buff_neat, pump_buff_neat
     global cycle_counter, plot_index, plot_index_prev
     global app
 
@@ -1987,13 +2025,14 @@ def program():
 
     #   SHIFT BUFFERS IN REVERSED ORDER
         for n in reversed(range( 1, BUFF_LEN )):
-            valM[1,n]= valM[1,n-1]
-            valH[1,n]= valH[1,n-1]
-            valH1[1,n]= valH1[1,n-1]
-            valP[1,n]= valP[1,n-1]
-            valL[1,n]= valL[1,n-1]  
-            valAM_T[1,n] = valAM_T[1,n-1]
-            valAM_H[1,n] = valAM_H[1,n-1]
+            for m in range(NR_MOISTURE):
+                moist_buff[m,1,n]= moist_buff[m,1,n-1]
+            for m in range(NR_THERMO):
+                heat_buff[m,1,n]= heat_buff[m,1,n-1]
+            for m in range(NR_PUMP):
+                pump_buff[m,1,n]= pump_buff[m,1,n-1]
+            for m in range(NR_PUMP):
+                light_buff[m,1,n]= light_buff[m,1,n-1]  
 
         if  DEBUG_MODE:
             end = time.time()
@@ -2002,95 +2041,83 @@ def program():
 
 #   ADD VALUES TO BUFFERS
     #   HEAT
-        if DEBUG_MODE:
-            tmpVal = str( (valH[1,0]+1) % 2 )
-        else:
-            tmpVal = app.arduino.readCommand("GET_TEMP",["0"])
+        for n in range(NR_THERMO):
+            # GET VALUE (STRING)
+            if DEBUG_MODE:
+                tmpVal = str( (heat_buff[n,1,0]+1) % 2 )
+            else:
+                if ENABLE_I2C_SENSOR and n >= NR_THERMO - 1:
+                    tmpVal = app.arduino.readCommand("AM2315_TEMP",[""])
+                else:   
+                    tmpVal = app.arduino.readCommand("GET_TEMP",[str(n)])
 
-        app.temperature_var[0].set(tmpVal)
-        try:
-            float(tmpVal)
-        except ValueError:
-            valH[1,0] = float(0)
-        else:
-            valH[1,0] = float(tmpVal)  
+            # SET STRING VALUE
+            app.temperature_var[n].set(tmpVal)
 
-    #   HEAT 1
-        if DEBUG_MODE:
-            tmpVal = str( ((valH1[1,0]+1)*7) % 3 ) 
-        else:
-            tmpVal = app.arduino.readCommand("GET_TEMP",["1"])
-        app.temperature_var[1].set(tmpVal)
-        try:
-            float(tmpVal)
-        except ValueError:
-            valH1[1,0] = float(0)
-        else:
-            valH1[1,0] = float(tmpVal)   
-
-    #   AM2315 TEMPERATURE
-        if DEBUG_MODE:
-            tmpVal = str( ((valAM_T[1,0]+1)*7) % 3 ) 
-        else:
-            tmpVal = app.arduino.readCommand("AM2315_TEMP",[""])
-        app.temperature_var[1].set(tmpVal)
-        try:
-            float(tmpVal)
-        except ValueError:
-            valAM_T[1,0] = float(0)
-        else:
-            valAM_T[1,0] = float(tmpVal)   
-
-    #   AM2315 HUMIDITY
-        if DEBUG_MODE:
-            tmpVal = str( ((valAM_H[1,0]+1)*7) % 3 ) 
-        else:
-            tmpVal = app.arduino.readCommand("AM2315_HUM",[""])
-        app.temperature_var[1].set(tmpVal)
-        try:
-            float(tmpVal)
-        except ValueError:
-            valAM_H[1,0] = float(0)
-        else:
-            valAM_H[1,0] = float(tmpVal)   
+            # CONVERT TO FLAOT & ADD TO BUFFER
+            try:
+                float(tmpVal)
+            except ValueError:
+                heat_buff[n,1,0] = float(0)
+            else:
+                heat_buff[n,1,0] = float(tmpVal)  
+ 
 
     #   MOISTURE
-        if DEBUG_MODE:
-            tmpVal = str( valM[1,0] + 1 )
-        else:
-            tmpVal = app.arduino.readCommand("GET_MOISTURE",["0"])
-        app.moisture_var[0].set(tmpVal)
+        for n in range(NR_MOISTURE):
+            # GET VALUE (STRING)
+            if DEBUG_MODE:
+                tmpVal = str( (moist_buff[n,1,0]+1) % 2 )
+            else:
+                if ENABLE_I2C_SENSOR and n >= NR_MOISTURE - 1:
+                    tmpVal = app.arduino.readCommand("AM2315_HUM",[""])
+                else:   
+                    tmpVal = app.arduino.readCommand("GET_MOISTURE",[str(n)])
 
-        try:
-            float(tmpVal)
-        except ValueError:
-            valM[1,0] = float(0)
-        else:
-            valM[1,0] = float(tmpVal)
+            # SET STRING VALUE
+            app.moisture_var[n].set(tmpVal)
+
+            # CONVERT TO FLAOT & ADD TO BUFFER
+            try:
+                float(tmpVal)
+            except ValueError:
+                moist_buff[n,1,0] = float(0)
+            else:
+                moist_buff[n,1,0] = float(tmpVal)  
 
     #   PUMP
-        if DEBUG_MODE:
-            tmpVal = str( (valP[1,0]+1) % 2 )
-        else:
-            tmpVal = app.arduino.readCommand("GET_PUMP",["0"])
-        try:
-            float(tmpVal)
-        except ValueError:
-            valP[1,0] = float(0)
-        else:
-            valP[1,0] = float(tmpVal)
+        for n in range(NR_MOISTURE):
+            # GET VALUE (STRING)
+            if DEBUG_MODE:
+                tmpVal = str( (pump_buff[n,1,0]+1) % 2 )
+            else:
+                tmpVal = app.arduino.readCommand("GET_PUMP",[str(n)])
+
+            # CONVERT TO FLAOT & ADD TO BUFFER
+            try:
+                float(tmpVal)
+            except ValueError:
+                pump_buff[n,1,0] = float(0)
+            else:
+                pump_buff[n,1,0] = float(tmpVal)  
+
+
         
     #   LIGHT
-        if DEBUG_MODE:
-            tmpVal = str( (valL[1,0]+1) % 2 )
-        else:
-            tmpVal = app.arduino.readCommand("GET_LAMP",["0"])
-        try:
-            float(tmpVal)
-        except ValueError:
-            valL[1,0] = float(0)
-        else:
-            valL[1,0] = float(tmpVal)
+        for n in range(NR_MOISTURE):
+            # GET VALUE (STRING)
+            if DEBUG_MODE:
+                tmpVal = str( (light_buff[n,1,0]+1) % 2 )
+            else:
+                tmpVal = app.arduino.readCommand("GET_LAMP",[str(n)])
+
+            # CONVERT TO FLAOT & ADD TO BUFFER
+            try:
+                float(tmpVal)
+            except ValueError:
+                light_buff[n,1,0] = float(0)
+            else:
+                light_buff[n,1,0] = float(tmpVal)  
 
         if DEBUG_MODE:
             end = time.time()
@@ -2101,13 +2128,10 @@ def program():
 
 #   FLIP BUFFERS
         # reverse value array for neatness
-        valMneat = np.flip(valM, 1)
-        valHneat = np.flip(valH, 1)
-        valH1neat = np.flip(valH1, 1)
-        valPneat = np.flip(valP, 1)
-        valLneat = np.flip(valL, 1)
-        valAM_Tneat = np.flip(valAM_T, 1)
-        valAM_Hneat = np.flip(valAM_H, 1)
+        moist_buff_neat = np.flip(moist_buff, 2)
+        heat_buff_neat = np.flip(heat_buff, 2)
+        pump_buff_neat = np.flip(pump_buff, 2)
+        light_buff_neat = np.flip(light_buff, 2)
         
 #   MAKE LICK LIST
         my_time_list.insert(0, app.str_time.get())
