@@ -1827,12 +1827,12 @@ def update_plot_pumping_water():
     #   F - UPDATE MOUSTURE PLOT
     hy_min = 100.0
     for n in range(NR_MOISTURE):
-        hy_min = min( hy_min, moist_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
+        hy_min = min( hy_min, min( moist_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] ))
     hy_min = hy_min - 1
 
     hy_max = 0.0
     for n in range(NR_MOISTURE):
-        hy_max = max( hy_max, moist_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
+        hy_max = max( hy_max, max(moist_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] ))
     hy_max = hy_max + 1
 
     ax[2].set_ylim([ hy_min, hy_max ])
@@ -2086,7 +2086,7 @@ def program():
                 moist_buff[n,1,0] = float(tmpVal)  
 
     #   PUMP
-        for n in range(NR_MOISTURE):
+        for n in range(NR_PUMP):
             # GET VALUE (STRING)
             if DEBUG_MODE:
                 tmpVal = str( (pump_buff[n,1,0]+1) % 2 )
@@ -2104,7 +2104,7 @@ def program():
 
         
     #   LIGHT
-        for n in range(NR_MOISTURE):
+        for n in range(NR_LAMP):
             # GET VALUE (STRING)
             if DEBUG_MODE:
                 tmpVal = str( (light_buff[n,1,0]+1) % 2 )
@@ -2143,10 +2143,10 @@ def program():
 
                 for n in range(6):
                     my_label_list.append(my_time_list[int(n*stepsize)])
-                    my_tick_list.append(valP[0,int(n*stepsize)])
+                    my_tick_list.append(pump_buff[0,0,int(n*stepsize)])
                     my_clear_list.append("")
                 my_label_list.append(my_time_list[BUFF_FILL-1])
-                my_tick_list.append(valP[0,BUFF_FILL-1])
+                my_tick_list.append(pump_buff[0, 0,BUFF_FILL-1])
                 my_clear_list.append("")
 
             else:
@@ -2155,10 +2155,10 @@ def program():
                 my_clear_list = []
                 for n in range(BUFF_FILL-1):
                     my_label_list.append(time_list[int(n)])
-                    my_tick_list.append(valP[0,n])
+                    my_tick_list.append(pump_buff[0,0,n])
                     my_clear_list.append("")
                 my_label_list.append(time_list[BUFF_FILL-1])
-                my_tick_list.append(valP[0,BUFF_FILL-1])
+                my_tick_list.append(pump_buff[0,0,BUFF_FILL-1])
                 my_clear_list.append("")
 
             set_tick_list(my_tick_list)
