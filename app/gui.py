@@ -34,7 +34,7 @@ import numpy as np
 
 from comms import SlaveComm
 from configuration import *
-from config_ui import *
+from gui_config import *
 
 print("> import pandas")
 import pandas as pd
