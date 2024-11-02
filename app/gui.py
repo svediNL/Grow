@@ -6,12 +6,12 @@ print("")
 try:
     from Tkinter import *
     from ttk import *
-    from Tkinter import messagebox
+    from Tkinter import messagebox, font
 except:
     print("> using execeptional tkinter")
     from tkinter import *
     from tkinter import ttk
-    from tkinter import messagebox
+    from tkinter import messagebox, font
 else:
     print("> using regular Tkinter")
 
@@ -34,6 +34,7 @@ import numpy as np
 
 from comms import SlaveComm
 from configuration import *
+from config_ui import *
 
 print("> import pandas")
 import pandas as pd
