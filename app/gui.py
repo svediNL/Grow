@@ -15,6 +15,9 @@ except:
 else:
     print("> using regular Tkinter")
 
+root = Tk() #init Tk
+root.title ("G R O W  .  M A S T E R")
+
 from math import *
 
 print("> import matplotlib stuff")
@@ -32,14 +35,19 @@ import numpy as np
 from comms import SlaveComm
 from configuration import *
 
-print("> import pandas stuff")
+print("> import pandas")
 import pandas as pd
 import os.path
 
-print("> import time, maaan")
+print("> import time")
 import time
 
+print("> import warnings")
 import warnings
+
+print("> start script...")
+
+print("> global variable definitions")
 
 FIRST_SCAN = True
 PLOT_WINDOW = 0
@@ -56,6 +64,7 @@ label_list = []
 tick_list = []
 clear_list = []
 
+print("> define sampling funcrions")
 def get_time_list():
     global time_list
     return time_list
@@ -104,10 +113,441 @@ heat_buff_neat  = np.flip(heat_buff, 2)
 pump_buff_neat  = np.flip(pump_buff, 2)
 light_buff_neat = np.flip(light_buff, 2)
 
+
+
+##   A N I M A T I O N   /   P L O T T I N G
+#  DEFINE MATPLOT FUIGURE
+f, ax = pp.subplots(nrows = 4, ncols = 1)
+f.set_tight_layout(True)
+f.set_facecolor('#c4c4c4')
+pp.tight_layout()
+
+print("> do something with warnings")  
+with warnings.catch_warnings():
+    warnings.simplefilter("ignore")
+    f.tight_layout()
+warnings.filterwarnings("ignore",lineno=746, module="tkinter")
+warnings.filterwarnings("ignore", category= UserWarning)
+
+def update_plot():
+    global BUFF_FILL, FIRST_SCAN, PLOT_WINDOW
+
+    if not FIRST_SCAN and BUFF_FILL>0:
+        if PLOT_WINDOW == 1:
+            update_plot_light_temp()
+        elif PLOT_WINDOW == 2:
+            update_plot_pumping_water()
+        else:
+            update_plot_all()
+
+def update_plot_all():
+    global BUFF_FILL, FIRST_SCAN    
+    global moist_buff_neat, heat_buff_neat, pump_buff_neat, light_buff_neat
+
+    my_time_list = get_time_list()
+    my_label_list = get_label_list()
+    my_tick_list = get_tick_list()
+    my_clear_list = get_clear_list()
+
+    if not ax[0].get_visible():
+    # SHOW AXIS
+        ax[0].set_visible(True)
+
+    if not ax[1].get_visible():
+    # SHOW AXIS
+        ax[1].set_visible(True)
+
+    if not ax[2].get_visible():
+    # SHOW AXIS
+        ax[2].set_visible(True)
+
+    if not ax[3].get_visible():
+    # SHOW AXIS
+        ax[3].set_visible(True)
+
+    ax[0].clear()
+    ax[1].clear()
+    ax[2].clear()
+    ax[3].clear()
+
+    ax[0].set_position([0.125, 0.81, 0.85, 0.17])
+    ax[1].set_position([0.125, 0.59, 0.85, 0.17])
+    ax[2].set_position([0.125, 0.37, 0.85, 0.17])
+    ax[3].set_position([0.125, 0.15, 0.85, 0.17])
+
+    #   F - UPDATE TEMOERATURE PLOT
+    hy_min = 100.0
+    for n in range(NR_THERMO):
+        hy_min = min( hy_min, heat_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
+    hy_min = hy_min - 1
+
+    hy_max = 0.0
+    for n in range(NR_THERMO):
+        hy_max = max( hy_max, heat_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
+    hy_max = hy_max + 1
+
+    # SET X TICK TIME LABEL
+    if BUFF_FILL > 1:
+        ax[0].set_xticks(my_tick_list)
+        ax[0].set_xticklabels(my_clear_list)
+
+    ax[0].set_ylim([ hy_min, hy_max ])
+    ax[0].set_ylabel("TC Temp [*C]")
+    ax[0].grid(True)
+
+    #   F - UPDATE LAMP
+    hy_min = 100.0
+    for n in range(NR_LAMP):
+        hy_min = min( hy_min, light_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
+    hy_min = hy_min - 1
+
+    hy_max = 0.0
+    for n in range(NR_LAMP):
+        hy_max = max( hy_max, light_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
+    hy_max = hy_max + 1
+
+    # ax[1].set_ylim([ hy_min, hy_max ])
+    ax[1].set_ylim(DEFAULT_RANGE_LAMP)
+    ax[1].set_ylabel("LIGHT")   
+
+    ax[1].grid(True)
+
+    # SET X TICK TIME LABEL
+    if BUFF_FILL > 1:
+        ax[1].set_xticks(my_tick_list)
+        ax[1].set_xticklabels(my_clear_list)
+
+    #   F - UPDATE MOUSTURE PLOT
+    hy_min = 100.0
+    for n in range(NR_MOISTURE):
+        hy_min = min( hy_min, moist_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
+    hy_min = hy_min - 1
+
+    hy_max = 0.0
+    for n in range(NR_MOISTURE):
+        hy_max = max( hy_max, moist_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
+    hy_max = hy_max + 1
+
+    ax[2].set_ylim([ hy_min, hy_max ])
+    ax[2].set_ylabel("Moisture [%]")
+    ax[2].grid(True)   
+
+    # SET X TICK TIME LABEL
+    if BUFF_FILL > 1:
+        ax[2].set_xticks(my_tick_list)
+        ax[2].set_xticklabels(my_clear_list)
+
+    #   F - UPDATE PUMP
+    hy_min = 100.0
+    for n in range(NR_PUMP):
+        hy_min = min( hy_min, pump_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
+    hy_min = hy_min - 1
+
+    hy_max = 0.0
+    for n in range(NR_PUMP):
+        hy_max = max( hy_max, pump_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
+    hy_max = hy_max + 1
+    
+
+    ax[3].set_ylim([ hy_min, hy_max ])
+    ax[3].set_ylabel("PUMP")
+
+    ax[3].grid(True)
+
+    # SET X TICK TIME LABEL
+    if BUFF_FILL > 1:
+        ax[3].set_xticks(my_tick_list)
+        ax[3].set_xticklabels(my_label_list, rotation =45)
+
+    #ax[3].set_xlabel("time [min]")
+
+    f.set_tight_layout(True)    
+    pp.tight_layout()
+
+    for n in range(NR_THERMO):
+        ax[0].plot( heat_buff_neat[n, 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , heat_buff_neat[n, 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color=THERMO_PLOT_CMAP[n] )
+
+    for n in range(NR_LAMP):
+        ax[1].plot( light_buff_neat[n, 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , light_buff_neat[n, 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color=LIGHT_PLOT_CMAP[n] )
+
+    for n in range(NR_MOISTURE):
+        ax[2].plot( moist_buff_neat[n, 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , moist_buff_neat[n, 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color=MOIST_PLOT_CMAP[n] )
+
+    for n in range(NR_PUMP):
+        ax[3].plot( pump_buff_neat[n, 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , pump_buff_neat[n, 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color=PUMP_PLOT_CMAP[n] )
+
+
+def update_plot_light_temp():
+    global BUFF_FILL, FIRST_SCAN    
+    global heat_buff_neat, light_buff_neat
+
+    my_time_list = get_time_list()
+    my_label_list = get_label_list()
+    my_tick_list = get_tick_list()
+    my_clear_list = get_clear_list()
+
+    if not ax[0].get_visible():
+    # SHOW AXIS
+        ax[0].set_visible(True)
+
+    if not ax[1].get_visible():
+    # SHOW AXIS
+        ax[1].set_visible(True)
+
+    if ax[2].get_visible():
+    # CLEAR & HIDE AXIS
+        ax[2].clear()
+        ax[2].set_visible(False)
+
+    if ax[3].get_visible():
+    # CLEAR & HIDE AXIS
+        ax[3].clear()
+        ax[3].set_visible(False)
+
+    ax[0].clear()
+    ax[1].clear()
+    #ax[2].clear()
+    #ax[3].clear()
+
+    ax[0].set_position([0.15, 0.375, 0.8, 0.6])
+    ax[1].set_position([0.15, 0.15, 0.8, 0.2])
+    #ax[2].set_position([0.05, 0.05, 0.9, 0.3])
+    #ax[3].set_position([0.05, 0.05, 0.9, 0.3])
+
+        #   F - UPDATE TEMOERATURE PLOT
+    hy_min = 100.0
+    for n in range(NR_THERMO):
+        hy_min = min( hy_min, heat_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
+    hy_min = hy_min - 1
+
+    hy_max = 0.0
+    for n in range(NR_THERMO):
+        hy_max = max( hy_max, heat_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
+    hy_max = hy_max + 1
+
+    # SET X TICK TIME LABEL
+    if BUFF_FILL > 1:
+        ax[0].set_xticks(my_tick_list)
+        ax[0].set_xticklabels(my_clear_list)
+
+    ax[0].set_ylim([ hy_min, hy_max ])
+    ax[0].set_ylabel("TC Temp [*C]")
+    ax[0].grid(True)
+
+
+    #   F - UPDATE LAMP
+    hy_min = 100.0
+    for n in range(NR_LAMP):
+        hy_min = min( hy_min, light_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
+    hy_min = hy_min - 1
+
+    hy_max = 0.0
+    for n in range(NR_LAMP):
+        hy_max = max( hy_max, light_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
+    hy_max = hy_max + 1
+
+    # ax[1].set_ylim([ hy_min, hy_max ])
+    ax[1].set_ylim(DEFAULT_RANGE_LAMP)
+    ax[1].set_ylabel("LIGHT")   
+    ax[1].grid(True)
+
+
+    # SET X TICK TIME LABEL
+    if BUFF_FILL > 1:
+        ax[1].set_xticks(my_tick_list)
+        ax[1].set_xticklabels(my_label_list, rotation =45)
+    #ax[1].set_xlabel("time [min]")
+
+    f.set_tight_layout(True)
+    pp.tight_layout()
+
+    for n in range(NR_THERMO):
+        ax[0].plot( heat_buff_neat[n, 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , heat_buff_neat[n, 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color=THERMO_PLOT_CMAP[n] )
+
+    for n in range(NR_LAMP):
+        ax[1].plot( light_buff_neat[n, 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , light_buff_neat[n, 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color=LIGHT_PLOT_CMAP[n] )
+
+def update_plot_pumping_water():
+    global BUFF_FILL, FIRST_SCAN    
+    global moist_buff_neat,pump_buff_neat
+
+    my_time_list = get_time_list()
+    my_label_list = get_label_list()
+    my_tick_list = get_tick_list()
+    my_clear_list = get_clear_list()
+
+    if ax[0].get_visible():
+    # CLEAR & HIDE AXIS
+        ax[0].clear()
+        ax[0].set_visible(False)
+
+    if ax[1].get_visible():
+    # CLEAR & HIDE AXIS
+        ax[1].clear()
+        ax[1].set_visible(False)
+    
+    if not ax[2].get_visible():
+    # SHOW AXIS
+        ax[2].set_visible(True)
+
+    if not ax[3].get_visible():
+    # SHOW AXIS
+        ax[3].set_visible(True)
+
+    #ax[0].clear()
+    #ax[1].clear()
+    ax[2].clear()
+    ax[3].clear()
+
+    #ax[0].set_position([0.125, 0.575, 0.85, 0.4])
+    #ax[1].set_position([0.125, 0.15, 0.85, 0.4])
+    ax[2].set_position([0.125, 0.375, 0.85, 0.6])
+    ax[3].set_position([0.125, 0.15, 0.85, 0.2])
+
+    #   F - UPDATE MOUSTURE PLOT
+    hy_min = 100.0
+    for n in range(NR_MOISTURE):
+        hy_min = min( hy_min, min( moist_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] ))
+    hy_min = hy_min - 1
+
+    hy_max = 0.0
+    for n in range(NR_MOISTURE):
+        hy_max = max( hy_max, max(moist_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] ))
+    hy_max = hy_max + 1
+
+    ax[2].set_ylim([ hy_min, hy_max ])
+    ax[2].set_ylabel("Moisture [%]")
+    ax[2].grid(True)   
+
+    # SET X TICK TIME LABEL
+    if BUFF_FILL > 1:
+        ax[2].set_xticks(my_tick_list)
+        ax[2].set_xticklabels(my_clear_list)
+
+    #   F - UPDATE PUMP
+    hy_min = 100.0
+    for n in range(NR_PUMP):
+        hy_min = min( hy_min, pump_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
+    hy_min = hy_min - 1
+
+    hy_max = 0.0
+    for n in range(NR_PUMP):
+        hy_max = max( hy_max, pump_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
+    hy_max = hy_max + 1
+    
+    ax[3].set_ylim([ hy_min, hy_max ])
+    ax[3].set_ylabel("PUMP")
+    ax[3].grid(True)
+
+    # SET X TICK TIME LABEL
+    if BUFF_FILL > 1:
+        ax[3].set_xticks(my_tick_list)
+        ax[3].set_xticklabels(my_label_list, rotation =45)
+
+    #ax[3].set_xlabel("time [min]")
+    f.set_tight_layout(True)
+
+    for n in range(NR_MOISTURE):
+        ax[2].plot( moist_buff_neat[n, 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , moist_buff_neat[n, 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color=MOIST_PLOT_CMAP[n] )
+
+    for n in range(NR_PUMP):
+        ax[3].plot( pump_buff_neat[n, 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , pump_buff_neat[n, 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color=PUMP_PLOT_CMAP[n] )
+
+
+def animate(i):
+# PLOT VALUES
+    global BUFF_FILL, FIRST_SCAN, PLOT_WINDOW
+
+    if not FIRST_SCAN and BUFF_FILL>0:
+    # UPDATE PLOTS
+        if DEBUG_MODE:
+            print(" ")
+            print("+- ~ - ~ - ~ - ~ - ~ -+")
+            print("   A N I M A T E   ")
+            start_plot = time.time()
+            start = time.time()
+
+        update_plot()   
+
+        # PRINT PLOTTING TIME
+        if DEBUG_MODE:
+            end = time.time()
+            print("plot time: " + str(end-start))
+            print("PLOT WINDOW: " + str(PLOT_WINDOW))
+            print("BUFF_FILL: " + str(BUFF_FILL))
+                
+        if DEBUG_MODE:
+            end_plot = time.time()
+            print(" ")
+            print("ANIMATE time: " + str(end_plot-start_plot))
+
+    if FIRST_SCAN:
+        FIRST_SCAN = False
+
+def init_log():
+    global LOG_NAME
+
+    if os.path.isfile(LOG_NAME):
+    # FILE EXISTS
+        if ( time.time() ) - ( os.path.getmtime(LOG_NAME) ) > 600:
+        # CHECK IF LOG HAS EXPIRED
+            os.remove(LOG_NAME)
+            file = open(LOG_NAME, 'w')
+            file.close()
+
+        else:
+        # LOAD DATA
+            my_data_frame = pd.read_csv(LOG_NAME)
+            my_data = my_data_frame.values.to_list()
+
+    else:
+    # CREATE FILE
+        file = open(LOG_NAME, 'w')
+        file.close()
+
+
+def log_data(my_data):
+    global FIRST_SCAN, LOG_NAME
+    my_data_frame = pd.DataFrame()
+
+    # APPEND TO FILE
+    my_data_frame.append(my_data[0,1])
+
+## START PROGRAM / GUI
+
+
+# SET Y LIMITS
+ax[0].set_ylim([10,40])
+ax[1].set_ylim([0,255])
+ax[2].set_ylim([0,100])
+ax[3].set_ylim([0,100])
+
+# SET Y LABEL
+ax[0].set_ylabel("TC temp [*C]")
+ax[1].set_ylabel("LIGHT")
+ax[2].set_ylabel("Moisture [%]")
+ax[3].set_ylabel("PUMP")
+
+# SETT GRID
+ax[0].grid(True)
+ax[1].grid(True)
+ax[2].grid(True)
+ax[3].grid(True)
+
+#ax[3].set_xlabel("time [min]")
+
+ax[0].plot([0,1], [10,40])
+ax[1].plot([0,1], [0,255])
+ax[2].plot([0,1], [0,100])
+ax[3].plot([0,1], [0,100])
+
+# DEFINE TK STUFF
+print("> define app class")
 # DEFINE APP CLASS AS BASE FRAME
 class App( Frame ):
 
 #   INIT
+    print("   > def inti")
     def __init__(self, master=None):
 
         print("> app _init_")
@@ -306,6 +746,7 @@ class App( Frame ):
         print(">app _init_   finished")
 
 #   SERIAL FUNCTIONS
+    print("   > def serial functions")
     def open_serial_connection(self):
         self.arduino.setPort(self.serial_var_port.get())
         self.serial_port_hist.append(self.serial_var_port.get())
@@ -633,10 +1074,12 @@ class App( Frame ):
 
 
 #   BUILD GUI
+    print("   > define gui")
     def create_widgets(self):
     # M A I N   F R A M E
 
         # CREATE MAIN FRAME
+        print("      > create mainframe")
         self.mainframe = Frame( self, 
                                 bg= BG_MAIN, 
                                 bd = 4, 
@@ -649,8 +1092,11 @@ class App( Frame ):
         self.mainframe.grid_rowconfigure(0, weight =0)
         self.mainframe.grid_rowconfigure(1, weight =2)
 
-    # H E A D E R   F R A M E
+        print("      > fill mainframe")   
+
+    # H E A D E R   F R A M E   
         # CREATE HEADER FRAME
+        print("      > create header")
         self.headerFrame=Frame( self.mainframe, 
                                 bg      = BG_MAIN, 
                                 bd      = 2, 
@@ -1568,402 +2014,12 @@ class App( Frame ):
         self.schedule_frame.grid_rowconfigure(len(self.schedule_sel)+1 ,weight=8)   
 
 #   PACK SELF
+        print("      > pack self")
         self.grid_columnconfigure(0, weight =1)
         self.grid_rowconfigure(0, weight =1)
         self.pack(fill = BOTH, expand = True)
 
-##   A N I M A T I O N
-#  DEFINE MATPLOT FUIGURE
-f, ax = pp.subplots(nrows = 4, ncols = 1)
-f.set_tight_layout(True)
-f.set_facecolor('#c4c4c4')
-pp.tight_layout()
 
-
-with warnings.catch_warnings():
-    warnings.simplefilter("ignore")
-    f.tight_layout()
-warnings.filterwarnings("ignore",lineno=746, module="tkinter")
-warnings.filterwarnings("ignore", category= UserWarning)
-
-def update_plot():
-    global BUFF_FILL, FIRST_SCAN, PLOT_WINDOW
-
-    if not FIRST_SCAN and BUFF_FILL>0:
-        if PLOT_WINDOW == 1:
-            update_plot_light_temp()
-        elif PLOT_WINDOW == 2:
-            update_plot_pumping_water()
-        else:
-            update_plot_all()
-
-def update_plot_all():
-    global BUFF_FILL, FIRST_SCAN    
-    global moist_buff_neat, heat_buff_neat, pump_buff_neat, light_buff_neat
-
-    my_time_list = get_time_list()
-    my_label_list = get_label_list()
-    my_tick_list = get_tick_list()
-    my_clear_list = get_clear_list()
-
-    ax[0].clear()
-    ax[1].clear()
-    ax[2].clear()
-    ax[3].clear()
-
-    ax[0].set_visible(True)
-    ax[1].set_visible(True)
-    ax[2].set_visible(True)
-    ax[3].set_visible(True)
-
-    ax[0].set_position([0.125, 0.81, 0.85, 0.17])
-    ax[1].set_position([0.125, 0.59, 0.85, 0.17])
-    ax[2].set_position([0.125, 0.37, 0.85, 0.17])
-    ax[3].set_position([0.125, 0.15, 0.85, 0.17])
-
-    #   F - UPDATE TEMOERATURE PLOT
-    hy_min = 100.0
-    for n in range(NR_THERMO):
-        hy_min = min( hy_min, heat_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
-    hy_min = hy_min - 1
-
-    hy_max = 0.0
-    for n in range(NR_THERMO):
-        hy_max = max( hy_max, heat_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
-    hy_max = hy_max + 1
-
-    # SET X TICK TIME LABEL
-    if BUFF_FILL > 1:
-        ax[0].set_xticks(my_tick_list)
-        ax[0].set_xticklabels(my_clear_list)
-
-    ax[0].set_ylim([ hy_min, hy_max ])
-    ax[0].set_ylabel("TC Temp [*C]")
-    ax[0].grid(True)
-
-    #   F - UPDATE LAMP
-    hy_min = 100.0
-    for n in range(NR_LAMP):
-        hy_min = min( hy_min, light_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
-    hy_min = hy_min - 1
-
-    hy_max = 0.0
-    for n in range(NR_LAMP):
-        hy_max = max( hy_max, light_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
-    hy_max = hy_max + 1
-
-    # ax[1].set_ylim([ hy_min, hy_max ])
-    ax[1].set_ylim(DEFAULT_RANGE_LAMP)
-    ax[1].set_ylabel("LIGHT")   
-
-    ax[1].grid(True)
-
-    # SET X TICK TIME LABEL
-    if BUFF_FILL > 1:
-        ax[1].set_xticks(my_tick_list)
-        ax[1].set_xticklabels(my_clear_list)
-
-    #   F - UPDATE MOUSTURE PLOT
-    hy_min = 100.0
-    for n in range(NR_MOISTURE):
-        hy_min = min( hy_min, moist_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
-    hy_min = hy_min - 1
-
-    hy_max = 0.0
-    for n in range(NR_MOISTURE):
-        hy_max = max( hy_max, moist_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
-    hy_max = hy_max + 1
-
-    ax[2].set_ylim([ hy_min, hy_max ])
-    ax[2].set_ylabel("Moisture [%]")
-    ax[2].grid(True)   
-
-    # SET X TICK TIME LABEL
-    if BUFF_FILL > 1:
-        ax[2].set_xticks(my_tick_list)
-        ax[2].set_xticklabels(my_clear_list)
-
-    #   F - UPDATE PUMP
-    hy_min = 100.0
-    for n in range(NR_PUMP):
-        hy_min = min( hy_min, pump_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
-    hy_min = hy_min - 1
-
-    hy_max = 0.0
-    for n in range(NR_PUMP):
-        hy_max = max( hy_max, pump_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
-    hy_max = hy_max + 1
-    
-
-    ax[3].set_ylim([ hy_min, hy_max ])
-    ax[3].set_ylabel("PUMP")
-
-    ax[3].grid(True)
-
-    # SET X TICK TIME LABEL
-    if BUFF_FILL > 1:
-        ax[3].set_xticks(my_tick_list)
-        ax[3].set_xticklabels(my_label_list, rotation =45)
-
-    #ax[3].set_xlabel("time [min]")
-
-    f.set_tight_layout(True)    
-    pp.tight_layout()
-
-    for n in range(NR_THERMO):
-        ax[0].plot( heat_buff_neat[n, 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , heat_buff_neat[n, 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color=THERMO_PLOT_CMAP[n] )
-
-    for n in range(NR_LAMP):
-        ax[1].plot( light_buff_neat[n, 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , light_buff_neat[n, 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color=LIGHT_PLOT_CMAP[n] )
-
-    for n in range(NR_MOISTURE):
-        ax[2].plot( moist_buff_neat[n, 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , moist_buff_neat[n, 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color=MOIST_PLOT_CMAP[n] )
-
-    for n in range(NR_PUMP):
-        ax[3].plot( pump_buff_neat[n, 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , pump_buff_neat[n, 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color=PUMP_PLOT_CMAP[n] )
-
-
-def update_plot_light_temp():
-    global BUFF_FILL, FIRST_SCAN    
-    global heat_buff_neat, light_buff_neat
-
-    my_time_list = get_time_list()
-    my_label_list = get_label_list()
-    my_tick_list = get_tick_list()
-    my_clear_list = get_clear_list()
-
-    ax[0].clear()
-    ax[1].clear()
-    ax[2].clear()
-    ax[3].clear()
-
-    ax[0].set_visible(True)
-    ax[1].set_visible(True)
-    ax[2].set_visible(False)
-    ax[3].set_visible(False)
-
-    ax[0].set_position([0.15, 0.375, 0.8, 0.6])
-    ax[1].set_position([0.15, 0.15, 0.8, 0.2])
-    #ax[2].set_position([0.05, 0.05, 0.9, 0.3])
-    #ax[3].set_position([0.05, 0.05, 0.9, 0.3])
-
-        #   F - UPDATE TEMOERATURE PLOT
-    hy_min = 100.0
-    for n in range(NR_THERMO):
-        hy_min = min( hy_min, heat_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
-    hy_min = hy_min - 1
-
-    hy_max = 0.0
-    for n in range(NR_THERMO):
-        hy_max = max( hy_max, heat_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
-    hy_max = hy_max + 1
-
-    # SET X TICK TIME LABEL
-    if BUFF_FILL > 1:
-        ax[0].set_xticks(my_tick_list)
-        ax[0].set_xticklabels(my_clear_list)
-
-    ax[0].set_ylim([ hy_min, hy_max ])
-    ax[0].set_ylabel("TC Temp [*C]")
-    ax[0].grid(True)
-
-
-    #   F - UPDATE LAMP
-    hy_min = 100.0
-    for n in range(NR_LAMP):
-        hy_min = min( hy_min, light_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
-    hy_min = hy_min - 1
-
-    hy_max = 0.0
-    for n in range(NR_LAMP):
-        hy_max = max( hy_max, light_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
-    hy_max = hy_max + 1
-
-    # ax[1].set_ylim([ hy_min, hy_max ])
-    ax[1].set_ylim(DEFAULT_RANGE_LAMP)
-    ax[1].set_ylabel("LIGHT")   
-    ax[1].grid(True)
-
-
-    # SET X TICK TIME LABEL
-    if BUFF_FILL > 1:
-        ax[1].set_xticks(my_tick_list)
-        ax[1].set_xticklabels(my_label_list, rotation =45)
-    #ax[1].set_xlabel("time [min]")
-
-    f.set_tight_layout(True)
-    pp.tight_layout()
-
-    for n in range(NR_THERMO):
-        ax[0].plot( heat_buff_neat[n, 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , heat_buff_neat[n, 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color=THERMO_PLOT_CMAP[n] )
-
-    for n in range(NR_LAMP):
-        ax[1].plot( light_buff_neat[n, 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , light_buff_neat[n, 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color=LIGHT_PLOT_CMAP[n] )
-
-def update_plot_pumping_water():
-    global BUFF_FILL, FIRST_SCAN    
-    global moist_buff_neat,pump_buff_neat
-
-    my_time_list = get_time_list()
-    my_label_list = get_label_list()
-    my_tick_list = get_tick_list()
-    my_clear_list = get_clear_list()
-
-    ax[0].clear()
-    ax[1].clear()
-    ax[2].clear()
-    ax[3].clear()
-
-    ax[0].set_visible(False)
-    ax[1].set_visible(False)
-    ax[2].set_visible(True)
-    ax[3].set_visible(True)
-
-    #ax[0].set_position([0.125, 0.575, 0.85, 0.4])
-    #ax[1].set_position([0.125, 0.15, 0.85, 0.4])
-    ax[2].set_position([0.125, 0.375, 0.85, 0.6])
-    ax[3].set_position([0.125, 0.15, 0.85, 0.2])
-
-    #   F - UPDATE MOUSTURE PLOT
-    hy_min = 100.0
-    for n in range(NR_MOISTURE):
-        hy_min = min( hy_min, min( moist_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] ))
-    hy_min = hy_min - 1
-
-    hy_max = 0.0
-    for n in range(NR_MOISTURE):
-        hy_max = max( hy_max, max(moist_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] ))
-    hy_max = hy_max + 1
-
-    ax[2].set_ylim([ hy_min, hy_max ])
-    ax[2].set_ylabel("Moisture [%]")
-    ax[2].grid(True)   
-
-    # SET X TICK TIME LABEL
-    if BUFF_FILL > 1:
-        ax[2].set_xticks(my_tick_list)
-        ax[2].set_xticklabels(my_clear_list)
-
-    #   F - UPDATE PUMP
-    hy_min = 100.0
-    for n in range(NR_PUMP):
-        hy_min = min( hy_min, pump_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
-    hy_min = hy_min - 1
-
-    hy_max = 0.0
-    for n in range(NR_PUMP):
-        hy_max = max( hy_max, pump_buff_neat[n, 1 ,BUFF_LEN-BUFF_FILL:BUFF_LEN] )
-    hy_max = hy_max + 1
-    
-    ax[3].set_ylim([ hy_min, hy_max ])
-    ax[3].set_ylabel("PUMP")
-    ax[3].grid(True)
-
-    # SET X TICK TIME LABEL
-    if BUFF_FILL > 1:
-        ax[3].set_xticks(my_tick_list)
-        ax[3].set_xticklabels(my_label_list, rotation =45)
-
-    #ax[3].set_xlabel("time [min]")
-    f.set_tight_layout(True)
-
-    for n in range(NR_MOISTURE):
-        ax[2].plot( moist_buff_neat[n, 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , moist_buff_neat[n, 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color=MOIST_PLOT_CMAP[n] )
-
-    for n in range(NR_PUMP):
-        ax[3].plot( pump_buff_neat[n, 0 , BUFF_LEN-BUFF_FILL : BUFF_LEN ] , pump_buff_neat[n, 1 , BUFF_LEN-BUFF_FILL : BUFF_LEN ], color=PUMP_PLOT_CMAP[n] )
-
-
-def animate(i):
-# PLOT VALUES
-    global BUFF_FILL, FIRST_SCAN, PLOT_WINDOW
-
-    if not FIRST_SCAN and BUFF_FILL>0:
-    # UPDATE PLOTS
-        if DEBUG_MODE:
-            print(" ")
-            print("+- ~ - ~ - ~ - ~ - ~ -+")
-            print("   A N I M A T E   ")
-            start_plot = time.time()
-            start = time.time()
-
-        update_plot()   
-
-        # PRINT PLOTTING TIME
-        if DEBUG_MODE:
-            end = time.time()
-            print("plot time: " + str(end-start))
-            print("PLOT WINDOW: " + str(PLOT_WINDOW))
-            print("BUFF_FILL: " + str(BUFF_FILL))
-                
-        if DEBUG_MODE:
-            end_plot = time.time()
-            print(" ")
-            print("ANIMATE time: " + str(end_plot-start_plot))
-
-    if FIRST_SCAN:
-        FIRST_SCAN = False
-
-def init_log():
-    global LOG_NAME
-
-    if os.path.isfile(LOG_NAME):
-    # FILE EXISTS
-        if ( time.time() ) - ( os.path.getmtime(LOG_NAME) ) > 600:
-        # CHECK IF LOG HAS EXPIRED
-            os.remove(LOG_NAME)
-            file = open(LOG_NAME, 'w')
-            file.close()
-
-        else:
-        # LOAD DATA
-            my_data_frame = pd.read_csv(LOG_NAME)
-            my_data = my_data_frame.values.to_list()
-
-    else:
-    # CREATE FILE
-        file = open(LOG_NAME, 'w')
-        file.close()
-
-
-def log_data(my_data):
-    global FIRST_SCAN, LOG_NAME
-    my_data_frame = pd.DataFrame()
-
-    # APPEND TO FILE
-    my_data_frame.append(my_data[0,1])
-
-## START PROGRAM / GUI
-
-
-# SET Y LIMITS
-ax[0].set_ylim([10,40])
-ax[1].set_ylim([0,255])
-ax[2].set_ylim([0,100])
-ax[3].set_ylim([0,100])
-
-# SET Y LABEL
-ax[0].set_ylabel("TC temp [*C]")
-ax[1].set_ylabel("LIGHT")
-ax[2].set_ylabel("Moisture [%]")
-ax[3].set_ylabel("PUMP")
-
-# SETT GRID
-ax[0].grid(True)
-ax[1].grid(True)
-ax[2].grid(True)
-ax[3].grid(True)
-
-#ax[3].set_xlabel("time [min]")
-
-ax[0].plot([0,1], [10,40])
-ax[1].plot([0,1], [0,255])
-ax[2].plot([0,1], [0,100])
-ax[3].plot([0,1], [0,100])
-
-# DEFINE TK STUFF
-root = Tk() #init Tk
-root.title ("G R O W  .  M A S T E R")
 app = App(master=root)  # assign tk to master frame
 
 # ACTIONS WHEN CLOSING WINDOW
@@ -1981,6 +2037,7 @@ plot_index = 0
 exportData  = pd.DataFrame()
 
 # PROGRAM TO CALL EVERY .. 
+print("> define program")
 def program():
     global BUFF_FILL, FIRST_SCAN, PLOT_WINDOW
     global moist_buff, heat_buff, light_buff, pump_buff
