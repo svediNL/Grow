@@ -43,16 +43,33 @@ else:
 
 
 FONT_DEFAULT = font.nametofont("TkDefaultFont") # load default
-FONT_DEFAULT.configure( #
-	family = "Courier",#
-	size = -14,
+FONT_DEFAULT.configure( 
+	family = "Courier",
+	size = 12,
 	weight = font.NORMAL)
 
-#FONT_TITLE = 
-font.Font(
+FONT_TITLE = font.Font(
 	name = "Title",
 	family = "Courier", 
-	size = -18, 
+	size = 18, 
+	weight = font.BOLD)
+
+FONT_HEADING1 = font.Font(
+	name = "Heading1",
+	family = "Courier", 
+	size = 16, 
+	weight = font.BOLD)
+
+FONT_HEADING2 = font.Font(
+	name = "Heading2",
+	family = "Courier", 
+	size = 16, 
+	weight = font.NORMAL)
+
+FONT_HEADING3 = font.Font(
+	name = "Heading3",
+	family = "Courier", 
+	size = 14, 
 	weight = font.BOLD)
 
 

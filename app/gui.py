@@ -552,16 +552,17 @@ class App( Frame ):
     def __init__(self, master=None):
 
         print("> app _init_")
+    # SET STYLE
         self.style = ttk.Style()
         # https://www.tcl.tk/man/tcl/TkCmd/ttk_notebook.htm#M10
         self.style.theme_create( "myStyle", 
                                  parent="default", 
                                  settings=  {   "TNotebook": { "configure": 
-                                                                 { "tabmargins": [7, 13, 4, 0],
+                                                                 { "tabmargins": [7, 13, 4, 0],     # direction: <, ^, >, v
                                                                    "background": BG_MAIN,
                                                                    "foreground": BG_MAIN,
                                                                    "lightcolor": BG_MAIN,
-                                                                   "darkcolor": BG_MAIN }    # direction: <, ^, >, v
+                                                                   "darkcolor": BG_MAIN}    
                                                              },
                                                 "TNotebook.Tab": { "configure": 
                                                                         { "padding": [5, 1], 
@@ -569,13 +570,15 @@ class App( Frame ):
                                                                           "foreground": FG_TEXT },
                                                                     "map":
                                                                         { "background": [("selected", BG_TAB_ACTIVE)], 
-                                                                          "expand": [("selected", [3, 2, 3, 1])] } 
+                                                                          "expand": [("selected", [3, 2, 3, 1])] }
                                                                  }
                                             }
                                 )
         self.style.theme_use("myStyle")
+        
 
-        # PUMP VARIABLES
+
+    # PUMP VARIABLES
         self.pump_enable = []
         self.pump_enable_prev = []
         self.pump_state = []
@@ -589,7 +592,7 @@ class App( Frame ):
             self.pump_state[n].set("pump stopped...")
             self.overrule_pump_interlock.append(IntVar(master))
 
-        # RELAY
+    # RELAY
         self.enable_relay=[]
         self.enable_relay_prev=[]
         for n in range(NR_RELAY):
@@ -628,8 +631,7 @@ class App( Frame ):
         self.flow_control_relays.sort()
         print("> Relays used in flow:" , str(self.flow_control_relays))
 
-
-        # LAMP
+    # LAMP
         self.lamp_enable =[]
         self.lamp_enable_prev = []
         self.lamp_output=[]         #  [LAMP_INDEX] [LAMP_CHANNEL]
@@ -657,7 +659,7 @@ class App( Frame ):
         for n in range(NR_THERMO):
             self.temperature_var.append(StringVar(master))
 
-        # DAYLIGHT SEQUENCE VARIABLES
+    # DAYLIGHT SEQUENCE VARIABLES
         self.enable_daylight = IntVar(master)
         self.daylight_status = StringVar(master)
         self.daylight_brightness = StringVar(master)
@@ -668,7 +670,7 @@ class App( Frame ):
         self.daylight_tv_ramp_hour = StringVar(master)
         self.daylight_tv_ramp_min = StringVar(master)
 
-        # SET DAYLIGHT VARIABLES
+    # SET DAYLIGHT VARIABLES
         self.daylight_status.set("Daylight disabled")
         self.daylight_brightness.set("255")
         self.daylight_tv_start_hour.set("7")
@@ -686,7 +688,7 @@ class App( Frame ):
         self.str_time = StringVar(master)
         self.str_time.set(".....")
 
-        # SERIAL VARIABLES
+    # SERIAL VARIABLES
         self.serial_var_string = StringVar(master)
         self.serial_connection_string = StringVar(master)
         self.serial_entry_string = StringVar(master)
@@ -1116,7 +1118,8 @@ class App( Frame ):
                                     text    = " +- ~ - ~ - ~ - ~ - ~ -+  G R O W   M A S T E R     v2.0  +- ~ - ~ - ~ - ~ - ~ -+ ", 
                                     bg      = BG_MAIN, 
                                     fg      = FG_TEXT, 
-                                    bd      = 4)
+                                    bd      = 4,
+                                    font    = "Title")
         self.label_header.grid(column = 0, row=0, sticky=N+S+W)
         #self.label_header.pack(side = LEFT)
 
@@ -1180,7 +1183,8 @@ class App( Frame ):
                                                  bg = BG_SUB, 
                                                  fg=FG_TEXT,
                                                  selectcolor = BG_CHECK,
-                                                 highlightbackground = BG_SUB) )    
+                                                 highlightbackground = BG_SUB,
+                                                 font = "Heading1") )    
             self.plotbutton[n].grid(column = n, row = 0, sticky= N+S+E+W)
         #self.plot_select.set(0)
 
@@ -1240,7 +1244,8 @@ class App( Frame ):
         self.live_label = Label( self.live_header_frame, 
                                  text = "~ L I V E   M O N I T O R", 
                                  bg = BG_SUB, 
-                                 fg = FG_TEXT)
+                                 fg = FG_TEXT,
+                                 font = "Heading1")
         self.live_label.grid(column = 0, row = 0, sticky = N+S+W)
 
         self.live_content_frame.grid_rowconfigure(0, weight =2)
@@ -1372,7 +1377,8 @@ class App( Frame ):
         self.serial_header_label = Label(   self.serial_header_frame, 
                                             text = "~  S E R I A L ", 
                                             bg   = BG_MAIN, 
-                                            fg   = FG_TEXT)
+                                            fg   = FG_TEXT,
+                                            font = "Heading1")
         self.serial_header_label.grid(column = 0, row=0, sticky=N+S+W)
 
         # ADD NOTEBOOK TO SERIAL FRAME
@@ -1492,7 +1498,8 @@ class App( Frame ):
         self.devco_label = Label( self.devco_frame, 
                                   text= "~  D E V I C E  C O N T R O L ", 
                                   bg = BG_MAIN, 
-                                  fg = FG_TEXT )
+                                  fg = FG_TEXT,
+                                  font = "Heading1")
         self.devco_label.grid(column = 0, row=0, sticky=N+S+W)
 
     #   - D E V I C E  C O N T R O L   N O T E B O O K    DICONB
@@ -1938,33 +1945,38 @@ class App( Frame ):
                             text    = "DEVICE", 
                             bg      = BG_MAIN, 
                             fg      = FG_TEXT, 
-                            bd      = 0)
+                            bd      = 0,
+                            font    = "Heading3")
         self.schedule_lbl0.grid(column = 0, row=0, sticky=N+S+W+E)
 
         self.schedule_lbl1 = Label(  self.schedule_frame, 
                             text    = "ID", 
                             bg      = BG_MAIN, 
                             fg      = FG_TEXT, 
-                            bd      = 0)
+                            bd      = 0,
+                            font    = "Heading3")
         self.schedule_lbl1.grid(column = 1, row=0, sticky=N+S+W+E)
 
         self.schedule_lbl2 = Label(  self.schedule_frame, 
                     text    = "START @", 
                     bg      = BG_MAIN, 
                     fg      = FG_TEXT, 
-                    bd      = 0)
+                    bd      = 0,
+                    font    = "Heading3")
         self.schedule_lbl2.grid(column = 2, row=0, sticky=N+S+W+E)
         self.schedule_lbl3 = Label(  self.schedule_frame, 
                     text    = "ON TIME", 
                     bg      = BG_MAIN, 
                     fg      = FG_TEXT, 
-                    bd      = 0)
+                    bd      = 0,
+                    font    = "Heading3")
         self.schedule_lbl3.grid(column = 3, row=0, sticky=N+S+W+E)
         self.schedule_lbl4 = Label(  self.schedule_frame, 
                     text    = "SP", 
                     bg      = BG_MAIN, 
                     fg      = FG_TEXT, 
-                    bd      = 0)
+                    bd      = 0,
+                    font    = "Heading3")
         self.schedule_lbl4.grid(column = 4, row=0, sticky=N+S+W+E)
 
         # INFILL ROWS
